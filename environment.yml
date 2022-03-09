@@ -1,0 +1,14 @@
+name: sstar
+channels:
+        - conda-forge
+        - defaults
+dependencies:
+        - python=3.8
+        - scikit-allel
+        - pandas
+        - python-markdown-math
+        - mkdocstrings=0.17.0
+        - mkdocs-material
+        - r-base
+        - r-spatstat
+        - rpy2

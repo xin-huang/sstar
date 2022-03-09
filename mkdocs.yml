@@ -1,0 +1,46 @@
+site_name: sstar
+site_url: "https://sstar.readthedocs.io"
+repo_url: "https://github.com/xin-huang/sstar"
+edit_uri: ""
+docs_dir: 'docs'
+theme:
+        name: "material"
+        palette:
+                primary: cyan
+                accent: cyan
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          rendering:
+            show_source: true
+      watch:
+        - sstar
+markdown_extensions:
+  - extra
+  - tables
+  - fenced_code
+  - admonition
+  - codehilite
+extra_javascript:
+  - 'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML'
+nav:
+- Home: 'index.md'
+- User Guide: 
+        - Overview: 'userguide/overview.md'
+        - Calculating S* scores: 'userguide/score.md'
+        - Calculating p-values for source match percentages: 'userguide/pvalue.md'
+        - Calculating significant S* score thresholds: 'userguide/threshold.md'
+        - Calculating posterior probabilities: 'userguide/likelihood.md'
+        - Calculating source match percentages from the reference population: 'userguide/rmatch.md'
+- Examples: 'examples.md'
+- References: 'references.md'
+- API:
+        - cal_s_star: 'API/cal_s_star.md'
+        - cal_pvalue: 'API/cal_pvalue.md'
+        - cal_threshold: 'API/cal_threshold.md'
+        - cal_likelihood: 'API/cal_likelihood.md'
+        - cal_ref_match_pct: 'API/cal_ref_match_pct.md'
+        - utils: 'API/utils.md'

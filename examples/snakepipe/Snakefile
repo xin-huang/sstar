@@ -1,0 +1,125 @@
+"""
+Snakefile for running sstar pipeline.
+"""
+
+configfile: "sstar-config.yaml"
+
+rule all:
+    input:
+        "results/sstar.example.posterior.prob.txt"
+
+rule score:
+    input:
+        vcf = "../data/real_data/sstar.example.biallelic.snps.vcf.gz",
+        ref_ind = "../data/ind_list/ref.ind.list",
+        tgt_ind = "../data/ind_list/tgt.ind.list"
+    output: 
+        "results/sstar.example.score.txt"
+    resources: time_min=60, mem_mb=5000, cpus=1
+    threads: 1
+    shell:
+        """
+        sstar score --vcf {input.vcf} --ref-ind {input.ref_ind} --tgt-ind {input.tgt_ind} --output {output[0]} --thread {threads}
+        """
+
+rule nean_pvalue:
+    input:
+        vcf = "../data/real_data/sstar.example.biallelic.snps.vcf.gz",
+        ref_ind = "../data/ind_list/ref.ind.list",
+        tgt_ind = "../data/ind_list/tgt.ind.list",
+        src_ind = "../data/ind_list/nean.ind.list",
+        score_file = rules.score.output,
+        ref_match_pct_file = "../../../sstar_supplementary_data/ref_match_pct.nean.gz"
+    output:
+        "results/sstar.example.match.nean.pval.txt"
+    resources: time_min=3000, mem_mb=30000, cpus=1
+    threads: 1
+    shell:
+        """
+        sstar pvalue --vcf {input.vcf} --ref-ind {input.ref_ind} --tgt-ind {input.tgt_ind} --src-ind {input.src_ind} --score {input.score_file} --ref-match-pct {input.ref_match_pct_file} --thread {threads} --output {output[0]}
+        """
+
+rule den_pvalue:
+    input:
+        vcf = "../data/real_data/sstar.example.biallelic.snps.vcf.gz",
+        ref_ind = "../data/ind_list/ref.ind.list",
+        tgt_ind = "../data/ind_list/tgt.ind.list",
+        src_ind = "../data/ind_list/den.ind.list",
+        score_file = rules.score.output,
+        ref_match_pct_file = "../../../sstar_supplementary_data/ref_match_pct.den.gz"
+    output:
+        "results/sstar.example.match.den.pval.txt"
+    resources: time_min=3000, mem_mb=30000, cpus=1
+    threads: 1
+    shell:
+        """
+        sstar pvalue --vcf {input.vcf} --ref-ind {input.ref_ind} --tgt-ind {input.tgt_ind} --src-ind {input.src_ind} --score {input.score_file} --ref-match-pct {input.ref_match_pct_file} --thread {threads} --output {output[0]}
+        """
+
+rule filter:
+    input:
+        src1_pvalue = rules.nean_pvalue.output[0],
+        src2_pvalue = rules.den_pvalue.output[0]
+    output:
+        "results/sstar.example.match.nean.filtered.pval.txt",
+        "results/sstar.example.match.den.filtered.pval.txt"
+    resources: time_min=60, mem_mb=5000, cpus=1
+    params:
+        hap_len = 10000,
+        hap_mapped_len = 5000,
+        hap_star_snps_num = 2,
+        hap_site = 8,
+        hap_dsnv_num = 10,
+        hap_num_match_ref = 100
+    shell:
+        """
+        awk '$10>={params.hap_star_snps_num}' {input.src1_pvalue} | awk '$11>={params.hap_dsnv_num}' | awk '$12>={params.hap_len}' | awk '$13>={params.hap_mapped_len}' | awk '$15>={params.hap_site}' | awk '$18>={params.hap_num_match_ref}' > {output[0]}
+        awk '$10>={params.hap_star_snps_num}' {input.src2_pvalue} | awk '$11>={params.hap_dsnv_num}' | awk '$12>={params.hap_len}' | awk '$13>={params.hap_mapped_len}' | awk '$15>={params.hap_site}' | awk '$18>={params.hap_num_match_ref}' > {output[1]}
+        """
+
+rule threshold:
+    input:
+        score_file = rules.score.output,
+        sim_data = "../data/simulated_data/gravel_asn_scale_60k.simulated.data",
+        recomb_map = "../data/real_data/hum.windows.50k.10k.recomb.map"
+    output:
+        "results/sstar.example.threshold.txt"
+    resources: time_min=60, mem_mb=5000, cpus=1
+    params:
+        LD_LIBRARY_PATH = config["LD_LIBRARY_PATH"],
+        quantile = 0.99
+    shell:
+        """
+        export LD_LIBRARY_PATH={params.LD_LIBRARY_PATH}
+        sstar threshold --score {input.score_file} --sim-data {input.sim_data} --recomb-map {input.recomb_map} --quantile {params.quantile} --output {output[0]}
+        """
+
+rule prob:
+    input:
+        sim_null_src1 = "../data/simulated_data/sstar.example.simulated.null.src1.pval.txt",
+        sim_null_src2 = "../data/simulated_data/sstar.example.simulated.null.src2.pval.txt",
+        sim_alt1_src1 = "../data/simulated_data/sstar.example.simulated.alt1.src1.pval.txt",
+        sim_alt1_src2 = "../data/simulated_data/sstar.example.simulated.alt1.src2.pval.txt",
+        sim_alt2_src1 = "../data/simulated_data/sstar.example.simulated.alt2.src1.pval.txt",
+        sim_alt2_src2 = "../data/simulated_data/sstar.example.simulated.alt2.src2.pval.txt",
+        real_data_src1 = rules.filter.output[0],
+        real_data_src2 = rules.filter.output[1],
+        threshold_file = rules.threshold.output
+    output:
+        "results/sstar.example.posterior.prob.txt"
+    resources: time_min=60, mem_mb=5000, cpus=1
+    params:
+        LD_LIBRARY_PATH = config["LD_LIBRARY_PATH"],
+        grid_size = 200
+    shell:
+        """
+        export LD_LIBRARY_PATH={params.LD_LIBRARY_PATH}
+        sstar prob --sim-null {input.sim_null_src1} {input.sim_null_src2} --sim-alt1 {input.sim_alt1_src1} {input.sim_alt1_src2} --sim-alt2 {input.sim_alt2_src1} {input.sim_alt2_src2} --real-data {input.real_data_src1} {input.real_data_src2} --threshold {input.threshold_file} --grid-size {params.grid_size} --output {output[0]}
+        """
+
+rule clean:
+    shell:
+        """
+        rm -r results
+        rm -r .snakemake
+        """
