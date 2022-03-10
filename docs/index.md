@@ -6,7 +6,7 @@
 
 ### Requirements
 
-`sstar` was implemented and tested on UNIX/LINUX operating systems with the following:
+`sstar` works on UNIX/LINUX operating systems and tested with the following:
 
 - Python 3.8/3.9
 - R 4.0.0/4.1.1
@@ -24,7 +24,7 @@
 
 Users should first install [R](https://cran.r-project.org/) and all the R dependencies listed above. Please ensure the path for the dynamic libraries in R is in the environment variable `$LD_LIBRARY_PATH`. For example, if the dynamic libraries in R are in the path `/usr/local/lib/R/lib/`, users can add this path with the following command:
 
-	export LD_LIBRARY_PATH=/usr/local/lib/R/lib/:$LD_LIBRARY_PATH
+	export LD_LIBRARY_PATH=/usr/local/lib/R/lib:$LD_LIBRARY_PATH
 
 Then users can install `sstar` with `pip`.
 
@@ -35,3 +35,13 @@ Users can also use `conda` to create a virtual environment and install `sstar` w
 	conda env create -f conda-env.yaml
 	conda activate sstar
 	export R_LIBS=$CONDA_PREFIX/lib/R/library
+
+Users may verify whether using the correct versions of Python and R under the virtual environment sstar or not with the following commands:
+
+	which python
+	which R
+
+And it should return some paths similar to
+
+	/path/to/conda/envs/sstar/bin/python
+	/path/to/conda/envs/sstar/bin/R
