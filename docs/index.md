@@ -12,8 +12,8 @@
 - R 4.0.0/4.1.1
 - Python packages:
 	- pandas
-	- scikit-allel
 	- rpy2
+	- scikit-allel
 - R packages:
 	- MASS
 	- mgcv
@@ -30,7 +30,7 @@ Then users can install `sstar` with `pip`.
 
 	pip install sstar
 
-Users can also use `conda` to create a virtual environment and install `sstar` with this [conda-env.yaml](https://github.com/xin-huang/sstar/blob/main/examples/snakepipe/conda-env.yaml). To install `conda`, please follow the [instruction](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). Then users can use the following commands:
+Users can also use `conda` to create a virtual environment and install `sstar` with this [conda-env.yaml](https://github.com/xin-huang/sstar/blob/main/examples/snakepipe/conda-env.yaml). This may take a long time. To install `conda`, please follow the [instruction](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). Then users can use the following commands:
 
 	conda env create -f conda-env.yaml
 	conda activate sstar
