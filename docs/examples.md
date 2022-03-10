@@ -19,4 +19,4 @@ Users can dry-run the whole pipeline as follows:
 	export R_LIBS=$CONDA_PREFIX/lib/R/library
 	snakemake -n -p
 
-Users can use `snakemake -c 1` for running the whole pipeline locally or submit jobs to `SLURM` with `mkdir logs_slurm && snakemake --profile . -j 1`.
+Users can use `snakemake -c 1` for running the whole pipeline locally or submit jobs to `SLURM` with `mkdir logs_slurm && snakemake --profile . -j 1`. Users can modify [config.yaml](https://github.com/xin-huang/sstar/blob/main/examples/snakepipe/config.yaml) for submitting jobs to other scheduling system, such as `SGE`. If memory usage is too high when calculating p-values, then users can add the `--low-memory` argument into the `pvalue` subcommand. This may slow down `sstar`.
