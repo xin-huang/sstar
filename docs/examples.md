@@ -16,6 +16,7 @@ Users can dry-run the whole pipeline as follows:
 	cd ./sstar/examples/snakepipe
 	conda env create -f conda-env.yaml
 	conda activate sstar
+	export R_LIBS=$CONDA_PREFIX/lib/R/library
 	snakemake -n -p
 
 Users can use `snakemake -c 1` for running the whole pipeline locally or submit jobs to `SLURM` with `mkdir logs_slurm && snakemake --profile . -j 1`.
