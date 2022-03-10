@@ -2,7 +2,9 @@
 Snakefile for running sstar pipeline.
 """
 
-configfile: "sstar-config.yaml"
+import os
+
+libr_dir = os.environ["CONDA_PREFIX"] + "/lib/R/library"
 
 rule all:
     input:
@@ -86,11 +88,11 @@ rule threshold:
         "results/sstar.example.threshold.txt"
     resources: time_min=60, mem_mb=5000, cpus=1
     params:
-        LD_LIBRARY_PATH = config["LD_LIBRARY_PATH"],
+        R_LIBS = libr_dir,
         quantile = 0.99
     shell:
         """
-        export LD_LIBRARY_PATH={params.LD_LIBRARY_PATH}
+        export R_LIBS={params.R_LIBS}
         sstar threshold --score {input.score_file} --sim-data {input.sim_data} --recomb-map {input.recomb_map} --quantile {params.quantile} --output {output[0]}
         """
 
@@ -109,11 +111,11 @@ rule prob:
         "results/sstar.example.posterior.prob.txt"
     resources: time_min=60, mem_mb=5000, cpus=1
     params:
-        LD_LIBRARY_PATH = config["LD_LIBRARY_PATH"],
+        R_LIBS = libr_dir,
         grid_size = 200
     shell:
         """
-        export LD_LIBRARY_PATH={params.LD_LIBRARY_PATH}
+        export R_LIBS={params.R_LIBS}
         sstar prob --sim-null {input.sim_null_src1} {input.sim_null_src2} --sim-alt1 {input.sim_alt1_src1} {input.sim_alt1_src2} --sim-alt2 {input.sim_alt2_src1} {input.sim_alt2_src2} --real-data {input.real_data_src1} {input.real_data_src2} --threshold {input.threshold_file} --grid-size {params.grid_size} --output {output[0]}
         """
 

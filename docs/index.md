@@ -29,3 +29,9 @@ Users should first install [R](https://cran.r-project.org/) and all the R depend
 Then users can install `sstar` with `pip`.
 
 	pip install sstar
+
+Users can also `conda` to create an virtual environment and install `sstar` with this [conda-env.yaml](https://github.com/xin-huang/sstar/blob/main/examples/snakepipe/conda-env.yaml). To install `conda`, please follow the [instruction](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). Then users can use the following commands:
+
+	conda env create -f conda-env.yaml
+	conda activate sstar
+	export R_LIBS=$CONDA_PREFIX/lib/R/library
