@@ -17,7 +17,7 @@ rule score:
         tgt_ind = "../data/ind_list/tgt.ind.list"
     output: 
         "results/sstar.example.score.txt"
-    resources: time_min=60, mem_mb=5000, cpus=1
+    resources: nodes=1, ntasks=1, time_min=60, mem_mb=5000, cpus=1
     threads: 1
     shell:
         """
@@ -34,7 +34,7 @@ rule nean_pvalue:
         ref_match_pct_file = "../../../sstar_supplementary_data/ref_match_pct.nean.gz"
     output:
         "results/sstar.example.match.nean.pval.txt"
-    resources: time_min=3000, mem_mb=30000, cpus=1
+    resources: nodes=1, ntasks=2, time_min=3000, mem_mb=30000, cpus=1
     threads: 1
     shell:
         """
@@ -51,7 +51,7 @@ rule den_pvalue:
         ref_match_pct_file = "../../../sstar_supplementary_data/ref_match_pct.den.gz"
     output:
         "results/sstar.example.match.den.pval.txt"
-    resources: time_min=3000, mem_mb=30000, cpus=1
+    resources: nodes=1, ntasks=2, time_min=3000, mem_mb=30000, cpus=1
     threads: 1
     shell:
         """
@@ -65,7 +65,7 @@ rule filter:
     output:
         "results/sstar.example.match.nean.filtered.pval.txt",
         "results/sstar.example.match.den.filtered.pval.txt"
-    resources: time_min=60, mem_mb=5000, cpus=1
+    resources: nodes=1, ntasks=1, time_min=60, mem_mb=5000, cpus=1
     params:
         hap_len = 10000,
         hap_mapped_len = 5000,
@@ -86,7 +86,7 @@ rule threshold:
         recomb_map = "../data/real_data/hum.windows.50k.10k.recomb.map"
     output:
         "results/sstar.example.threshold.txt"
-    resources: time_min=60, mem_mb=5000, cpus=1
+    resources: nodes=1, ntasks=1, time_min=60, mem_mb=5000, cpus=1
     params:
         R_LIBS = libr_dir,
         quantile = 0.99
@@ -109,7 +109,7 @@ rule prob:
         threshold_file = rules.threshold.output
     output:
         "results/sstar.example.posterior.prob.txt"
-    resources: time_min=60, mem_mb=5000, cpus=1
+    resources: nodes=1, ntasks=1, time_min=60, mem_mb=5000, cpus=1
     params:
         R_LIBS = libr_dir,
         grid_size = 200
