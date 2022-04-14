@@ -1,0 +1,36 @@
+time_units: generations
+generation_time: 1
+demes:
+- name: Ghost
+  epochs:
+  - {end_time: 0, start_size: 10000.0}
+- name: Bonobo
+  start_time: 140000.0
+  ancestors: [Ghost]
+  epochs:
+  - {end_time: 79600.0, start_size: 11600.0}
+  - {end_time: 79500.0, start_size: 10200.0}
+  - {end_time: 12320.0, start_size: 3700.0}
+  - {end_time: 0, start_size: 29100.0}
+- name: Central
+  start_time: 79600.0
+  ancestors: [Bonobo]
+  epochs:
+  - {end_time: 28000.0, start_size: 10100.0}
+  - {end_time: 15120.0, start_size: 24900.0}
+  - {end_time: 0, start_size: 65900.0}
+- name: Western
+  start_time: 28000.0
+  ancestors: [Central]
+  epochs:
+  - {end_time: 10440.0, start_size: 8000.0}
+  - {end_time: 0, start_size: 9200.0}
+migrations:
+- demes: [Bonobo, Central]
+  rate: 1.0000000000000001e-07
+  start_time: 60000.0
+  end_time: 48000.0
+- {source: Bonobo, dest: Central, start_time: 6203.0, end_time: 6202.0, rate: 0.00125}
+- {source: Central, dest: Bonobo, start_time: 6203.0, end_time: 6202.0, rate: 0.001}
+- {source: Central, dest: Western, start_time: 4003.9999999999995, end_time: 4003.0, rate: 0.015}
+- {source: Western, dest: Central, start_time: 4003.9999999999995, end_time: 4003.0, rate: 0.005}

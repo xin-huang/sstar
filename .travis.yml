@@ -19,22 +19,14 @@ before_install:
     - sudo make
     - sudo make install
     - cd ..
-    - wget https://cran.r-project.org/src/contrib/Archive/spatstat.geom/spatstat.geom_2.3-1.tar.gz
-    - wget https://cran.r-project.org/src/contrib/spatstat.data_2.1-2.tar.gz
-    - wget https://cran.r-project.org/src/contrib/spatstat.utils_2.3-0.tar.gz
-    - wget https://cran.r-project.org/src/contrib/deldir_1.0-6.tar.gz
-    - wget https://cran.r-project.org/src/contrib/polyclip_1.10-0.tar.gz
-    - sudo R CMD INSTALL polyclip_1.10-0.tar.gz
-    - sudo R CMD INSTALL deldir_1.0-6.tar.gz
-    - sudo R CMD INSTALL spatstat.utils_2.3-0.tar.gz
-    - sudo R CMD INSTALL spatstat.data_2.1-2.tar.gz
-    - sudo R CMD INSTALL spatstat.geom_2.3-1.tar.gz
     - export LD_LIBRARY_PATH=/usr/local/lib/R/lib/:$LD_LIBRARY_PATH
 install:
     - pip install numpy
     - pip install -U numpy
-    - pip install scikit-allel
     - pip install pandas
+    - pip install pybedtools
+    - pip install demes
+    - pip install scipy
     - python setup.py install
 script: pytest --cov=. --cov-report term-missing
 after_success:

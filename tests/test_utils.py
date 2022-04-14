@@ -16,13 +16,13 @@
 import allel
 import pytest
 import numpy as np
-from sstar.utils import parse_ind_file, read_geno_data, filter_data, read_data, get_ref_alt_allele, read_anc_allele, check_anc_allele, read_mapped_region_file, _cal_mapped_len, cal_match_pct
+from sstar.utils import parse_ind_file, read_geno_data, filter_data, read_data, get_ref_alt_allele, read_anc_allele, check_anc_allele, read_mapped_region_file, _cal_mapped_len, cal_matchpct
 
 @pytest.fixture
 def data():
     pytest.ref_ind_list = "./tests/data/test.ref.ind.list"
     pytest.tgt_ind_list = "./tests/data/test.tgt.ind.list"
-    pytest.vcf = "./tests/data/test.data.vcf"
+    pytest.vcf = "./tests/data/test.score.data.vcf"
     pytest.anc_allele = "./tests/data/test.anc.allele.bed"
     pytest.emp_ind_list = "./tests/data/test.empty.ind.list"
     pytest.emp_anc_allele = "./tests/data/test.empty.anc.allele.bed"
@@ -146,11 +146,11 @@ def test_cal_mapped_len(data):
     assert len5 == 18000
     assert len6 == 2000
 
-def test_cal_match_pct(data):
-    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data("./tests/data/test.pvalue.data.vcf", "./examples/data/ind_list/ref.ind.list", "./examples/data/ind_list/tgt.ind.list", "./examples/data/ind_list/nean.ind.list", None)
+def test_cal_matchpct(data):
+    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data("./tests/data/test.match.pct.data.vcf", "./examples/data/ind_list/ref.ind.list", "./examples/data/ind_list/tgt.ind.list", "./examples/data/ind_list/nean.ind.list", None)
 
-    hap1_match_pct = cal_match_pct('21', None, tgt_data, src_data, 0, 0, 0, 9400000, 9450000, len(tgt_data))[-1]
-    hap2_match_pct = cal_match_pct('21', None, tgt_data, src_data, 0, 0, 1, 9400000, 9450000, len(tgt_data))[-1]
+    hap1_match_pct = cal_matchpct('21', None, tgt_data, src_data, 0, 0, 0, 9400000, 9450000, len(tgt_data))[-1]
+    hap2_match_pct = cal_matchpct('21', None, tgt_data, src_data, 0, 0, 1, 9400000, 9450000, len(tgt_data))[-1]
 
     assert hap1_match_pct == 0.083333
     assert hap2_match_pct == 0.068966

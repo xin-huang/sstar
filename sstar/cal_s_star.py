@@ -20,7 +20,7 @@ from multiprocessing import Process, Queue
 from sstar.utils import read_data, filter_data
 
 #@profile
-def cal_s_star(vcf, ref_ind_file, tgt_ind_file, anc_allele_file, output, win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty):
+def cal_s_star(vcf, ref_ind_file, tgt_ind_file, anc_allele_file, output, win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, all_ind_geno_dist):
     """
     Description:
         Calculate S* scores.
@@ -68,11 +68,11 @@ def cal_s_star(vcf, ref_ind_file, tgt_ind_file, anc_allele_file, output, win_len
     #        o.write('\n'.join(res))
     #o.close()
 
-    if thread is None: thread = min(os.cpu_count()-1, len(tgt_samples))
+    if thread > 1: thread = min(os.cpu_count()-1, len(tgt_samples), thread)
 
-    _cal_score(ref_data, tgt_data, tgt_samples, win_len, win_step, output, thread, match_bonus, max_mismatch, mismatch_penalty)
+    _cal_score(ref_data, tgt_data, tgt_samples, win_len, win_step, output, thread, match_bonus, max_mismatch, mismatch_penalty, all_ind_geno_dist)
 
-def _cal_score(ref_data, tgt_data, samples, win_len, win_step, output, thread, match_bonus, max_mismatch, mismatch_penalty):
+def _cal_score(ref_data, tgt_data, samples, win_len, win_step, output, thread, match_bonus, max_mismatch, mismatch_penalty, all_ind_geno_dist):
     """
     Description:
         Helper function to manage worker functions to calculate S* scores with multiprocessing.
@@ -100,7 +100,8 @@ def _cal_score(ref_data, tgt_data, samples, win_len, win_step, output, thread, m
     res = []
     # Use multiprocessing to calculate S* scores in different samples
     in_queue, out_queue = Queue(), Queue()
-    workers = [Process(target=_cal_score_worker, args=(in_queue, out_queue, ref_data, tgt_data, win_len, win_step, match_bonus, max_mismatch, mismatch_penalty)) for ii in range(thread)]
+    workers = [Process(target=_cal_score_worker, args=(in_queue, out_queue, ref_data, tgt_data, 
+               win_len, win_step, match_bonus, max_mismatch, mismatch_penalty, all_ind_geno_dist)) for ii in range(thread)]
     for s in range(len(samples)):
         in_queue.put((s,samples[s]))
 
@@ -124,7 +125,7 @@ def _cal_score(ref_data, tgt_data, samples, win_len, win_step, output, thread, m
         o.write('\n'.join(res))
         o.write('\n')
 
-def _cal_score_worker(in_queue, out_queue, ref_data, tgt_data, win_len, win_step, match_bonus, max_mismatch, mismatch_penalty):
+def _cal_score_worker(in_queue, out_queue, ref_data, tgt_data, win_len, win_step, match_bonus, max_mismatch, mismatch_penalty, all_ind_geno_dist):
     """
     Description:
         Worker function to calculate S* scores with multiprocessing.
@@ -153,7 +154,8 @@ def _cal_score_worker(in_queue, out_queue, ref_data, tgt_data, win_len, win_step
             ref_pos = ref_data[c]['POS']
             ref_sub_pos = ref_pos[~np.all(ref_gt.is_hom_ref(), axis=1)]
             # Assume the ref allele is 0 and the alt allele is 1
-            tgt_sub_gt = tgt_gt[~ind.is_hom_ref()][:,s]
+            if all_ind_geno_dist is True: tgt_sub_gt = tgt_gt[~ind.is_hom_ref()]
+            else: tgt_sub_gt = tgt_gt[~ind.is_hom_ref()][:,s]
             tgt_sub_pos = tgt_pos[~ind.is_hom_ref()]
             res = _cal_score_ind(c, sample_name, ref_sub_pos, tgt_sub_pos, tgt_sub_gt, win_step, win_len, match_bonus, max_mismatch, mismatch_penalty)
             out_queue.put('\n'.join(res))
@@ -206,7 +208,8 @@ def _cal_score_ind(chr_name, sample_name, ref_pos, tgt_pos, tgt_gt, win_step, wi
                 max_score = -np.inf
                 snps = []
                 for i in range(j):
-                    geno_dist = abs(tgt_snps_gt[j][0] - tgt_snps_gt[i][0] + tgt_snps_gt[j][1] - tgt_snps_gt[i][1])
+                    geno_dist = abs(tgt_snps_gt[j].sum() - tgt_snps_gt[i].sum())
+                    #geno_dist = abs(tgt_snps_gt[j][0] - tgt_snps_gt[i][0] + tgt_snps_gt[j][1] - tgt_snps_gt[i][1])
                     phy_dist = abs(tgt_snps_pos[j] - tgt_snps_pos[i])
                     if phy_dist < 10: score_ij = -np.inf
                     elif geno_dist == 0: score_ij = match_bonus + phy_dist

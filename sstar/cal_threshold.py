@@ -35,15 +35,18 @@ def cal_threshold(simulated_data, score_file, recomb_rate, recomb_map, quantile,
         output str: Name of the output file.
         k int: Dimension(s) of the bases used to represent the smooth term.
     """
-    gam = _build_gam_model(simulated_data, k)
-    res = _predict_res(gam, score_file, recomb_rate, recomb_map, quantile)
+    if (recomb_rate != None) and (recomb_map != None): fit_lr = True
+    else: fit_lr = False
+
+    gam = _build_gam_model(simulated_data, k, fit_lr)
+    res = _predict_res(gam, score_file, recomb_rate, recomb_map, quantile, fit_lr)
     header = 'chrom\tstart\tend\tsample\tS*_score\texpected_S*_score\tlocal_recomb_rate\tquantile\tsignificant'
     with open(output, 'w') as o:
         o.write(header+"\n")
         o.write("\n".join(res)+"\n")
 
 #@profile
-def _build_gam_model(simulated_data, k):
+def _build_gam_model(simulated_data, k, fit_lr):
     """
     Description:
         Helper function for building a generalized additive model with R package MGCV.
@@ -51,6 +54,7 @@ def _build_gam_model(simulated_data, k):
     Arguments:
         simulated_data str: Name of the file containing simulated data.
         k int: Dimension(s) of the bases used to represent the smooth term.
+        fit_lr bool: If True, building a gam with local recombination rate.
 
     Returns:
         gam rpy2.robjects: Generalized additive model for prediction.
@@ -61,23 +65,26 @@ def _build_gam_model(simulated_data, k):
 
     s_star = FloatVector(data.iloc[:,0].values)
     snps = FloatVector(data.iloc[:,1].values)
-    lr = FloatVector(data.iloc[:,2].values)
-    q = FloatVector(data.iloc[:,3].values)
-
-    fmla = f's_star ~ te(snps, lr, q, k={k})'
-    fmla = Formula(fmla)
+    q = FloatVector(data.iloc[:,2].values)
 
     ro.globalenv['s_star'] = s_star
     ro.globalenv['snps'] = snps
-    ro.globalenv['lr'] = lr
     ro.globalenv['q'] = q
+
+    if fit_lr: 
+        lr = FloatVector(data.iloc[:,3].values)
+        ro.globalenv['lr'] = lr
+        fmla = f's_star ~ te(snps, lr, q, k={k})'
+    else: fmla = f's_star ~ te(snps, q, k={k})'
+
+    fmla = Formula(fmla)
 
     gam = mgcv.gam(fmla)
 
     return gam
 
 #@profile
-def _predict_res(gam, score_file, recomb_rate, recomb_map, quantile):
+def _predict_res(gam, score_file, recomb_rate, recomb_map, quantile, fit_lr):
     """
     Description:
         Helper function to predict significant S* scores.
@@ -88,6 +95,7 @@ def _predict_res(gam, score_file, recomb_rate, recomb_map, quantile):
         recomb_rate float: Uniform recombination rate assumed across the genome.
         recomb_map str: Name of the file containing recombination maps.
         quantile float: Quantile for estimating significant S* scores.
+        fit_lr bool: If True, building a gam with local recombination rate.
 
     Returns:
         res list: List containing results for output.
@@ -95,13 +103,12 @@ def _predict_res(gam, score_file, recomb_rate, recomb_map, quantile):
     stats = importr('stats')
 
     if recomb_map != None: recomb_map = _read_recomb_map(recomb_map)
-    data, meta_data = _read_score_file(score_file, recomb_rate, recomb_map, quantile)
+    data, meta_data = _read_score_file(score_file, recomb_rate, recomb_map, quantile, fit_lr)
 
     thresholds = dict()
     for s in data.keys():
-        pd_df = pd.DataFrame({'snps': data[s]['snps'],
-                              'lr': data[s]['lr'],
-                              'q': data[s]['q']})
+        if fit_lr: pd_df = pd.DataFrame({'snps': data[s]['snps'], 'lr': data[s]['lr'], 'q': data[s]['q']})
+        else: pd_df = pd.DataFrame({'snps': data[s]['snps'], 'q': data[s]['q']})
 
         with localconverter(ro.default_converter + pandas2ri.converter):
             r_from_pd_df = ro.conversion.py2rpy(pd_df)
@@ -127,7 +134,7 @@ def _predict_res(gam, score_file, recomb_rate, recomb_map, quantile):
     return res
 
 #@profile
-def _read_score_file(score_file, recomb_rate, recomb_map, quantile):
+def _read_score_file(score_file, recomb_rate, recomb_map, quantile, fit_lr):
     """
     Description:
         Helper function for reading files from `sstar score`.
@@ -137,6 +144,7 @@ def _read_score_file(score_file, recomb_rate, recomb_map, quantile):
         recomb_rate float: Uniform recombination rate assumed across the genome. 
         recomb_map str: Name of the file containing recombination maps.
         quantile float: Quantile for estimating significant S* scores.
+        fit_lr bool: If True, building a gam with local recombination rate.
 
     Returns:
         data dict: Dictionary containing data for predicting significat S* scores.
@@ -157,12 +165,14 @@ def _read_score_file(score_file, recomb_rate, recomb_map, quantile):
                 sample = element[3]
                 score = element[4]
                 total_snp_num = element[5]
-                if recomb_map != None: 
-                    key = chr_name+":"+win_start+"-"+win_end
-                    if key in recomb_map.keys(): local_recomb_rate = np.log10(recomb_map[key])
-                    else: continue
-                else:
-                    local_recomb_rate = np.log10(recomb_rate)
+                if fit_lr:
+                    if recomb_map != None: 
+                        key = chr_name+":"+win_start+"-"+win_end
+                        if key in recomb_map.keys(): local_recomb_rate = np.log10(recomb_map[key])
+                        else: continue
+                    else:
+                        local_recomb_rate = np.log10(recomb_rate)
+                else: local_recomb_rate = np.nan
 
                 if sample not in data.keys(): 
                     data[sample] = dict()

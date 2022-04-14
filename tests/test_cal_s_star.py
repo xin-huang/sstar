@@ -22,17 +22,29 @@ from sstar.cal_s_star import cal_s_star
 def data():
     pytest.ref_ind_list = "./tests/data/test.ref.ind.list"
     pytest.tgt_ind_list = "./tests/data/test.tgt.ind.list"
-    pytest.vcf = "./tests/data/test.data.vcf"
+    pytest.vcf = "./tests/data/test.score.data.vcf"
     pytest.anc_allele = "./tests/data/test.anc.allele"
-    pytest.output = "./tests/results/test.score.results"
-    pytest.exp_output = "./tests/results/test.score.exp.results"
+    pytest.output1 = "./tests/results/test1.score.results"
+    pytest.exp_output1 = "./tests/results/test1.score.exp.results"
+    pytest.output2 = "./tests/results/test2.score.results"
+    pytest.exp_output2 = "./tests/results/test2.score.exp.results"
 
 def test_cal_s_star(data):
-    cal_s_star(vcf=pytest.vcf, ref_ind_file=pytest.ref_ind_list, tgt_ind_file=pytest.tgt_ind_list, anc_allele_file=None, output=pytest.output, win_len=50000, win_step=10000, thread=1, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000)
-    f1 = open(pytest.output, 'r')
+    cal_s_star(vcf=pytest.vcf, ref_ind_file=pytest.ref_ind_list, tgt_ind_file=pytest.tgt_ind_list, anc_allele_file=None, output=pytest.output1, win_len=50000, win_step=10000, thread=1, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000, all_ind_geno_dist=False)
+    f1 = open(pytest.output1, 'r')
     res = f1.read()
     f1.close()
-    f2 = open(pytest.exp_output, 'r')
+    f2 = open(pytest.exp_output1, 'r')
+    exp_res = f2.read()
+    f2.close()
+
+    assert res == exp_res
+
+    cal_s_star(vcf=pytest.vcf, ref_ind_file=pytest.ref_ind_list, tgt_ind_file=pytest.tgt_ind_list, anc_allele_file=None, output=pytest.output2, win_len=50000, win_step=10000, thread=1, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000, all_ind_geno_dist=True)
+    f1 = open(pytest.output2, 'r')
+    res = f1.read()
+    f1.close()
+    f2 = open(pytest.exp_output2, 'r')
     exp_res = f2.read()
     f2.close()
 
