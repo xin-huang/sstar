@@ -278,7 +278,7 @@ def read_mapped_region_file(mapped_region):
     return mapped_intervals
 
 #@profile
-def cal_match_pct(chr_name, mapped_intervals, data, src_data, tgt_ind_index, src_ind_index, hap_index, win_start, win_end, sample_size):
+def cal_matchpct(chr_name, mapped_intervals, data, src_data, tgt_ind_index, src_ind_index, hap_index, win_start, win_end, sample_size):
     """
     Description:
         Helper function to calculate match percents in a given individual.

@@ -1,0 +1,36 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All filters passed">
+##contig=<ID=21,assembly=b37,length=48129895>
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##INFO=<ID=AC,Number=A,Type=Integer,Description="Total number of alternate alleles in called genotypes">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Estimated allele frequency in the range (0,1)">
+##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of samples with data">
+##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
+##INFO=<ID=EAS_AF,Number=A,Type=Float,Description="Allele frequency in the EAS populations calculated from AC and AN, in the range (0,1)">
+##INFO=<ID=EUR_AF,Number=A,Type=Float,Description="Allele frequency in the EUR populations calculated from AC and AN, in the range (0,1)">
+##INFO=<ID=AFR_AF,Number=A,Type=Float,Description="Allele frequency in the AFR populations calculated from AC and AN, in the range (0,1)">
+##INFO=<ID=AMR_AF,Number=A,Type=Float,Description="Allele frequency in the AMR populations calculated from AC and AN, in the range (0,1)">
+##INFO=<ID=SAS_AF,Number=A,Type=Float,Description="Allele frequency in the SAS populations calculated from AC and AN, in the range (0,1)">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total read depth; only low coverage data were counted towards the DP, exome data were not used">
+##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele. Format: AA|REF|ALT|IndelType. AA: Ancestral allele, REF:Reference Allele, ALT:Alternate Allele, IndelType:Type of Indel (REF, ALT and IndelType are only defined for indels)">
+##INFO=<ID=VT,Number=.,Type=String,Description="indicates what type of variant the line represents">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	ind1	ind2	ind3	ind4	ind5	ind6
+21	2309	rs559462325	G	A	100	PASS	AC=0;AF=0.000199681;AN=4;NS=2504;DP=20675;EAS_AF=0.001;AMR_AF=0;AFR_AF=0;EUR_AF=0;SAS_AF=0;AA=.|||;VT=SNP	GT	1|0	0|0	0|0	0|0	0|0	0|0
+21	7879	rs181691356	C	A	100	PASS	AC=0;AF=0.000798722;AN=4;NS=2504;DP=22649;EAS_AF=0;AMR_AF=0.0014;AFR_AF=0.0008;EUR_AF=0.002;SAS_AF=0;AA=.|||;VT=SNP	GT	0|0	0|1	0|0	0|0	0|0	0|0
+21	11484	rs548263598	A	C	100	PASS	AC=0;AF=0.000199681;AN=4;NS=2504;DP=28638;EAS_AF=0;AMR_AF=0;AFR_AF=0.0008;EUR_AF=0;SAS_AF=0;AA=.|||;VT=SNP	GT	0|0	0|0	1|0	0|0	0|0	0|0
+21	16249	rs548263598	A	C	100	PASS	AC=0;AF=0.000199681;AN=4;NS=2504;DP=28638;EAS_AF=0;AMR_AF=0;AFR_AF=0.0008;EUR_AF=0;SAS_AF=0;AA=.|||;VT=SNP	GT	1|1	1|0	1|1	1|1	1|1	1|1
+21	17324	rs561987868	G	T	100	PASS	AC=0;AF=0.000199681;AN=4;NS=2504;DP=29348;EAS_AF=0;AMR_AF=0.0014;AFR_AF=0;EUR_AF=0;SAS_AF=0;AA=.|||;VT=SNP	GT	0|0	1|0	0|0	0|0	0|0	0|0
+21	19064	rs531010746	G	T	100	PASS	AC=0;AF=0.00259585;AN=4;NS=2504;DP=30980;EAS_AF=0;AMR_AF=0;AFR_AF=0.0098;EUR_AF=0;SAS_AF=0;AA=.|||;VT=SNP	GT	0|0	0|0	0|1	0|0	0|0	0|0
+21	19124	rs550852792	G	A	100	PASS	AC=0;AF=0.00299521;AN=4;NS=2504;DP=30734;EAS_AF=0;AMR_AF=0;AFR_AF=0.0113;EUR_AF=0;SAS_AF=0;AA=.|||;VT=SNP	GT	0|0	1|0	0|0	0|0	0|0	0|0
+21	23559	rs550852792	G	A	100	PASS	AC=0;AF=0.00299521;AN=4;NS=2504;DP=30734;EAS_AF=0;AMR_AF=0;AFR_AF=0.0113;EUR_AF=0;SAS_AF=0;AA=.|||;VT=SNP	GT	1|1	0|1	1|1	1|1	1|1	1|1
+21	25354	rs571137411	G	T	100	PASS	AC=0;AF=0.000399361;AN=4;NS=2504;DP=31929;EAS_AF=0;AMR_AF=0;AFR_AF=0;EUR_AF=0;SAS_AF=0.002;AA=.|||;VT=SNP	GT	1|0	0|0	0|0	0|0	0|0	0|0
+21	26654	rs539713234	G	C	100	PASS	AC=0;AF=0.00459265;AN=4;NS=2504;DP=33378;EAS_AF=0;AMR_AF=0.0331;AFR_AF=0;EUR_AF=0;SAS_AF=0;AA=.|||;VT=SNP	GT	1|1	1|0	1|1	1|1	0|0	0|0
+21	29724	rs552178335	G	A	100	PASS	AC=0;AF=0.000199681;AN=4;NS=2504;DP=34296;EAS_AF=0;AMR_AF=0;AFR_AF=0.0008;EUR_AF=0;SAS_AF=0;AA=.|||;VT=SNP	GT	1|1	0|1	1|1	1|1	0|0	0|0
+21	30769	rs565663130	C	T	100	PASS	AC=0;AF=0.00219649;AN=4;NS=2504;DP=34637;EAS_AF=0;AMR_AF=0;AFR_AF=0;EUR_AF=0;SAS_AF=0.0112;AA=.|||;VT=SNP	GT	0|0	0|1	0|0	0|0	0|0	0|0
+21	31319	rs565663130	C	T	100	PASS	AC=0;AF=0.00219649;AN=4;NS=2504;DP=34637;EAS_AF=0;AMR_AF=0;AFR_AF=0;EUR_AF=0;SAS_AF=0.0112;AA=.|||;VT=SNP	GT	0|0	0|0	0|0	0|0	1|1	1|1
+21	37199	rs565663130	C	T	100	PASS	AC=0;AF=0.00219649;AN=4;NS=2504;DP=34637;EAS_AF=0;AMR_AF=0;AFR_AF=0;EUR_AF=0;SAS_AF=0.0112;AA=.|||;VT=SNP	GT	0|1	0|0	0|0	0|0	0|0	0|0
+21	38009	rs565663130	C	T	100	PASS	AC=0;AF=0.00219649;AN=4;NS=2504;DP=34637;EAS_AF=0;AMR_AF=0;AFR_AF=0;EUR_AF=0;SAS_AF=0.0112;AA=.|||;VT=SNP	GT	0|0	0|1	0|0	0|0	0|0	0|0
+21	39444	rs565663130	C	T	100	PASS	AC=0;AF=0.00219649;AN=4;NS=2504;DP=34637;EAS_AF=0;AMR_AF=0;AFR_AF=0;EUR_AF=0;SAS_AF=0.0112;AA=.|||;VT=SNP	GT	0|0	0|0	0|0	0|0	1|1	1|1
+21	40809	rs565663130	C	T	100	PASS	AC=0;AF=0.00219649;AN=4;NS=2504;DP=34637;EAS_AF=0;AMR_AF=0;AFR_AF=0;EUR_AF=0;SAS_AF=0.0112;AA=.|||;VT=SNP	GT	1|1	0|1	1|1	1|1	0|0	0|0
+21	45079	rs565663130	C	T	100	PASS	AC=0;AF=0.00219649;AN=4;NS=2504;DP=34637;EAS_AF=0;AMR_AF=0;AFR_AF=0;EUR_AF=0;SAS_AF=0.0112;AA=.|||;VT=SNP	GT	1|1	0|1	1|1	1|1	0|0	0|0
+21	48989	rs565663130	C	T	100	PASS	AC=0;AF=0.00219649;AN=4;NS=2504;DP=34637;EAS_AF=0;AMR_AF=0;AFR_AF=0;EUR_AF=0;SAS_AF=0.0112;AA=.|||;VT=SNP	GT	0|0	0|1	0|0	0|0	0|0	0|0
