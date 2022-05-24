@@ -24,19 +24,49 @@ from scipy.stats import norm
 from scipy.stats import nbinom
 
 
-def get_quantile(model, ms_dir, N0, nsamp, nreps, ref_index, ref_size, tgt_index, tgt_size, mut_rate, rec_rate, seq_len, snp_num_range, output_dir, thread, all_ind_geno_dist, seeds):
+def get_quantile(model, ms_dir, N0, nsamp, nreps, ref_index, ref_size, tgt_index, tgt_size, mut_rate, rec_rate, seq_len, snp_num_range, output_dir, thread, seeds):
     """
+    Description:
+        Calculates quantiles of expected S*.
+
+    Arguments:
+        model str: Name of file containing the demographic model for simulation.
+        ms_dir str: Name of the directory containing the ms program.
+        N0 int: N0 used in ms simulation.
+        nsamp int: Sample size (haploid) used in ms simulation.
+        nreps int: Number of replicates used in ms simulation.
+        ref_index int: Index of the reference population in the demographic model (start from 1).
+        ref_size int: Sample size (haploid) of the reference population.
+        tgt_index int: Index of the target population in the demographic model (start from 1).
+        tgt_size int: Sample size (haploid) of the target population.
+        mut_rate float: Mutation rate.
+        rec_rate float: Recombination rate.
+        seq_len int: Length of simulated sequence.
+        snp_num_range list: Range of SNP numbers in ms simulation; the first parameter is the minimum SNP number, the second parameter is the maximum SNP number, the third parameter is the step size.
+        output_dir str: Number of the output directory.
+        thread int: Number of threads.
+        seeds: list: Three random seed numbers used in ms simulation.
     """
     if seeds is not None: np.random.seed(np.sum(seeds))
     output_dir = os.path.abspath(output_dir)
     if os.path.exists(output_dir) is False: subprocess.call(['mkdir', output_dir])
     _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output_dir)
-    _run_ms_simulation(model, ms_dir, N0, nsamp, nreps, ref_index, ref_size, tgt_index, tgt_size, seq_len, snp_num_range, output_dir, thread, all_ind_geno_dist, seeds)
+    _run_ms_simulation(model, ms_dir, N0, nsamp, nreps, ref_index, ref_size, tgt_index, tgt_size, seq_len, snp_num_range, output_dir, thread, seeds)
     _summary(output_dir, rec_rate)
 
 
 def _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output_dir):
     """
+    Description:
+        Helper function to create different combination of mutation rates and recombination rates.
+
+    Arguments:
+        N0 int: N0 used in ms simulation.
+        nreps int: Number of replicates used in ms simulation.
+        mut_rate float: Mutation rate.
+        rec_rate float: Recombination rate.
+        seq_len int: Length of simulated sequence.
+        output_dir str: Name of the output directory.
     """
     scaled_mut_rate = 4*N0*mut_rate*seq_len
     scaled_rec_rate = 4*N0*rec_rate*seq_len
@@ -53,8 +83,26 @@ def _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output
             o.write(f'{mut_rate}\t{rec_rate}\n')
 
 
-def _run_ms_simulation(model, ms_dir, N0, nsamp, nreps, ref_index, ref_size, tgt_index, tgt_size, seq_len, snp_num_range, output_dir, thread, all_ind_geno_dist, seeds):
+def _run_ms_simulation(model, ms_dir, N0, nsamp, nreps, ref_index, ref_size, tgt_index, tgt_size, seq_len, snp_num_range, output_dir, thread, seeds):
     """
+    Description
+        Helper function for running ms simulation.
+
+    Arguments:
+        model str: Name of file containing the demographic model for simulation.
+        ms_dir str: Name of the directory containing the ms program.
+        N0 int: N0 used in ms simulation.
+        nsamp int: Sample size (haploid) used in ms simulation.
+        nreps int: Number of replicates used in ms simulation.
+        ref_index int: Index of the reference population in the demographic model (start from 1).
+        ref_size int: Sample size (haploid) of the reference population.
+        tgt_index int: Index of the target population in the demographic model (start from 1).
+        tgt_size int: Sample size (haploid) of the target population.
+        seq_len int: Length of simulated sequence.
+        snp_num_range list: Range of SNP numbers in ms simulation; the first parameter is the minimum SNP number, the second parameter is the maximum SNP number, the third parameter is the step size.
+        output_dir str: Name of the output directory.
+        thread int: Number of threads.
+        seeds list: Three random seed numbers used in ms simulation.
     """
     graph = demes.load(model)
     samples = np.zeros(len(graph.demes))
@@ -94,7 +142,7 @@ def _run_ms_simulation(model, ms_dir, N0, nsamp, nreps, ref_index, ref_size, tgt
         cleanup_on_sigterm()
 
     in_queue, out_queue = Queue(), Queue()
-    workers = [Process(target=_run_ms_simulation_worker, args=(in_queue, out_queue, output_dir, rates, ms_exec, nsamp, nreps, seq_len, ms_params, ref_list, tgt_list, all_ind_geno_dist, seeds)) for ii in range(thread)]
+    workers = [Process(target=_run_ms_simulation_worker, args=(in_queue, out_queue, output_dir, rates, ms_exec, nsamp, nreps, seq_len, ms_params, ref_list, tgt_list, seeds)) for ii in range(thread)]
  
     for snp_num in snp_num_list:
         in_queue.put(snp_num)
@@ -111,8 +159,24 @@ def _run_ms_simulation(model, ms_dir, N0, nsamp, nreps, ref_index, ref_size, tgt
             worker.join()
 
 
-def _run_ms_simulation_worker(in_queue, out_queue, output_dir, rates, ms_exec, nsamp, nreps, seq_len, ms_params, ref_list, tgt_list, all_ind_geno_dist, seeds):
+def _run_ms_simulation_worker(in_queue, out_queue, output_dir, rates, ms_exec, nsamp, nreps, seq_len, ms_params, ref_list, tgt_list, seeds):
     """
+    Description:
+        Worker function for running ms simulation.
+
+    Arguments:
+        in_queue multiprocessing.Queue: multiprocessing.Queue instance to receive parameters from the manager.
+        out_queue multiprocessing.Queue: multiprocessing.Queue instance to send results back to the manager.
+        output_dir str: Name of the output directory.
+        rates str: Name of the file containing different combination of mutation rates and recombination rates.
+        ms_exec str: Path to the ms program.
+        nsamp int: Sample size (haploid) used in ms simulation.
+        nreps int: Number of replicates used in ms simulation.
+        seq_len int: Length of the simulated sequeuence.
+        ms_params list: List of ms parameters.
+        ref_list str: Name of the file containing individuals from the reference population.
+        tgt_list str: Name of the file containing individuals from the target population.
+        seeds list: Three random seed numbers used in ms simulation.
     """
     while True:
         snp_num = in_queue.get()
@@ -122,15 +186,18 @@ def _run_ms_simulation_worker(in_queue, out_queue, output_dir, rates, ms_exec, n
         output_score = f'{output_subdir}/sim.score'
         output_quantile = f'{output_subdir}/sim.quantile'
         ms_script = f'{output_subdir}/run_ms.sh'
-        cmd = " ".join(['cat', rates, '|', ms_exec, str(nsamp), str(nreps), '-seeds', " ".join([str(s) for s in seeds]), '-t', 'tbs', '-r', 'tbs', str(seq_len), '-s', str(snp_num), ms_params, '>', output_ms])
+
+        if seeds is not None:
+            cmd = " ".join(['cat', rates, '|', ms_exec, str(nsamp), str(nreps), '-seeds', " ".join([str(s) for s in seeds]), '-t', 'tbs', '-r', 'tbs', str(seq_len), '-s', str(snp_num), ms_params, '>', output_ms])
+        else:
+            cmd = " ".join(['cat', rates, '|', ms_exec, str(nsamp), str(nreps), '-t', 'tbs', '-r', 'tbs', str(seq_len), '-s', str(snp_num), ms_params, '>', output_ms])
         
         if os.path.exists(output_subdir) is False: subprocess.call(['mkdir', output_subdir])
         with open(ms_script, 'w') as o:
             o.write(cmd+"\n")
         subprocess.call(['bash', ms_script])
         _ms2vcf(output_ms, output_vcf, nsamp, seq_len)
-        if all_ind_geno_dist is True: subprocess.call(['sstar', 'score', '--vcf', output_vcf, '--ref', ref_list, '--tgt', tgt_list, '--output', output_score, '--win-len', str(seq_len), '--win-step', str(seq_len), '--thread', '1', '--all-ind-geno-dist'])
-        else: subprocess.call(['sstar', 'score', '--vcf', output_vcf, '--ref', ref_list, '--tgt', tgt_list, '--output', output_score, '--win-len', str(seq_len), '--win-step', str(seq_len), '--thread', '1'])
+        subprocess.call(['sstar', 'score', '--vcf', output_vcf, '--ref', ref_list, '--tgt', tgt_list, '--output', output_score, '--win-len', str(seq_len), '--win-step', str(seq_len), '--thread', '1'])
         _cal_quantile(output_score, output_quantile, snp_num)
         out_queue.put('Finished')
 
@@ -181,6 +248,13 @@ def _ms2vcf(ms_file, vcf_file, nsamp, seq_len, ploidy=2):
 
 def _cal_quantile(in_file, out_file, snp_num):
     """
+    Description:
+        Helper function for calculating quantiles of expected S* with a given SNP number.
+
+    Arguments:
+        in_file str: Name of the input file containing S* scores.
+        out_file str: Name of the output file.
+        snp_num int: Number of SNPs used in the simulation.
     """
     df = pd.read_csv(in_file, sep="\t").dropna()
     quantiles = np.arange(0.5,1,0.005)
@@ -194,6 +268,12 @@ def _cal_quantile(in_file, out_file, snp_num):
 
 def _summary(output_dir, rec_rate):
     """
+    Description:
+        Helper function for summarize quantiles of expected S* from different SNP numbers.
+
+    Arguments:
+        output_dir str: Name of the output directory.
+        rec_rate float: Recombination rate.
     """
     all_files = glob.glob(f'{output_dir}/*/*.quantile')
     li = []
@@ -202,5 +282,5 @@ def _summary(output_dir, rec_rate):
         li.append(df)
 
     df = pd.concat(li, ignore_index=True).round(3)
-    df['rec_rate'] = rec_rate
+    df['log(local_recomb_rate)'] = np.log10(rec_rate)
     df.sort_values(by=['SNP_num', 'quantile']).to_csv(f'{output_dir}/quantile.summary.txt', sep='\t', index=False)

@@ -19,8 +19,8 @@ from sstar.get_tract import get_tract
 @pytest.fixture
 def data():
     pytest.threshold = "./tests/data/test.tract.threshold"
-    pytest.src1_match_pct = "./tests/data/test.tract.src1.match.pct"
-    pytest.src2_match_pct = "./tests/data/test.tract.src2.match.pct"
+    pytest.src1_match_pct = "./tests/data/test.tract.src1.match.rate"
+    pytest.src2_match_pct = "./tests/data/test.tract.src2.match.rate"
     pytest.exp_bed = "./tests/results/test.tract.exp.bed"
     pytest.exp_src1_bed = "./tests/results/test.tract.exp.src1.bed"
     pytest.exp_src2_bed = "./tests/results/test.tract.exp.src2.bed"

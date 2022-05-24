@@ -3,10 +3,10 @@
 There are five subcommands in `sstar`:
 
 - score
-- pvalue
+- quantile
 - threshold
-- prob
-- rmatch
+- matchrate
+- tract
 
 To display help information for each subcommand, users can use
 

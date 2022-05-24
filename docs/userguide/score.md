@@ -1,4 +1,4 @@
-# Calculating S* scores
+# Calculate S* scores
 
 ### Input
 
@@ -6,7 +6,7 @@ To calculate S* scores, users should provide a VCF file containing genotypes fro
 
 Users can calculate S* scores with the following command:
 
-        sstar score --vcf test.data.vcf --ref-ind test.ref.ind.list --tgt-ind test.tgt.ind.list --output test.score.results
+        sstar score --vcf test.data.vcf --ref test.ref.ind.list --tgt test.tgt.ind.list --output test.score.results
 
 The expected result above can be found in [test.score.exp.results](https://github.com/xin-huang/sstar/blob/main/tests/results/test.score.exp.results).
 
@@ -31,4 +31,4 @@ The meaning of each column:
 
 ### Settings
 
-By default, `sstar` assumes the reference allele is the ancestral allele and the alternative allele is the dervied allele. Users can use the argument `--anc-allele` with a BED format file (e.g. [test.anc.allele.bed](https://github.com/xin-huang/sstar/blob/main/tests/data/test.anc.allele.bed)) to define the ancestral allele for each variant. If `--anc-allele` is used, then variants without ancestral allele information will be removed. Besides, `sstar` uses a window size with 50,000 bp and step size with 10,000 bp for calculating S\* scores. Users can change these settings with the arguments `--win-len` and `--win-step`. Finally, users can use `--thread` to specifiy numbers of CPUs in order to speed up the calculation. If users do not specify numbers of CPUs, `sstar` will use all CPUs for calculating S\* scores.
+By default, `sstar` assumes the reference allele is the ancestral allele and the alternative allele is the dervied allele. Users can use the argument `--anc-allele` with a BED format file (e.g. [test.anc.allele.bed](https://github.com/xin-huang/sstar/blob/main/tests/data/test.anc.allele.bed)) to define the ancestral allele for each variant. If `--anc-allele` is used, then variants without ancestral allele information will be removed. Besides, `sstar` uses a window size with 50,000 bp and step size with 10,000 bp for calculating S\* scores. Users can change these settings with the arguments `--win-len` and `--win-step`. Finally, users can use `--thread` to specifiy numbers of CPUs in order to speed up the calculation.

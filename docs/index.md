@@ -1,8 +1,6 @@
 # sstar
 
-### Introduction
-
-`sstar` is a Python package for detecting archaic admixture from population genetic data with S* scores (Plagnol and Wall 2006), which can be used for detecting introgression not only in humans, but also in other species, e.g. Kulhwilm et al. (2019). `sstar` re-implements the algorithm and pipeline in [freezing-archer](https://github.com/bvernot/freezing-archer) (Vernot and Akey 2014; Vernot et al. 2016) with [Python 3](https://www.python.org/downloads/), because `freezing-archer` was originally developed with [Python 2](https://www.python.org/doc/sunset-python-2/) that is no longer supported from 2020.
+`sstar` is a Python package for detecting archaic admixture from population genetic data with S* scores (Plagnol and Wall 2006), which can be used for detecting introgression not only in humans, but also in other species, e.g. Kulhwilm et al. (2019).
 
 ### Requirements
 
