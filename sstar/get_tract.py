@@ -16,22 +16,49 @@
 import pandas as pd
 import pybedtools
 
+
 def get_tract(threshold_file, match_pct_files, output_prefix, diff):
     """
+    Description:
+        Gets candidate introgressed fragments.
+
+    Arguments:
+        threshold_file str:
+        match_pct_files list:
+        output_prefix str:
+        diff float:
     """
     threshold_df = pd.read_csv(threshold_file, sep="\t")
     threshold_df = threshold_df[threshold_df['significant'] == True]
-    cols = ['chrom', 'start', 'end']
 
     if match_pct_files is None:
-        pybedtools.BedTool.from_dataframe(threshold_df).sort().merge().moveto(output_prefix+'.bed')
+        _output_bed(threshold_df, output_prefix+'.bed')
     else:
         src1_df = pd.read_csv(match_pct_files[0], sep="\t")
         src2_df = pd.read_csv(match_pct_files[1], sep="\t")
         src1_sig_df = pd.merge(src1_df, threshold_df, on=['chrom', 'start', 'end', 'sample'])
         src2_sig_df = pd.merge(src2_df, threshold_df, on=['chrom', 'start', 'end', 'sample'])
         df = pd.merge(src1_sig_df, src2_sig_df, on=['chrom', 'start', 'end', 'sample'])
-        src1_df = df[df['match_pct_x']-df['match_pct_y']>diff]
-        src2_df = df[df['match_pct_x']-df['match_pct_y']<diff]
-        pybedtools.BedTool.from_dataframe(src1_df).sort().merge().moveto(output_prefix+'.src1.bed')
-        pybedtools.BedTool.from_dataframe(src2_df).sort().merge().moveto(output_prefix+'.src2.bed')
+        src1_df = df[df['match_rate_x']-df['match_rate_y']>diff]
+        src2_df = df[df['match_rate_x']-df['match_rate_y']<diff]
+        _output_bed(src1_df, output_prefix+'.src1.bed')
+        _output_bed(src2_df, output_prefix+'.src2.bed')
+
+
+def _output_bed(df, output):
+    """
+    Description:
+
+    Arguments:
+        df pandas.da
+        output str:
+    """
+    o = open(output, 'w')
+    df = df.sort_values(by=['sample'])
+    samples = df['sample'].unique()
+    for s in samples:
+        sub_df = df[df['sample'] == s]
+        x = pybedtools.BedTool.from_dataframe(sub_df).sort().merge()
+        for r in x:
+            o.write(f'{r.chrom}\t{r.start}\t{r.stop}\t{s}\n')
+    o.close()

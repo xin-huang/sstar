@@ -1,4 +1,4 @@
-# Calculating significant S* score thresholds
+# Calculate significant S* score thresholds
 
 ### Input
 
@@ -6,16 +6,16 @@ To determing whether an S\* score is statistically significant, users could use 
 
 An example for the simulated dataset is below:
 
-| S*_score | SNP_number | log(local_recomb_rate) | quantile |
+| S*_score | SNP_number | quantile | log(local_recomb_rate) |
 | - | - | - | - |
-| 0 | 10 | -7.7500000013365 | 0.8 |
+| 0 | 10 | 0.8 | -7.7500000013365 |
 
 The meaning of each column:
 
 - The `S*_score` column is the S\* score in the current window.
 - The `SNP_number` column is the number of SNPs in the current window.
-- The `log(local_recomb_rate)` column is the logarithm of the local recombination rate in the current window.
 - The `quantile` column is the quantile of the S\*_score in the simulated dataset.
+- The `log(local_recomb_rate)` column is the logarithm of the local recombination rate in the current window.
 
 Users also need to provide the file (e.g. [test.score.exp.results](https://github.com/xin-huang/sstar/blob/main/tests/results/test.score.exp.results)) containing S\* score estimated from real data. Users can use a BED file (e.g. [hum.windows.50k.10k.recomb.map](https://raw.githubusercontent.com/xin-huang/sstar/main/examples/data/real_data/hum.windows.50k.10k.recomb.map)) to specify local recombination rates across the genome.
 

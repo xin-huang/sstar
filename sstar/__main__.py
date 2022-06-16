@@ -22,18 +22,18 @@ def _set_sigpipe_handler():
 
 def _run_score(args):
     from sstar.cal_s_star import cal_s_star
-    cal_s_star(vcf=args.vcf, ref_ind_file=args.ref_ind, tgt_ind_file=args.tgt_ind, anc_allele_file=args.anc_allele, win_len=args.win_len, win_step=args.win_step, output=args.output, thread=args.thread, match_bonus=args.match_bonus, max_mismatch=args.max_mismatch, mismatch_penalty=args.mismatch_penalty, all_ind_geno_dist=args.all_ind_geno_dist)
+    cal_s_star(vcf=args.vcf, ref_ind_file=args.ref_ind, tgt_ind_file=args.tgt_ind, anc_allele_file=args.anc_allele, win_len=args.win_len, win_step=args.win_step, output=args.output, thread=args.thread, match_bonus=args.match_bonus, max_mismatch=args.max_mismatch, mismatch_penalty=args.mismatch_penalty)
 
 def _run_quantile(args):
     from sstar.get_quantile import get_quantile
-    get_quantile(model=args.model, ms_dir=args.ms_dir, N0=args.N0, nsamp=args.nsamp, nreps=args.nreps, ref_index=args.ref_index, ref_size=args.ref_size, tgt_index=args.tgt_index, tgt_size=args.tgt_size, mut_rate=args.mut_rate, rec_rate=args.rec_rate, seq_len=args.seq_len, snp_num_range=args.snp_num_range, output_dir=args.output_dir, thread=args.thread, all_ind_geno_dist=args.all_ind_geno_dist, seeds=args.seeds)
+    get_quantile(model=args.model, ms_dir=args.ms_dir, N0=args.N0, nsamp=args.nsamp, nreps=args.nreps, ref_index=args.ref_index, ref_size=args.ref_size, tgt_index=args.tgt_index, tgt_size=args.tgt_size, mut_rate=args.mut_rate, rec_rate=args.rec_rate, seq_len=args.seq_len, snp_num_range=args.snp_num_range, output_dir=args.output_dir, thread=args.thread, seeds=args.seeds)
 
 def _run_threshold(args):
     from sstar.cal_threshold import cal_threshold
     cal_threshold(simulated_data=args.sim_data, score_file=args.score, recomb_rate=args.recomb_rate, recomb_map=args.recomb_map, quantile=args.quantile, output=args.output, k=args.k)
 
 def _run_match_pct(args):
-    from sstar.cal_match_pct import cal_match_pct
+    from sstar.cal_match_rate import cal_match_pct
     cal_match_pct(vcf=args.vcf, ref_ind_file=args.ref_ind, tgt_ind_file=args.tgt_ind, src_ind_file=args.src_ind, anc_allele_file=args.anc_allele, output=args.output, thread=args.thread, score_file=args.score, mapped_region_file=args.mapped_region_file)
 
 def _run_tract(args):
@@ -79,7 +79,6 @@ def _s_star_cli_parser():
     parser.add_argument('--match-bonus', type=int, dest='match_bonus', default=5000, help='bonus for matching genotypes of two different variants; default: 5000')
     parser.add_argument('--max-mismatch', type=int, dest='max_mismatch', default=5, help='maximum genotype distance allowed; default: 5')
     parser.add_argument('--mismatch-penalty', type=int, dest='mismatch_penalty', default=-10000, help='penalty for mismatching genotypes of two different variants; default: -10000')
-    parser.add_argument('--all-ind-geno-dist', action='store_true', dest='all_ind_geno_dist', help='determine how to calculate genotype distance, using a single individual or all individual from the target population; default: False')
     parser.set_defaults(runner=_run_score)
 
     # Arguments for quantile subcommand
@@ -100,7 +99,6 @@ def _s_star_cli_parser():
     parser.add_argument('--snp-num-range', type=int, dest='snp_num_range', nargs=3, required=True, help='range of SNP numbers in ms simulation; the first parameter is the minimum SNP number, the second parameter is the maximum SNP number, the third parameter is the step size')
     parser.add_argument('--output-dir', type=str, dest='output_dir', required=True, help='directory for the output files')
     parser.add_argument('--thread', type=int, default=1, help='number of thread')
-    parser.add_argument('--all-ind-geno-dist', action='store_true', dest='all_ind_geno_dist', help='determine how to calculate genotype distance, using a single individual or all individual from the target population; default: False')
     parser.set_defaults(runner=_run_quantile)
     
     # Arguments for threshold subcommand
@@ -115,7 +113,7 @@ def _s_star_cli_parser():
     parser.set_defaults(runner=_run_threshold)
 
     # Arguments for matchpct subcommand
-    parser = subparsers.add_parser('matchpct', help='calculate match percentages in target populations with genomes from source populations')
+    parser = subparsers.add_parser('matchrate', help='calculate source match rates in target populations with genomes from source populations')
     parser.add_argument('--vcf', type=str, dest='vcf', required=True, help='name of the VCF file containing genotypes from samples')
     _add_ref_ind_args(parser)
     _add_tgt_ind_args(parser)
@@ -128,9 +126,9 @@ def _s_star_cli_parser():
     # Arguments for tract subcommand
     parser = subparsers.add_parser('tract', help='get candidate introgressed fragments')
     parser.add_argument('--threshold', type=str, required=True, help='threshold file from `sstar threshold`')
-    parser.add_argument('--match-pct', type=str, default=None, dest='match_pct', nargs=2, help='match percent files from `sstar matchpct`; the first file contains match percents using genomes from the source population 1 (src1), the second file contains match percents using genomes from the source population 2 (src2)')
+    parser.add_argument('--match-rate', type=str, default=None, dest='match_pct', nargs=2, help='match rate files from `sstar matchrate`; the first file contains match percents using genomes from the source population 1 (src1), the second file contains match percents using genomes from the source population 2 (src2)')
     parser.add_argument('--output-prefix', type=str, dest='output', required=True, help='prefix for output files')
-    parser.add_argument('--diff', type=float, default=0, help='difference between src1 match percents (src1_match_pct) and src2 match percents (src2_match_pct); if src1_match_pct - src2_match_pct > diff, then this fragment is assigned to src1, if src1_match_pct - src2_match_pct < diff, then this fragment is assigned to src2')
+    parser.add_argument('--diff', type=float, default=0, help='difference between src1 match rates (src1_match_rate) and src2 match rates (src2_match_rate); if src1_match_rate - src2_match_rate > diff, then this fragment is assigned to src1, if src1_match_rate - src2_match_rate < diff, then this fragment is assigned to src2; default: 0')
     parser.set_defaults(runner=_run_tract)
 
     return top_parser

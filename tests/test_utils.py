@@ -147,7 +147,7 @@ def test_cal_mapped_len(data):
     assert len6 == 2000
 
 def test_cal_matchpct(data):
-    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data("./tests/data/test.match.pct.data.vcf", "./examples/data/ind_list/ref.ind.list", "./examples/data/ind_list/tgt.ind.list", "./examples/data/ind_list/nean.ind.list", None)
+    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data("./tests/data/test.match.rate.data.vcf", "./examples/data/ind_list/ref.ind.list", "./examples/data/ind_list/tgt.ind.list", "./examples/data/ind_list/nean.ind.list", None)
 
     hap1_match_pct = cal_matchpct('21', None, tgt_data, src_data, 0, 0, 0, 9400000, 9450000, len(tgt_data))[-1]
     hap2_match_pct = cal_matchpct('21', None, tgt_data, src_data, 0, 0, 1, 9400000, 9450000, len(tgt_data))[-1]
