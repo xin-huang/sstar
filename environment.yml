@@ -11,7 +11,6 @@ dependencies:
         - python=3.8
         - python-markdown-math
         - r-base
-        - r-spatstat
         - rpy2
         - scikit-allel
         - pip:
