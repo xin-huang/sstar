@@ -17,7 +17,6 @@
 - R packages:
 	- MASS
 	- mgcv
-	- spatstat
 	- stat
 
 ### Installation
