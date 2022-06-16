@@ -9,7 +9,9 @@
 - Python 3.8/3.9
 - R 4.0.0/4.1.1
 - Python packages:
+	- demes
 	- pandas
+	- pybedtools
 	- rpy2
 	- scikit-allel
 - R packages:
@@ -28,8 +30,10 @@ Then users can install `sstar` with `pip`.
 
 	pip install sstar
 
-Users can also use `conda` to create a virtual environment and install `sstar` with this [conda-env.yaml](https://github.com/xin-huang/sstar/blob/main/examples/snakepipe/conda-env.yaml). This may take a long time. To install `conda`, please follow the [instruction](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). Then users can use the following commands:
+Users can also use `conda` to create a virtual environment and install `sstar` with this [conda-env.yaml](https://github.com/xin-huang/sstar/blob/main/examples/snakepipe/conda-env.yaml) or this [environment.yml](https://github.com/admixVIE/sstar-analysis/blob/main/environment.yml) in [sstar-analysis](https://github.com/admixVIE/sstar-analysis). This may take a long time. To install `conda`, please follow the [instruction](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). Then users can use the following commands:
 
+	conda config --set safety_checks disabled
+	conda config --set channel_priority strict
 	conda env create -f conda-env.yaml
 	conda activate sstar
 	export R_LIBS=$CONDA_PREFIX/lib/R/library

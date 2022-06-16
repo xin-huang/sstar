@@ -2,7 +2,7 @@
 
 ### Input
 
-To calculate S* scores, users should provide a VCF file containing genotypes from the reference and target populations (e.g. [test.data.vcf](https://github.com/xin-huang/sstar/blob/main/tests/data/test.data.vcf)). Users also need to provide two files containing names of individuals from the reference and target populations (e.g. [test.ref.ind.list](https://github.com/xin-huang/sstar/blob/main/tests/data/test.ref.ind.list) and [test.tgt.ind.list](https://github.com/xin-huang/sstar/blob/main/tests/data/test.tgt.ind.list)) for analysis.
+To calculate S* scores, users should provide a VCF file containing genotypes from the reference and target populations (e.g. [test.score.data.vcf](https://github.com/xin-huang/sstar/blob/main/tests/data/test.score.data.vcf)). Users also need to provide two files containing names of individuals from the reference and target populations (e.g. [test.ref.ind.list](https://github.com/xin-huang/sstar/blob/main/tests/data/test.ref.ind.list) and [test.tgt.ind.list](https://github.com/xin-huang/sstar/blob/main/tests/data/test.tgt.ind.list)) for analysis.
 
 Users can calculate S* scores with the following command:
 

@@ -7,9 +7,12 @@ dependencies:
         - mkdocstrings=0.17.0
         - mkdocs-material
         - pandas
+        - pip
         - python=3.8
         - python-markdown-math
         - r-base
         - r-spatstat
         - rpy2
         - scikit-allel
+        - pip:
+                - sstar==1.1.0

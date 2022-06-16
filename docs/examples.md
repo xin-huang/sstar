@@ -4,12 +4,6 @@ A Snakefile for running the whole pipeline can be found [here](https://github.co
 
 Users need to install `conda` first. See [conda installation](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) for instruction.
 
-Users also need to download two tables for source match percentages from the reference population with the following commands:
-
-	wget -c https://figshare.com/ndownloader/files/34320419
-	mv 34320419 sstar_supplementary_data.tar.gz
-	tar -xvf sstar_supplementary_data.tar.gz
-
 Users can dry-run the whole pipeline as follows:
 
 	git clone https://github.com/xin-huang/sstar
@@ -19,4 +13,4 @@ Users can dry-run the whole pipeline as follows:
 	export R_LIBS=$CONDA_PREFIX/lib/R/library
 	snakemake -n -p
 
-Users can use `snakemake -c 1` for running the whole pipeline locally or submit jobs to `SLURM` with `mkdir logs_slurm && snakemake --profile . -j 1`. Users can modify [config.yaml](https://github.com/xin-huang/sstar/blob/main/examples/snakepipe/config.yaml) for submitting jobs to other scheduling system, such as `SGE`. If memory usage is too high when calculating p-values, then users can add the `--low-memory` argument into the `pvalue` subcommand. This may slow down `sstar`.
+Users can use `snakemake -c 1` for running the whole pipeline locally or submit jobs to `SLURM` with `mkdir logs_slurm && snakemake --profile . -j 1`. Users can modify [config.yaml](https://github.com/xin-huang/sstar/blob/main/examples/snakepipe/config.yaml) for submitting jobs to other scheduling system, such as `SGE`.

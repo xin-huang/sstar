@@ -10,7 +10,7 @@ Users need to install the `ms` program from [Hudson Lab](https://home.uchicago.e
 
 The meaning of each option can be found using `sstar quantile -h`.
 
-The expected result above can be found in [quantile.summary.txt](https://github.com/xin-huang/sstar/blob/main/tests/results/simulation/quantile.summary.txt).
+The expected result above can be found in [test.quantile.exp.summary](https://github.com/xin-huang/sstar/blob/main/tests/results/test.quantile.exp.summary).
 
 ### Output
 
