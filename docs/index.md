@@ -33,7 +33,7 @@ Users can also use `conda` to create a virtual environment and install `sstar` w
 
 	conda config --set safety_checks disabled
 	conda config --set channel_priority strict
-	conda env create -f conda-env.yaml
+	conda env create -f conda-env.yml
 	conda activate sstar
 	export R_LIBS=$CONDA_PREFIX/lib/R/library
 
