@@ -8,6 +8,8 @@ Users can dry-run the whole pipeline as follows:
 
 	git clone https://github.com/xin-huang/sstar
 	cd ./sstar/examples/snakepipe
+	conda config --set safety_checks disabled
+	conda config --set channel_priority strict	
 	conda env create -f conda-env.yaml
 	conda activate sstar
 	export R_LIBS=$CONDA_PREFIX/lib/R/library
