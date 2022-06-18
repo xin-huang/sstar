@@ -4,7 +4,11 @@ Snakefile for running sstar pipeline.
 
 import os
 
-libr_dir = os.environ["CONDA_PREFIX"] + "/lib/R/library"
+
+try:
+    libr_dir = os.environ["CONDA_PREFIX"] + "/lib/R/library"
+except:
+    libr_dir = os.environ["CONDA"] + "/lib/R/library"
 
 
 rule all:
