@@ -1,6 +1,6 @@
 # Calculate quanitles of expected S*
 
-`sstar` provides a function `quantile` to estimate different quantiles of expected S* scores from simualted data without introgression. If users need to estimate quantiles of expected S* with large scale simulation, we recommend users follow our `sstar` pipelines in [sstar-analysis](https://github.com/admixVIE/sstar-analysis), for example, [sstar.snake](https://github.com/admixVIE/sstar-analysis/blob/main/workflows/1src/sstar.snake).
+`sstar` provides a function `quantile` to estimate different quantiles of expected S\* scores from simualted data without introgression. If users need to estimate quantiles of expected S\* with large scale simulation, we recommend users follow our `sstar` pipelines in [sstar-analysis](https://github.com/admixVIE/sstar-analysis), for example, [sstar.snake](https://github.com/admixVIE/sstar-analysis/blob/main/workflows/1src/sstar.snake).
 
 ### Input
 
