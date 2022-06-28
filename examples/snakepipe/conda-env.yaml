@@ -9,7 +9,6 @@ dependencies:
         - numpy
         - pandas
         - pip
-        - pybedtools
         - pytest
         - pytest-cov
         - python=3.8
@@ -21,4 +20,4 @@ dependencies:
         - r-essentials=4.1
         - rpy2
         - pip:
-                - sstar==1.1.0
+                - sstar==1.1.1

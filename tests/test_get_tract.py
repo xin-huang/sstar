@@ -22,6 +22,7 @@ def data():
     pytest.src1_match_pct = "./tests/data/test.tract.src1.match.rate"
     pytest.src2_match_pct = "./tests/data/test.tract.src2.match.rate"
     pytest.exp_bed = "./tests/results/test.tract.exp.bed"
+    pytest.exp_bed_with_src = "./tests/results/test.tract.with.src.match.rate.exp.bed"
     pytest.exp_src1_bed = "./tests/results/test.tract.exp.src1.bed"
     pytest.exp_src2_bed = "./tests/results/test.tract.exp.src2.bed"
 
@@ -31,6 +32,16 @@ def test_get_tract(data):
     res = f1.read()
     f1.close()
     f2 = open(pytest.exp_bed, 'r')
+    exp_res = f2.read()
+    f2.close()
+
+    assert res == exp_res
+
+    get_tract(threshold_file=pytest.threshold, match_pct_files=[pytest.src1_match_pct], output_prefix='./tests/results/test.tract.with.src.match.rate', diff=0)
+    f1 = open('./tests/results/test.tract.with.src.match.rate.bed', 'r')
+    res = f1.read()
+    f1.close()
+    f2 = open(pytest.exp_bed_with_src, 'r')
     exp_res = f2.read()
     f2.close()
 
