@@ -9,3 +9,4 @@ examples/snakepipe/results/*
 examples/snakepipe/.snakemake/*
 examples/snakepipe/logs_slurm/*
 .coverage
+tests/results/simulation

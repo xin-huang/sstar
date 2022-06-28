@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import pandas as pd
-import pybedtools
 
 
 def get_tract(threshold_file, match_pct_files, output_prefix, diff):
@@ -23,16 +22,20 @@ def get_tract(threshold_file, match_pct_files, output_prefix, diff):
         Gets candidate introgressed fragments.
 
     Arguments:
-        threshold_file str:
-        match_pct_files list:
-        output_prefix str:
-        diff float:
+        threshold_file str: Name of the file containing thresholds.
+        match_pct_files list: List containing names of files containing source match rates.
+        output_prefix str: Prefix of the output files.
+        diff float: Cut-off to determine the origin of the candidate introgressed fragments.
     """
     threshold_df = pd.read_csv(threshold_file, sep="\t")
     threshold_df = threshold_df[threshold_df['significant'] == True]
 
     if match_pct_files is None:
         _output_bed(threshold_df, output_prefix+'.bed')
+    elif len(match_pct_files) == 1:
+        src_df = pd.read_csv(match_pct_files[0], sep="\t")
+        merge_df = pd.merge(src_df, threshold_df, on=['chrom', 'start', 'end', 'sample'])
+        _output_bed(merge_df, output_prefix+'.bed', col='match_rate')
     else:
         src1_df = pd.read_csv(match_pct_files[0], sep="\t")
         src2_df = pd.read_csv(match_pct_files[1], sep="\t")
@@ -41,24 +44,22 @@ def get_tract(threshold_file, match_pct_files, output_prefix, diff):
         df = pd.merge(src1_sig_df, src2_sig_df, on=['chrom', 'start', 'end', 'sample'])
         src1_df = df[df['match_rate_x']-df['match_rate_y']>diff]
         src2_df = df[df['match_rate_x']-df['match_rate_y']<diff]
-        _output_bed(src1_df, output_prefix+'.src1.bed')
-        _output_bed(src2_df, output_prefix+'.src2.bed')
+        _output_bed(src1_df, output_prefix+'.src1.bed', col='match_rate_x')
+        _output_bed(src2_df, output_prefix+'.src2.bed', col='match_rate_y')
 
 
-def _output_bed(df, output):
+def _output_bed(df, output, col=None):
     """
     Description:
+        Helper fuction for outputing candidate introgressed fragments in BED format.
 
     Arguments:
-        df pandas.da
-        output str:
+        df pandas.dataframe: Dataframe containing candidate introgressed fragments.
+        output str: Name of the output file.
+        col str: Name of the column containing source match rates in the dataframe.
     """
-    o = open(output, 'w')
-    df = df.sort_values(by=['sample'])
-    samples = df['sample'].unique()
-    for s in samples:
-        sub_df = df[df['sample'] == s]
-        x = pybedtools.BedTool.from_dataframe(sub_df).sort().merge()
-        for r in x:
-            o.write(f'{r.chrom}\t{r.start}\t{r.stop}\t{s}\n')
-    o.close()
+    df = df.sort_values(by=['sample', 'chrom', 'start', 'end'])
+    if col is None:
+        colnames = ['chrom', 'start', 'end', 'sample']
+    else: colnames = ['chrom', 'start', 'end', 'sample', col]
+    df.to_csv(output, columns=colnames, sep="\t", header=False, index=False)

@@ -17,20 +17,21 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Add conda to system path
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install dependencies
-      run: |
-        conda env update --file conda-env.yml --name base
+    - name: Add micromamba to system path
+      uses: mamba-org/provision-with-micromamba@main
+      with:
+        environment-name: sstar
+        activate-environment: sstar
+        environment-file: conda-env.yml
     - name: Test with pytest
       run: |
         export R_LIBS=${CONDA_PREFIX}/lib/R/library
-        pytest --cov=. --cov-report term-missing
+        micromamba run -n sstar pytest --cov=. --cov-report term-missing
+        micromamba run -n sstar coverage xml
     - name: upload coverage report to codecov
       uses: codecov/codecov-action@v3
       with:
           name: codecov-umbrella
           fail_ci_if_error: true
           env_vars: OS,PYTHON
+          token: d257164e-ffda-43ba-b37b-f33b5dde0f34
