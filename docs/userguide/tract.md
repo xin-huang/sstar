@@ -20,6 +20,8 @@ BED files containing candidate introgressed fragments will be generated, e.g. [t
 
 An example for the output is below:
 
+|   |          |          |        |          |
+| - | -        | -        | -      | -        |
 | 1 | 75030000 | 75080000 | tsk_10 | 0.280797 |
 
 - The first column is the name of the chromosome.

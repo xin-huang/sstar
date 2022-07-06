@@ -31,7 +31,8 @@ An example for the output is below:
 
 | chrom | start | end | sample | S*_score | expected_S*_score | local_recomb_rate | quantile | significant |
 | -     | -     | -   | -      | -        | -                 | -                 | -        | -           |
-| 21    |  0    | 50000 | ind1 | 51470 | -8539.774316 | 1.29162 | 0.99 | True |
+| 21    | 9480000 | 9530000 | NA06984 | 48493 | 53263.269232  | 1.29162 | 0.99 | False |
+| 21    | 9650000 | 9700000 | NA06984 | 55639 | 53754.835563  | 1.29162 | 0.99 | True  |
 
 The meanings of the first to fifth columns are the same as those in the [output](https://sstar.readthedocs.io/en/latest/userguide/score/#output) from `sstar score`. The meanings of the remaining columns:
 
