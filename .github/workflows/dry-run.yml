@@ -17,7 +17,7 @@ jobs:
       with:
         environment-name: sstar
         activate-environment: sstar
-        environment-file: conda-env.yml
+        environment-file: build-env.yml
     - name: Test dry-run
       run: |
         cd examples/snakepipe
