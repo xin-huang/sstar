@@ -2,15 +2,14 @@
 
 A Snakefile for running the whole pipeline can be found [here](https://github.com/xin-huang/sstar/blob/main/examples/snakepipe/Snakefile).
 
-Users need to install `conda` first. See [conda installation](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) for instruction.
+Users need to install `conda` first. See [conda installation](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) for instruction. We recommend users use [mamba](https://github.com/mamba-org/mamba) to create the virtual environment, because `mamba` is much faster than `conda`.
 
 Users can dry-run the whole pipeline as follows:
 
 	git clone https://github.com/xin-huang/sstar
 	cd ./sstar/examples/snakepipe
-	conda config --set safety_checks disabled
-	conda config --set channel_priority strict	
-	conda env create -f conda-env.yaml
+	conda install mamba -n base -c conda-forge
+	mamba env create -f conda-env.yml
 	conda activate sstar
 	export R_LIBS=$CONDA_PREFIX/lib/R/library
 	snakemake -n -p

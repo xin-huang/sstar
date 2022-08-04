@@ -1,0 +1,6 @@
+demes
+numpy
+pandas
+rpy2
+scikit-allel
+scipy

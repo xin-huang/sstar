@@ -1,19 +1,20 @@
 # sstar
 
-`sstar` is a Python package for detecting archaic admixture from population genetic data with S* scores (Plagnol and Wall 2006), which can be used for detecting introgression not only in humans, but also in other species, e.g. Kulhwilm et al. (2019).
+`sstar` is a Python package for detecting archaic introgression from population genetic data with S\* scores (Plagnol and Wall 2006), which can be used for detecting introgression not only in humans, but also in other species, e.g. Kulhwilm et al. (2019).
 
 ### Requirements
 
 `sstar` works on UNIX/LINUX operating systems and tested with the following:
 
 - Python 3.8/3.9
-- R 4.0.0/4.1.1
+- R 4.1
 - Python packages:
 	- demes
+	- numpy
 	- pandas
-	- pybedtools
 	- rpy2
 	- scikit-allel
+	- scipy
 - R packages:
 	- MASS
 	- mgcv
@@ -29,11 +30,10 @@ Then users can install `sstar` with `pip`.
 
 	pip install sstar
 
-Users can also use `conda` to create a virtual environment and install `sstar` with this [conda-env.yaml](https://github.com/xin-huang/sstar/blob/main/examples/snakepipe/conda-env.yaml) or this [environment.yml](https://github.com/admixVIE/sstar-analysis/blob/main/environment.yml) in [sstar-analysis](https://github.com/admixVIE/sstar-analysis). This may take a long time. To install `conda`, please follow the [instruction](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). Then users can use the following commands:
+Users can also use `conda` to create a virtual environment and install `sstar` with this [conda-env.yml](https://github.com/xin-huang/sstar/blob/main/conda-env.yml) or this [environment.yml](https://github.com/admixVIE/sstar-analysis/blob/main/environment.yml) in [sstar-analysis](https://github.com/admixVIE/sstar-analysis). To install `conda`, please follow the [instruction](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). We recommend users use [mamba](https://github.com/mamba-org/mamba) to create the virtual environment, because `mamba` is much faster than `conda`. Then users can use the following commands:
 
-	conda config --set safety_checks disabled
-	conda config --set channel_priority strict
-	conda env create -f conda-env.yml
+	conda install mamba -n base -c conda-forge
+	mamba env create -f conda-env.yml
 	conda activate sstar
 	export R_LIBS=$CONDA_PREFIX/lib/R/library
 

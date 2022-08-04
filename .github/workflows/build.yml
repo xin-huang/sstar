@@ -22,7 +22,7 @@ jobs:
       with:
         environment-name: sstar
         activate-environment: sstar
-        environment-file: conda-env.yml
+        environment-file: build-env.yml
     - name: Test with pytest
       run: |
         export R_LIBS=${CONDA_PREFIX}/lib/R/library
