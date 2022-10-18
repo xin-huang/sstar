@@ -14,14 +14,12 @@ def cal_n_ton(tgt_gt):
     Returns:
         spectra numpy.ndarray: Individual frequency spectra for haplotypes.
     """
-    mut_num = tgt_gt.shape[0]
-    ind_num = tgt_gt.shape[1]
-    ploidy = tgt_gt.shape[2]
-    hap_num = ind_num * ploidy
+    mut_num, ind_num, ploidy = tgt_gt.shape
+    hap_num = ind_num*ploidy
 
     tgt_gt = np.reshape(tgt_gt, (mut_num, hap_num))
     iv = np.ones((hap_num, 1))
-    counts = tgt_gt * np.matmul(tgt_gt, iv)
+    counts = tgt_gt*np.matmul(tgt_gt, iv)
 
     spectra = np.array([np.bincount(counts[:,idx].astype('int64'), minlength=hap_num+1) for idx in range(hap_num)])
     # ArchIE does not count non-segragating sites
@@ -74,8 +72,29 @@ def cal_tgt_dist(tgt_gt):
     return tgt_dist, dist_mean, dist_var, dist_skew, dist_kurtosis
 
 
-def cal_pvt_mut_num():
-    pass
+def cal_pvt_mut_num(ref_gt, tgt_gt):
+    """
+    Description:
+        Calculates private mutations in a haplotypes.
+
+    Arguments:
+        ref_gt numpy.ndarray: Genotype matrix from the reference population.
+        tgt_gt numpy.ndarray: Genotype matrix from the target population.
+        
+    Returns:
+        pvt_mut_num numpy.ndarray: Numbers of private mutations.
+    """
+    ref_mut_num, ref_ind_num, ref_ploidy = ref_gt.shape
+    tgt_mut_num, tgt_ind_num, tgt_ploidy = tgt_gt.shape
+    ref_hap_num = ref_ind_num*ref_ploidy
+    tgt_hap_num = tgt_ind_num*tgt_ploidy
+    ref_gt = np.reshape(ref_gt, (ref_mut_num, ref_hap_num))
+    tgt_gt = np.reshape(tgt_gt, (tgt_mut_num, tgt_hap_num))
+    iv = np.ones((ref_hap_num, 1))
+    counts = np.matmul(ref_gt, iv)
+    pvt_mut_num = np.sum(tgt_gt*(counts==0), axis=0)
+
+    return pvt_mut_num
 
 
 def cal_sstar():
