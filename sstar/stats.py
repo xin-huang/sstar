@@ -16,12 +16,10 @@ def cal_n_ton(tgt_gt):
     """
     mut_num, ind_num, ploidy = tgt_gt.shape
     hap_num = ind_num*ploidy
-
     tgt_gt = np.reshape(tgt_gt, (mut_num, hap_num))
     iv = np.ones((hap_num, 1))
     counts = tgt_gt*np.matmul(tgt_gt, iv)
-
-    spectra = np.array([np.bincount(counts[:,idx].astype('int64'), minlength=hap_num+1) for idx in range(hap_num)])
+    spectra = np.array([np.bincount(counts[:,idx].astype('int8'), minlength=hap_num+1) for idx in range(hap_num)])
     # ArchIE does not count non-segragating sites
     # spectra[:,0] = 0
 
@@ -75,7 +73,7 @@ def cal_tgt_dist(tgt_gt):
 def cal_pvt_mut_num(ref_gt, tgt_gt):
     """
     Description:
-        Calculates private mutations in a haplotypes.
+        Calculates private mutations in a haplotype.
 
     Arguments:
         ref_gt numpy.ndarray: Genotype matrix from the reference population.
