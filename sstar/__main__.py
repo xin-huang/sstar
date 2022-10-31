@@ -23,7 +23,7 @@ def _set_sigpipe_handler():
 
 
 def _run_score(args):
-    from sstar.cal_s_star import cal_s_star
+    from sstar.cal_sstar_stats import cal_s_star
     cal_s_star(vcf=args.vcf, ref_ind_file=args.ref_ind, tgt_ind_file=args.tgt_ind, anc_allele_file=args.anc_allele, win_len=args.win_len, win_step=args.win_step, output=args.output, thread=args.thread, match_bonus=args.match_bonus, max_mismatch=args.max_mismatch, mismatch_penalty=args.mismatch_penalty)
 
 
@@ -45,6 +45,10 @@ def _run_match_pct(args):
 def _run_tract(args):
     from sstar.get_tract import get_tract
     get_tract(threshold_file=args.threshold, match_pct_files=args.match_pct, output_prefix=args.output, diff=args.diff)
+
+
+def _run_archie(args):
+    pass
 
 
 def _add_common_args(parser):
@@ -155,6 +159,10 @@ def _s_star_cli_parser():
     parser.add_argument('--output-prefix', type=str, dest='output', required=True, help='prefix for output files')
     parser.add_argument('--diff', type=float, default=0, help='difference between src1 match rates (src1_match_rate) and src2 match rates (src2_match_rate); if src1_match_rate - src2_match_rate > diff, then this fragment is assigned to src1, if src1_match_rate - src2_match_rate < diff, then this fragment is assigned to src2; default: 0')
     parser.set_defaults(runner=_run_tract)
+
+    # Arguments for archie subcommand
+    parser = subparsers.add_parser('archie', help='calculate statistics used in ArchIE')
+    parser.set_defaults(runner=_run_archie)
 
     return top_parser
 
