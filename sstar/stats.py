@@ -101,45 +101,57 @@ def cal_sstar(tgt_gt, pos, match_bonus, max_mismatch, mismatch_penalty):
         Calculates an sstar score for given genotypes from an individual.
 
     Arguments:
-        tgt_gt numpy.ndarray: Genotypes for an individual from the target population.
+        tgt_gt numpy.ndarray: Genotype matrix for individuals from the target population.
         pos numpy.ndarray: Positions for the variants.
         match_bonus int: Bonus for matching genotypes of two different variants.
         max_mismatch int: Maximum genotype distance allowed.
         mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
 
     Returns:
-        sstar_score float: The estimated sstar score.
-        haplotype list: The haplotype used for obtaining the estimated sstar score.
+        sstar_scores float: The estimated sstar scores.
+        haplotypes list: The haplotypes used for obtaining the estimated sstar scores.
     """
-    pos = pos[tgt_gt!=0]
-    tgt_gt = tgt_gt[tgt_gt!=0]
-    snp_num = len(pos)
-    pos_matrix = np.tile(pos, (snp_num, 1))
-    geno_matrix = np.tile(tgt_gt, (snp_num, 1))
-    pd_matrix = np.transpose(pos_matrix)-pos_matrix
-    gd_matrix = np.transpose(geno_matrix)-geno_matrix
-    pd_matrix[pd_matrix<10] = -np.inf
-    pd_matrix[(pd_matrix>=10)*(gd_matrix==0)] += match_bonus
-    pd_matrix[(pd_matrix>=10)*(gd_matrix>0)*(gd_matrix<=max_mismatch)] = mismatch_penalty
-    pd_matrix[(pd_matrix>=10)*(gd_matrix>max_mismatch)] = -np.inf
+    def _cal_ind_sstar(gt, pos, match_bonus, max_mismatch, mismatch_penalty):
+        pos = pos[gt!=0]
+        gt = gt[gt!=0]
+        snp_num = len(pos)
+        pos_matrix = np.tile(pos, (snp_num, 1))
+        geno_matrix = np.tile(gt, (snp_num, 1))
+        pd_matrix = np.transpose(pos_matrix)-pos_matrix
+        gd_matrix = np.transpose(geno_matrix)-geno_matrix
+        pd_matrix = pd_matrix.astype('float')
+        pd_matrix[pd_matrix<10] = -np.inf
+        pd_matrix[(pd_matrix>=10)*(gd_matrix==0)] += match_bonus
+        pd_matrix[(pd_matrix>=10)*(gd_matrix>0)*(gd_matrix<=max_mismatch)] = mismatch_penalty
+        pd_matrix[(pd_matrix>=10)*(gd_matrix>max_mismatch)] = -np.inf
 
-    max_scores = [0] * snp_num
-    max_score_snps = [[]] * snp_num
-    for j in range(snp_num):
-        max_score = -np.inf
-        snps = []
-        for i in range(j):
-            score = max_scores[i] + pd_matrix[j,i]
-            max_score_i = max(max_score, score, pd_matrix[j,i])
-            if max_score_i == max_score: continue
-            elif max_score_i == score: snps = max_score_snps[i] + [pos[j]]
-            elif max_score_i == score_ij: snps = [pos[i], pos[j]]
-            max_score = max_score_i
-        max_scores[j] = max_score
-        max_score_snps[j] = snps
+        max_scores = [0] * snp_num
+        max_score_snps = [[]] * snp_num
+        for j in range(snp_num):
+            max_score = -np.inf
+            snps = []
+            for i in range(j):
+                score = max_scores[i] + pd_matrix[j,i]
+                max_score_i = max(max_score, score, pd_matrix[j,i])
+                if max_score_i == max_score: continue
+                elif max_score_i == score: snps = max_score_snps[i] + [pos[j]]
+                elif max_score_i == pd_matrix[j,i]: snps = [pos[i], pos[j]]
+                max_score = max_score_i
+            max_scores[j] = max_score
+            max_score_snps[j] = snps
 
-    sstar_score = max(max_scores)
-    last_snp = max_scores.index(sstar_score)
-    haplotype = max_score_snps[last_snp]
+        sstar_score = max(max_scores)
+        last_snp = max_scores.index(sstar_score)
+        haplotype = max_score_snps[last_snp]
 
-    return sstar_score, haplotype
+        return sstar_score, haplotype
+
+    mut_num, ind_num = tgt_gt.shape
+    sstar_scores = []
+    haplotypes = []
+    for i in range(ind_num):
+        sstar_score, haplotype = _cal_ind_sstar(tgt_gt[:,i], pos, match_bonus, max_mismatch, mismatch_penalty)
+        sstar_scores.append(sstar_score)
+        haplotypes.append(haplotypes)
+
+    return sstar_scores, haplotypes
