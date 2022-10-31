@@ -16,7 +16,7 @@
 import allel
 import pytest
 import numpy as np
-from sstar.cal_s_star import cal_s_star
+from sstar.cal_sstar_stats import cal_s_star
 
 @pytest.fixture
 def data():
