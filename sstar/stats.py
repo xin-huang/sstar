@@ -98,7 +98,7 @@ def cal_pvt_mut_num(ref_gt, tgt_gt):
 def cal_sstar(tgt_gt, pos, match_bonus, max_mismatch, mismatch_penalty):
     """
     Description:
-        Calculates an sstar score for given genotypes from an individual.
+        Calculates sstar scores for a given genotype matrix.
 
     Arguments:
         tgt_gt numpy.ndarray: Genotype matrix for individuals from the target population.
@@ -108,7 +108,7 @@ def cal_sstar(tgt_gt, pos, match_bonus, max_mismatch, mismatch_penalty):
         mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
 
     Returns:
-        sstar_scores float: The estimated sstar scores.
+        sstar_scores list: The estimated sstar scores.
         haplotypes list: The haplotypes used for obtaining the estimated sstar scores.
     """
     def _cal_ind_sstar(gt, pos, match_bonus, max_mismatch, mismatch_penalty):
