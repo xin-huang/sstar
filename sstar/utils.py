@@ -277,6 +277,33 @@ def read_mapped_region_file(mapped_region):
 
     return mapped_intervals
 
+
+def create_windows(pos, win_step, win_len):
+    """
+    Description:
+        Creates sliding windows along the genome.
+
+    Arguments:
+        pos numpy.ndarray: Positions for the variants.
+        win_step int: Step size of sliding windows.
+        win_len int: Length of sliding windows.
+
+    Returns:
+        windows list: List of sliding windows along the genome.
+    """
+    win_start = (pos[0]+win_step)//win_step*win_step-win_len
+    if win_start < 0: win_start = 0
+    last_pos = pos[-1]
+
+    windows = []
+    while last_pos > win_start:
+        win_end = win_start + win_len
+        windows.append((win_start, win_end))
+        win_start += win_step
+
+    return windows
+
+
 #@profile
 def cal_matchpct(chr_name, mapped_intervals, data, src_data, tgt_ind_index, src_ind_index, hap_index, win_start, win_end, sample_size):
     """
