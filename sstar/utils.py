@@ -278,13 +278,14 @@ def read_mapped_region_file(mapped_region):
     return mapped_intervals
 
 
-def create_windows(pos, win_step, win_len):
+def create_windows(pos, chr_name, win_step, win_len):
     """
     Description:
         Creates sliding windows along the genome.
 
     Arguments:
         pos numpy.ndarray: Positions for the variants.
+        chr_name str: Name of the chromosome.
         win_step int: Step size of sliding windows.
         win_len int: Length of sliding windows.
 
@@ -298,7 +299,7 @@ def create_windows(pos, win_step, win_len):
     windows = []
     while last_pos > win_start:
         win_end = win_start + win_len
-        windows.append((win_start, win_end))
+        windows.append((chr_name, win_start, win_end))
         win_start += win_step
 
     return windows
