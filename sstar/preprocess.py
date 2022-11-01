@@ -42,7 +42,8 @@ def _process_archie():
     """
     header = ''
     worker_func = _archie_worker
-    _manager(windows, output, thread, header, worker_func, **kwargs)
+    output_func = _archie_output
+    _manager(windows, output, thread, header, worker_func, output_func, **kwargs)
 
 
 def _process_sstar(windows, output, thread, **kwargs):
@@ -50,15 +51,16 @@ def _process_sstar(windows, output, thread, **kwargs):
     """
     header = 'chrom\tstart\tend\tsample\tS*_score\tS*_SNP_number\tS*_SNPs'
     worker_func = _sstar_worker
+    output_func = _sstar_output
     for c in kwargs['data'].keys():
         kwargs['data'][c]['GT'] = np.sum(kwargs['data'][c]['GT'], axis=2)
 
-    _manager(windows, output, thread, header, worker_func, 
+    _manager(windows, output, thread, header, worker_func, output_func,
              data=kwargs['data'], samples=kwargs['samples'], 
              match_bonus=kwargs['match_bonus'], max_mismatch=kwargs['max_mismatch'], mismatch_penalty=kwargs['mismatch_penalty'])
 
 
-def _manager(windows, output, thread, header, worker_func, **kwargs):
+def _manager(windows, output, thread, header, worker_func, output_func, **kwargs):
     """
     """
     try:
@@ -79,7 +81,7 @@ def _manager(windows, output, thread, header, worker_func, **kwargs):
         idx = (pos>start)*(pos<=end)
         sub_gts = gts[idx]
         sub_pos = pos[idx]
-        in_queue.put((sub_gts, sub_pos))
+        in_queue.put((chr_name, start, end, sub_gts, sub_pos))
 
     try:
         for w in workers: w.start()
@@ -92,7 +94,7 @@ def _manager(windows, output, thread, header, worker_func, **kwargs):
     finally:
         for w in workers: w.join()
 
-    print(res)
+    output_func(output, header, kwargs['samples'], res)
 
 
 def _archie_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penalty):
@@ -105,10 +107,29 @@ def _sstar_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penal
     """
     """
     while True:
-        gts, pos = in_queue.get()
-        sstar_scores, haplotypes = cal_sstar(gts, pos, match_bonus, max_mismatch, mismatch_penalty)
-        out_queue.put((sstar_scores, haplotypes))
+        chr_name, start, end, gts, pos = in_queue.get()
+        sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(gts, pos, match_bonus, max_mismatch, mismatch_penalty)
+        out_queue.put((chr_name, start, end, sstar_scores, sstar_snp_nums, haplotypes))
+
+
+def _archie_output(output, header, samples, res):
+    pass
+
+
+def _sstar_output(output, header, samples, res):
+    with open(output, 'w') as o:
+        o.write(header+'\n')
+        for item in res:
+            chr_name = item[0]
+            start = item[1]
+            end = item[2]
+            sstar_scores = item[3]
+            sstar_snp_nums = item[4]
+            haplotypes = item[5]
+            for i in range(len(sstar_scores)):
+                ind_name = samples[i]
+                o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{sstar_scores[i]}\t{sstar_snp_nums[i]}\t{haplotypes[i]}\n')
 
 
 if __name__ == '__main__':
-    process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 1, 50000, 10000, 1, 5000, 5, -10000, process_archie=False)
+    process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 'test.out', 50000, 10000, 1, 5000, 5, -10000, process_archie=False)

@@ -1,3 +1,19 @@
+# Apache License Version 2.0
+# Copyright 2022 Xin Huang
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 import numpy as np
 import scipy as sp
 from scipy.spatial import distance_matrix
@@ -109,6 +125,7 @@ def cal_sstar(tgt_gt, pos, match_bonus, max_mismatch, mismatch_penalty):
 
     Returns:
         sstar_scores list: The estimated sstar scores.
+        sstar_snp_nums list: Numbers of sstar SNPs.
         haplotypes list: The haplotypes used for obtaining the estimated sstar scores.
     """
     def _cal_ind_sstar(gt, pos, match_bonus, max_mismatch, mismatch_penalty):
@@ -148,10 +165,14 @@ def cal_sstar(tgt_gt, pos, match_bonus, max_mismatch, mismatch_penalty):
 
     mut_num, ind_num = tgt_gt.shape
     sstar_scores = []
+    sstar_snp_nums = []
     haplotypes = []
     for i in range(ind_num):
         sstar_score, haplotype = _cal_ind_sstar(tgt_gt[:,i], pos, match_bonus, max_mismatch, mismatch_penalty)
+        sstar_snp_num = len(haplotype)
+        haplotype = ",".join([str(x) for x in haplotype])
         sstar_scores.append(sstar_score)
-        haplotypes.append(haplotypes)
+        sstar_snp_nums.append(sstar_snp_num)
+        haplotypes.append(haplotype)
 
-    return sstar_scores, haplotypes
+    return sstar_scores, sstar_snp_nums, haplotypes
