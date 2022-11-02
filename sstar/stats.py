@@ -156,8 +156,8 @@ def cal_sstar(tgt_gt, pos, match_bonus, max_mismatch, mismatch_penalty):
             haplotype = max_score_snps[last_snp]
         except ValueError:
             sstar_score = 0
-            last_snp = 'NA'
-            haplotype = 'NA'
+            last_snp = None
+            haplotype = None
 
         return sstar_score, haplotype
 
@@ -167,8 +167,10 @@ def cal_sstar(tgt_gt, pos, match_bonus, max_mismatch, mismatch_penalty):
     haplotypes = []
     for i in range(ind_num):
         sstar_score, haplotype = _cal_ind_sstar(tgt_gt[:,i], pos, match_bonus, max_mismatch, mismatch_penalty)
-        sstar_snp_num = len(haplotype)
-        haplotype = ",".join([str(x) for x in haplotype])
+        if haplotype is not None: sstar_snp_num = len(haplotype)
+        else: sstar_snp_num = 'NA'
+        if haplotype is not None: haplotype = ",".join([str(x) for x in haplotype])
+        else: haplotype = 'NA'
         sstar_scores.append(sstar_score)
         sstar_snp_nums.append(sstar_snp_num)
         haplotypes.append(haplotype)
