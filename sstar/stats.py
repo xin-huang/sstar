@@ -15,7 +15,7 @@
 
 
 import numpy as np
-import scipy as sp
+import scipy.stats as sps
 from scipy.spatial import distance_matrix
 
 
@@ -30,9 +30,7 @@ def cal_n_ton(tgt_gt):
     Returns:
         spectra numpy.ndarray: Individual frequency spectra for haplotypes.
     """
-    mut_num, ind_num, ploidy = tgt_gt.shape
-    hap_num = ind_num*ploidy
-    tgt_gt = np.reshape(tgt_gt, (mut_num, hap_num))
+    mut_num, hap_num = tgt_gt.shape
     iv = np.ones((hap_num, 1))
     counts = tgt_gt*np.matmul(tgt_gt, iv)
     spectra = np.array([np.bincount(counts[:,idx].astype('int8'), minlength=hap_num+1) for idx in range(hap_num)])
@@ -80,8 +78,8 @@ def cal_tgt_dist(tgt_gt):
     # tgt_dist.sort()
     dist_mean = np.mean(tgt_dist, axis=1)
     dist_var = np.var(tgt_dist, axis=1)
-    dist_skew = sp.stats.skew(tgt_dist, axis=1)
-    dist_kurtosis = sp.stats.kurtosis(tgt_dist, axis=1)
+    dist_skew = sps.skew(tgt_dist, axis=1)
+    dist_kurtosis = sps.kurtosis(tgt_dist, axis=1)
 
     return tgt_dist, dist_mean, dist_var, dist_skew, dist_kurtosis
 
@@ -98,12 +96,7 @@ def cal_pvt_mut_num(ref_gt, tgt_gt):
     Returns:
         pvt_mut_num numpy.ndarray: Numbers of private mutations.
     """
-    ref_mut_num, ref_ind_num, ref_ploidy = ref_gt.shape
-    tgt_mut_num, tgt_ind_num, tgt_ploidy = tgt_gt.shape
-    ref_hap_num = ref_ind_num*ref_ploidy
-    tgt_hap_num = tgt_ind_num*tgt_ploidy
-    ref_gt = np.reshape(ref_gt, (ref_mut_num, ref_hap_num))
-    tgt_gt = np.reshape(tgt_gt, (tgt_mut_num, tgt_hap_num))
+    ref_mut_num, ref_hap_num = ref_gt.shape
     iv = np.ones((ref_hap_num, 1))
     counts = np.matmul(ref_gt, iv)
     pvt_mut_num = np.sum(tgt_gt*(counts==0), axis=0)
@@ -157,9 +150,14 @@ def cal_sstar(tgt_gt, pos, match_bonus, max_mismatch, mismatch_penalty):
             max_scores[j] = max_score
             max_score_snps[j] = snps
 
-        sstar_score = max(max_scores)
-        last_snp = max_scores.index(sstar_score)
-        haplotype = max_score_snps[last_snp]
+        try:
+            sstar_score = max(max_scores)
+            last_snp = max_scores.index(sstar_score)
+            haplotype = max_score_snps[last_snp]
+        except ValueError:
+            sstar_score = 0
+            last_snp = 'NA'
+            haplotype = 'NA'
 
         return sstar_score, haplotype
 

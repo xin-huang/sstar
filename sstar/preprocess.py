@@ -30,20 +30,44 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, output, 
         # Remove variants observed in the reference population
         # Assume 1 is the derived allele
         variants_not_in_ref = np.sum(ref_data[c]['GT'].is_hom_ref(), axis=1) == len(ref_samples)
+        ref_data = filter_data(ref_data, c, variants_not_in_ref)
         tgt_data = filter_data(tgt_data, c, variants_not_in_ref)
         windows = create_windows(tgt_data[c]['POS'], c, win_step, win_len)
 
-    if process_archie: _process_archie()
-    else: _process_sstar(windows, output, thread, data=tgt_data, samples=tgt_samples, match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
+    if process_archie: 
+        _process_archie(windows, output, thread, 
+                        ref_data=ref_data, tgt_data=tgt_data, samples=tgt_samples, 
+                        match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
+    else: 
+        _process_sstar(windows, output, thread, 
+                       ref_data=ref_data, tgt_data=tgt_data, samples=tgt_samples, 
+                       match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
 
 
-def _process_archie():
+def _process_archie(windows, output, thread, **kwargs):
     """
     """
     header = ''
     worker_func = _archie_worker
     output_func = _archie_output
-    _manager(windows, output, thread, header, worker_func, output_func, **kwargs)
+
+    for c in kwargs['tgt_data'].keys():
+        ref_gts = kwargs['ref_data'][c]['GT']
+        tgt_gts = kwargs['tgt_data'][c]['GT']
+
+        ref_mut_num, ref_ind_num, ref_ploidy = ref_gts.shape
+        tgt_mut_num, tgt_ind_num, tgt_ploidy = tgt_gts.shape
+        ref_hap_num = ref_ind_num*ref_ploidy
+        tgt_hap_num = tgt_ind_num*tgt_ploidy
+        ref_gts = np.reshape(ref_gts, (ref_mut_num, ref_hap_num))
+        tgt_gts = np.reshape(tgt_gts, (tgt_mut_num, tgt_hap_num))
+
+        kwargs['ref_data'][c]['GT'] = ref_gts
+        kwargs['tgt_data'][c]['GT'] = tgt_gts
+
+    _manager(windows, output, thread, header, worker_func, output_func, 
+             ref_data=kwargs['ref_data'], tgt_data=kwargs['tgt_data'], samples=kwargs['samples'],
+             match_bonus=kwargs['match_bonus'], max_mismatch=kwargs['max_mismatch'], mismatch_penalty=kwargs['mismatch_penalty'])
 
 
 def _process_sstar(windows, output, thread, **kwargs):
@@ -52,11 +76,11 @@ def _process_sstar(windows, output, thread, **kwargs):
     header = 'chrom\tstart\tend\tsample\tS*_score\tS*_SNP_number\tS*_SNPs'
     worker_func = _sstar_worker
     output_func = _sstar_output
-    for c in kwargs['data'].keys():
-        kwargs['data'][c]['GT'] = np.sum(kwargs['data'][c]['GT'], axis=2)
+    for c in kwargs['tgt_data'].keys():
+        kwargs['tgt_data'][c]['GT'] = np.sum(kwargs['tgt_data'][c]['GT'], axis=2)
 
     _manager(windows, output, thread, header, worker_func, output_func,
-             data=kwargs['data'], samples=kwargs['samples'], 
+             ref_data=None, tgt_data=kwargs['tgt_data'], samples=kwargs['samples'], 
              match_bonus=kwargs['match_bonus'], max_mismatch=kwargs['max_mismatch'], mismatch_penalty=kwargs['mismatch_penalty'])
 
 
@@ -76,12 +100,16 @@ def _manager(windows, output, thread, header, worker_func, output_func, **kwargs
 
     for i in range(len(windows)):
         chr_name, start, end = windows[i]
-        gts = kwargs['data'][chr_name]['GT']
-        pos = kwargs['data'][chr_name]['POS']
+        tgt_gts = kwargs['tgt_data'][chr_name]['GT']
+        pos = kwargs['tgt_data'][chr_name]['POS']
         idx = (pos>start)*(pos<=end)
-        sub_gts = gts[idx]
+        sub_ref_gts = None
+        sub_tgt_gts = tgt_gts[idx]
+        if kwargs['ref_data'] is not None:
+            ref_gts = kwargs['ref_data'][chr_name]['GT']
+            sub_ref_gts = ref_gts[idx]
         sub_pos = pos[idx]
-        in_queue.put((chr_name, start, end, sub_gts, sub_pos))
+        in_queue.put((chr_name, start, end, sub_ref_gts, sub_tgt_gts, sub_pos))
 
     try:
         for w in workers: w.start()
@@ -100,20 +128,30 @@ def _manager(windows, output, thread, header, worker_func, output_func, **kwargs
 def _archie_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penalty):
     """
     """
-    pass
+    while True:
+        chr_name, start, end, ref_gts, tgt_gts, pos = in_queue.get()
+        spectra = cal_n_ton(tgt_gts)
+        min_ref_dists = cal_ref_dist(ref_gts, tgt_gts)
+        tgt_dists, mean_tgt_dists, var_tgt_dists, skew_tgt_dists, kurtosis_tgt_dists = cal_tgt_dist(tgt_gts)
+        pvt_mut_nums = cal_pvt_mut_num(ref_gts, tgt_gts)
+        sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(tgt_gts, pos, match_bonus, max_mismatch, mismatch_penalty)
+        out_queue.put((chr_name, start, end, 
+                       spectra, min_ref_dists, tgt_dists, 
+                       mean_tgt_dists, var_tgt_dists, skew_tgt_dists, 
+                       kurtosis_tgt_dists, pvt_mut_nums, sstar_scores))
 
 
 def _sstar_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penalty):
     """
     """
     while True:
-        chr_name, start, end, gts, pos = in_queue.get()
-        sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(gts, pos, match_bonus, max_mismatch, mismatch_penalty)
+        chr_name, start, end, ref_gts, tgt_gts, pos = in_queue.get()
+        sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(tgt_gts, pos, match_bonus, max_mismatch, mismatch_penalty)
         out_queue.put((chr_name, start, end, sstar_scores, sstar_snp_nums, haplotypes))
 
 
 def _archie_output(output, header, samples, res):
-    pass
+    print(res)
 
 
 def _sstar_output(output, header, samples, res):
@@ -132,4 +170,5 @@ def _sstar_output(output, header, samples, res):
 
 
 if __name__ == '__main__':
-    process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 'test.out', 50000, 10000, 1, 5000, 5, -10000, process_archie=False)
+    #process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 'test.sstar.out', 50000, 10000, 1, 5000, 5, -10000, process_archie=False)
+    process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 'test.archie.out', 50000, 10000, 1, 5000, 5, -10000, process_archie=True)
