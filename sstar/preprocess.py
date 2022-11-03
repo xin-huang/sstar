@@ -151,7 +151,42 @@ def _sstar_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penal
 
 
 def _archie_output(output, header, samples, res):
-    print(res)
+    with open(output, 'w') as o:
+        for item in res:
+            chr_name = item[0]
+            start = item[1]
+            end = item[2]
+            spectra = item[3]
+            min_ref_dists = item[4]
+            tgt_dists = item[5]
+            mean_tgt_dists = item[6]
+            var_tgt_dists = item[7]
+            skew_tgt_dists = item[8]
+            kurtosis_tgt_dists = item[9]
+            pvt_mut_nums = item[10]
+            sstar_scores = item[11]
+            for i in range(len(samples)):
+                ind_name = samples[i]
+                hap1_spectrum = "\t".join([str(x) for x in spectra[i]])
+                hap2_spectrum = "\t".join([str(x) for x in spectra[i+1]])
+                hap1_min_ref_dist = min_ref_dists[i]
+                hap2_min_ref_dist = min_ref_dists[i+1]
+                hap1_tgt_dist = "\t".join([str(x) for x in tgt_dists[i]])
+                hap2_tgt_dist = "\t".join([str(x) for x in tgt_dists[i+1]])
+                hap1_mean_tgt_dist = mean_tgt_dists[i]
+                hap2_mean_tgt_dist = mean_tgt_dists[i+1]
+                hap1_var_tgt_dist = var_tgt_dists[i]
+                hap2_var_tgt_dist = var_tgt_dists[i+1]
+                hap1_skew_tgt_dist = skew_tgt_dists[i]
+                hap2_skew_tgt_dist = skew_tgt_dists[i+1]
+                hap1_kurtosis_tgt_dist = kurtosis_tgt_dists[i]
+                hap2_kurtosis_tgt_dist = kurtosis_tgt_dists[i+1]
+                hap1_pvt_mut_num = pvt_mut_nums[i]
+                hap2_pvt_mut_num = pvt_mut_nums[i+1]
+                hap1_sstar_score = sstar_scores[i]
+                hap2_sstar_score = sstar_scores[i+1]
+                o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{hap1_spectrum}\t{hap1_tgt_dist}\t{hap1_mean_tgt_dist}\t{hap1_var_tgt_dist}\t{hap1_skew_tgt_dist}\t{hap1_kurtosis_tgt_dist}\t{hap1_min_ref_dist}\t{hap1_sstar_score}\t{hap1_pvt_mut_num}\n')
+                o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{hap2_spectrum}\t{hap2_tgt_dist}\t{hap2_mean_tgt_dist}\t{hap2_var_tgt_dist}\t{hap2_skew_tgt_dist}\t{hap2_kurtosis_tgt_dist}\t{hap2_min_ref_dist}\t{hap2_sstar_score}\t{hap2_pvt_mut_num}\n')
 
 
 def _sstar_output(output, header, samples, res):
@@ -164,11 +199,11 @@ def _sstar_output(output, header, samples, res):
             sstar_scores = item[3]
             sstar_snp_nums = item[4]
             haplotypes = item[5]
-            for i in range(len(sstar_scores)):
+            for i in range(len(samples)):
                 ind_name = samples[i]
                 o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{sstar_scores[i]}\t{sstar_snp_nums[i]}\t{haplotypes[i]}\n')
 
 
 if __name__ == '__main__':
-    #process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 'test.sstar.out', 50000, 10000, 1, 5000, 5, -10000, process_archie=False)
+    process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 'test.sstar.out', 50000, 10000, 1, 5000, 5, -10000, process_archie=False)
     process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 'test.archie.out', 50000, 10000, 1, 5000, 5, -10000, process_archie=True)

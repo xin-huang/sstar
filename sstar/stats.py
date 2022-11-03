@@ -35,7 +35,7 @@ def cal_n_ton(tgt_gt):
     counts = tgt_gt*np.matmul(tgt_gt, iv)
     spectra = np.array([np.bincount(counts[:,idx].astype('int8'), minlength=hap_num+1) for idx in range(hap_num)])
     # ArchIE does not count non-segragating sites
-    # spectra[:,0] = 0
+    spectra[:,0] = 0
 
     return spectra
 
@@ -75,7 +75,7 @@ def cal_tgt_dist(tgt_gt):
     """
     tgt_dist = distance_matrix(np.transpose(tgt_gt), np.transpose(tgt_gt))
     # ArchIE sorts tgt_dist
-    # tgt_dist.sort()
+    tgt_dist.sort()
     dist_mean = np.mean(tgt_dist, axis=1)
     dist_var = np.var(tgt_dist, axis=1)
     dist_skew = sps.skew(tgt_dist, axis=1)
@@ -138,7 +138,7 @@ def cal_sstar(tgt_gt, pos, match_bonus, max_mismatch, mismatch_penalty):
         max_scores = [0] * snp_num
         max_score_snps = [[]] * snp_num
         for j in range(snp_num):
-            max_score = -np.inf
+            max_score = 0
             snps = []
             for i in range(j):
                 score = max_scores[i] + pd_matrix[j,i]
