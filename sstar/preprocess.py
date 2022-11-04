@@ -26,28 +26,26 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, output, 
     """
     ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, anc_allele_file)
     chr_names = tgt_data.keys()
-    for c in chr_names:
-        # Remove variants observed in the reference population
-        # Assume 1 is the derived allele
-        variants_not_in_ref = np.sum(ref_data[c]['GT'].is_hom_ref(), axis=1) == len(ref_samples)
-        ref_data = filter_data(ref_data, c, variants_not_in_ref)
-        tgt_data = filter_data(tgt_data, c, variants_not_in_ref)
-        windows = create_windows(tgt_data[c]['POS'], c, win_step, win_len)
 
     if process_archie: 
-        _process_archie(windows, output, thread, 
+        _process_archie(win_step, win_len, output, thread, 
                         ref_data=ref_data, tgt_data=tgt_data, samples=tgt_samples, 
                         match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
     else: 
-        _process_sstar(windows, output, thread, 
-                       ref_data=ref_data, tgt_data=tgt_data, samples=tgt_samples, 
+        _process_sstar(win_step, win_len, output, thread, 
+                       ref_data=ref_data, tgt_data=tgt_data, ref_samples=ref_samples, tgt_samples=tgt_samples, 
                        match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
 
 
-def _process_archie(windows, output, thread, **kwargs):
+def _process_archie(win_step, win_len, output, thread, **kwargs):
     """
     """
-    header = ''
+    ind_num = len(kwargs['samples'])
+    header = 'chrom\tstart\tend\tsample\t'
+    header += '\t'.join([str(x)+'-ton' for x in range(ind_num*2+1)]) + '\t'
+    header += '\t'.join(['pairwised_dist'+str(x+1) for x in range(ind_num*2)])
+    header += '\tmean_pairwised_dist\tvar_pairwised_dist\tskew_pairwised_dist\tkurtosis_pairwised_dist'
+    header += '\tmin_dist_to_ref\tS*_score\tprivate_SNP_num'
     worker_func = _archie_worker
     output_func = _archie_output
 
@@ -64,23 +62,30 @@ def _process_archie(windows, output, thread, **kwargs):
 
         kwargs['ref_data'][c]['GT'] = ref_gts
         kwargs['tgt_data'][c]['GT'] = tgt_gts
+        windows = create_windows(kwargs['tgt_data'][c]['POS'], c, win_step, win_len)
 
     _manager(windows, output, thread, header, worker_func, output_func, 
              ref_data=kwargs['ref_data'], tgt_data=kwargs['tgt_data'], samples=kwargs['samples'],
              match_bonus=kwargs['match_bonus'], max_mismatch=kwargs['max_mismatch'], mismatch_penalty=kwargs['mismatch_penalty'])
 
 
-def _process_sstar(windows, output, thread, **kwargs):
+def _process_sstar(win_step, win_len, output, thread, **kwargs):
     """
     """
     header = 'chrom\tstart\tend\tsample\tS*_score\tS*_SNP_number\tS*_SNPs'
     worker_func = _sstar_worker
     output_func = _sstar_output
+
     for c in kwargs['tgt_data'].keys():
+        # Remove variants observed in the reference population
+        # Assume 1 is the derived allele
+        variants_not_in_ref = np.sum(kwargs['ref_data'][c]['GT'].is_hom_ref(), axis=1) == len(kwargs['ref_samples'])
+        kwargs['tgt_data'] = filter_data(kwargs['tgt_data'], c, variants_not_in_ref)
         kwargs['tgt_data'][c]['GT'] = np.sum(kwargs['tgt_data'][c]['GT'], axis=2)
+        windows = create_windows(kwargs['tgt_data'][c]['POS'], c, win_step, win_len)
 
     _manager(windows, output, thread, header, worker_func, output_func,
-             ref_data=None, tgt_data=kwargs['tgt_data'], samples=kwargs['samples'], 
+             ref_data=None, tgt_data=kwargs['tgt_data'], samples=kwargs['tgt_samples'], 
              match_bonus=kwargs['match_bonus'], max_mismatch=kwargs['max_mismatch'], mismatch_penalty=kwargs['mismatch_penalty'])
 
 
@@ -122,6 +127,7 @@ def _manager(windows, output, thread, header, worker_func, output_func, **kwargs
     finally:
         for w in workers: w.join()
 
+    res.sort(key=lambda x: (x[0], x[1], x[2]))
     output_func(output, header, kwargs['samples'], res)
 
 
@@ -133,8 +139,14 @@ def _archie_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_pena
         spectra = cal_n_ton(tgt_gts)
         min_ref_dists = cal_ref_dist(ref_gts, tgt_gts)
         tgt_dists, mean_tgt_dists, var_tgt_dists, skew_tgt_dists, kurtosis_tgt_dists = cal_tgt_dist(tgt_gts)
-        pvt_mut_nums = cal_pvt_mut_num(ref_gts, tgt_gts)
-        sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(tgt_gts, pos, match_bonus, max_mismatch, mismatch_penalty)
+
+        variants_not_in_ref = np.sum(ref_gts, axis=1)==0
+        sub_ref_gts = ref_gts[variants_not_in_ref]
+        sub_tgt_gts = tgt_gts[variants_not_in_ref]
+        sub_pos = pos[variants_not_in_ref]
+
+        pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
+        sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 'archie', match_bonus, max_mismatch, mismatch_penalty)
         out_queue.put((chr_name, start, end, 
                        spectra, min_ref_dists, tgt_dists, 
                        mean_tgt_dists, var_tgt_dists, skew_tgt_dists, 
@@ -146,12 +158,15 @@ def _sstar_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penal
     """
     while True:
         chr_name, start, end, ref_gts, tgt_gts, pos = in_queue.get()
-        sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(tgt_gts, pos, match_bonus, max_mismatch, mismatch_penalty)
+        sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(tgt_gts, pos, 'vernot2016', match_bonus, max_mismatch, mismatch_penalty)
         out_queue.put((chr_name, start, end, sstar_scores, sstar_snp_nums, haplotypes))
 
 
 def _archie_output(output, header, samples, res):
+    """
+    """
     with open(output, 'w') as o:
+        o.write(header+'\n')
         for item in res:
             chr_name = item[0]
             start = item[1]
@@ -190,6 +205,8 @@ def _archie_output(output, header, samples, res):
 
 
 def _sstar_output(output, header, samples, res):
+    """
+    """
     with open(output, 'w') as o:
         o.write(header+'\n')
         for item in res:
@@ -205,5 +222,5 @@ def _sstar_output(output, header, samples, res):
 
 
 if __name__ == '__main__':
-    process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 'test.sstar.out', 50000, 10000, 1, 5000, 5, -10000, process_archie=False)
-    process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 'test.archie.out', 50000, 10000, 1, 5000, 5, -10000, process_archie=True)
+    process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 'test.sstar.out', 50000, 10000, 2, 5000, 5, -10000, process_archie=False)
+    process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 'test.archie.out', 50000, 10000, 2, 5000, 5, -10000, process_archie=True)

@@ -104,7 +104,7 @@ def cal_pvt_mut_num(ref_gt, tgt_gt):
     return pvt_mut_num
 
 
-def cal_sstar(tgt_gt, pos, match_bonus, max_mismatch, mismatch_penalty):
+def cal_sstar(tgt_gt, pos, method, match_bonus, max_mismatch, mismatch_penalty):
     """
     Description:
         Calculates sstar scores for a given genotype matrix.
@@ -112,6 +112,11 @@ def cal_sstar(tgt_gt, pos, match_bonus, max_mismatch, mismatch_penalty):
     Arguments:
         tgt_gt numpy.ndarray: Genotype matrix for individuals from the target population.
         pos numpy.ndarray: Positions for the variants.
+        method str: Method to create the physical distance matrix and genotype distance matrix.
+                    Supported methods: vernot2016, vernot2014, and archie.
+                    vernot2016 calculates genotype distances with a single individual from the target population.
+                    vernot2014 calculates genotype distances with all individuals from the target population.
+                    archie uses vernot2014 to calculate genotype distances but removes singletons before calculating genotype distances.
         match_bonus int: Bonus for matching genotypes of two different variants.
         max_mismatch int: Maximum genotype distance allowed.
         mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
@@ -121,24 +126,44 @@ def cal_sstar(tgt_gt, pos, match_bonus, max_mismatch, mismatch_penalty):
         sstar_snp_nums list: Numbers of sstar SNPs.
         haplotypes list: The haplotypes used for obtaining the estimated sstar scores.
     """
-    def _cal_ind_sstar(gt, pos, match_bonus, max_mismatch, mismatch_penalty):
-        pos = pos[gt!=0]
-        gt = gt[gt!=0]
-        snp_num = len(pos)
-        pos_matrix = np.tile(pos, (snp_num, 1))
-        geno_matrix = np.tile(gt, (snp_num, 1))
+    def _create_matrixes(gt, pos, idx, method):
+        hap = gt[:,idx]
+        pos = pos[hap!=0]
+
+        if method == 'vernot2016':
+            # Calculate genotype distance with a single individual
+            gt = hap[hap!=0]
+            geno_matrix = np.tile(gt, (len(pos), 1))
+            gd_matrix = np.transpose(geno_matrix)-geno_matrix
+        elif method == 'vernot2014':
+            # Calculate genotype distance with all individuals
+            gd_matrix = distance_matrix(geno_matrix, geno_matrix, p=1)
+        elif method == 'archie':
+            geno_matrix = gt[hap!=0]
+            # Remove singletons
+            idx = np.sum(geno_matrix,axis=1)!=1
+            pos = pos[idx]
+            geno_matrix = geno_matrix[idx]
+            gd_matrix = distance_matrix(geno_matrix, geno_matrix, p=1)
+        else: raise ValueError(f'Method {method} is not supported!')
+
+        pos_matrix = np.tile(pos, (len(pos), 1))
         pd_matrix = np.transpose(pos_matrix)-pos_matrix
-        gd_matrix = np.transpose(geno_matrix)-geno_matrix
         pd_matrix = pd_matrix.astype('float')
+
+        return pd_matrix, gd_matrix, pos
+
+    def _cal_ind_sstar(pd_matrix, gd_matrix, pos, match_bonus, max_mismatch, mismatch_penalty):
         pd_matrix[pd_matrix<10] = -np.inf
         pd_matrix[(pd_matrix>=10)*(gd_matrix==0)] += match_bonus
         pd_matrix[(pd_matrix>=10)*(gd_matrix>0)*(gd_matrix<=max_mismatch)] = mismatch_penalty
         pd_matrix[(pd_matrix>=10)*(gd_matrix>max_mismatch)] = -np.inf
 
+        snp_num = len(pos)
         max_scores = [0] * snp_num
         max_score_snps = [[]] * snp_num
         for j in range(snp_num):
-            max_score = 0
+            max_score = -np.inf
             snps = []
             for i in range(j):
                 score = max_scores[i] + pd_matrix[j,i]
@@ -166,7 +191,8 @@ def cal_sstar(tgt_gt, pos, match_bonus, max_mismatch, mismatch_penalty):
     sstar_snp_nums = []
     haplotypes = []
     for i in range(ind_num):
-        sstar_score, haplotype = _cal_ind_sstar(tgt_gt[:,i], pos, match_bonus, max_mismatch, mismatch_penalty)
+        pd_matrix, gd_matrix, sub_pos = _create_matrixes(tgt_gt, pos, i, method)
+        sstar_score, haplotype = _cal_ind_sstar(pd_matrix, gd_matrix, sub_pos, match_bonus, max_mismatch, mismatch_penalty)
         if haplotype is not None: sstar_snp_num = len(haplotype)
         else: sstar_snp_num = 'NA'
         if haplotype is not None: haplotype = ",".join([str(x) for x in haplotype])
