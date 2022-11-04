@@ -180,28 +180,18 @@ def _archie_output(output, header, samples, res):
             kurtosis_tgt_dists = item[9]
             pvt_mut_nums = item[10]
             sstar_scores = item[11]
-            for i in range(len(samples)):
-                ind_name = samples[i]
-                hap1_spectrum = "\t".join([str(x) for x in spectra[i]])
-                hap2_spectrum = "\t".join([str(x) for x in spectra[i+1]])
-                hap1_min_ref_dist = min_ref_dists[i]
-                hap2_min_ref_dist = min_ref_dists[i+1]
-                hap1_tgt_dist = "\t".join([str(x) for x in tgt_dists[i]])
-                hap2_tgt_dist = "\t".join([str(x) for x in tgt_dists[i+1]])
-                hap1_mean_tgt_dist = mean_tgt_dists[i]
-                hap2_mean_tgt_dist = mean_tgt_dists[i+1]
-                hap1_var_tgt_dist = var_tgt_dists[i]
-                hap2_var_tgt_dist = var_tgt_dists[i+1]
-                hap1_skew_tgt_dist = skew_tgt_dists[i]
-                hap2_skew_tgt_dist = skew_tgt_dists[i+1]
-                hap1_kurtosis_tgt_dist = kurtosis_tgt_dists[i]
-                hap2_kurtosis_tgt_dist = kurtosis_tgt_dists[i+1]
-                hap1_pvt_mut_num = pvt_mut_nums[i]
-                hap2_pvt_mut_num = pvt_mut_nums[i+1]
-                hap1_sstar_score = sstar_scores[i]
-                hap2_sstar_score = sstar_scores[i+1]
-                o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{hap1_spectrum}\t{hap1_tgt_dist}\t{hap1_mean_tgt_dist}\t{hap1_var_tgt_dist}\t{hap1_skew_tgt_dist}\t{hap1_kurtosis_tgt_dist}\t{hap1_min_ref_dist}\t{hap1_sstar_score}\t{hap1_pvt_mut_num}\n')
-                o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{hap2_spectrum}\t{hap2_tgt_dist}\t{hap2_mean_tgt_dist}\t{hap2_var_tgt_dist}\t{hap2_skew_tgt_dist}\t{hap2_kurtosis_tgt_dist}\t{hap2_min_ref_dist}\t{hap2_sstar_score}\t{hap2_pvt_mut_num}\n')
+            for i in range(len(samples)*2):
+                ind_name = samples[int(i/2)]
+                spectrum = "\t".join([str(x) for x in spectra[i]])
+                min_ref_dist = min_ref_dists[i]
+                tgt_dist = "\t".join([str(x) for x in tgt_dists[i]])
+                mean_tgt_dist = mean_tgt_dists[i]
+                var_tgt_dist = var_tgt_dists[i]
+                skew_tgt_dist = skew_tgt_dists[i]
+                kurtosis_tgt_dist = kurtosis_tgt_dists[i]
+                pvt_mut_num = pvt_mut_nums[i]
+                sstar_score = sstar_scores[i]
+                o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{spectrum}\t{tgt_dist}\t{mean_tgt_dist}\t{var_tgt_dist}\t{skew_tgt_dist}\t{kurtosis_tgt_dist}\t{min_ref_dist}\t{sstar_score}\t{pvt_mut_num}\n')
 
 
 def _sstar_output(output, header, samples, res):
