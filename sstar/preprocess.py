@@ -191,6 +191,7 @@ def _archie_output(output, header, samples, res):
                 kurtosis_tgt_dist = kurtosis_tgt_dists[i]
                 pvt_mut_num = pvt_mut_nums[i]
                 sstar_score = sstar_scores[i]
+                if sstar_score == -np.inf: sstar_score = 0
                 o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{spectrum}\t{tgt_dist}\t{mean_tgt_dist}\t{var_tgt_dist}\t{skew_tgt_dist}\t{kurtosis_tgt_dist}\t{min_ref_dist}\t{sstar_score}\t{pvt_mut_num}\n')
 
 
