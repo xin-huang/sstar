@@ -23,6 +23,22 @@ from sstar.utils import read_data, filter_data, create_windows
 
 def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, output, win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, process_archie=False):
     """
+    Description:
+        Processes genotype data.
+
+    Arguments:
+        vcf_file str: Name of the VCF file containing genotype data.
+        ref_ind_file str: Name of the file containing sample information from the reference population.
+        tgt_ind_file str: Name of the file containing sample information from the target population.
+        anc_allele_file str: Name of the file containing ancestral allele information.
+        output str: Name of the output file.
+        win_len int: Length of sliding windows.
+        win_step int: Step size of sliding windows.
+        thread int: Number of threads.
+        match_bonus int: Bonus for matching genotypes of two different variants.
+        max_mismatch int: Maximum genotype distance allowed.
+        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
+        process_archie bool: If True, process the data for using archie; If False, process the data for using sstar.
     """
     ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, anc_allele_file)
     chr_names = tgt_data.keys()
@@ -39,6 +55,22 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, output, 
 
 def _process_archie(win_step, win_len, output, thread, **kwargs):
     """
+    Description:
+        Processes genotype data for using archie.
+
+    Arguments:
+        win_step int: Length of sliding windows.
+        win_len int: Step size of sliding windows.
+        output str: Name of the output file.
+        thread int: Number of threads.
+
+    Keyword arguments:
+        ref_data dict: Dictionary containing data from the reference population.
+        tgt_data dict: Dictionary containing data from the target population.
+        samples list: List containing sample information from the target population.
+        match_bonus int: Bonus for matching genotypes of two different variants.
+        max_mismatch int: Maximum genotype distance allowed.
+        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
     """
     ind_num = len(kwargs['samples'])
     header = 'chrom\tstart\tend\tsample\t'
@@ -71,6 +103,23 @@ def _process_archie(win_step, win_len, output, thread, **kwargs):
 
 def _process_sstar(win_step, win_len, output, thread, **kwargs):
     """
+    Description:
+        Processes genotype data for using sstar.
+
+    Arguments:
+        win_step int: Length of sliding windows.
+        win_len int: Step size of sliding windows.
+        output str: Name of the output file.
+        thread int: Number of threads.
+
+    Keyword arguments:
+        ref_data dict: Dictionary containing data from the reference population.
+        tgt_data dict: Dictionary containing data from the target population.
+        ref_samples list: List containing sample information from the reference population.
+        tgt_samples list: List containing sample information from the target population.
+        match_bonus int: Bonus for matching genotypes of two different variants.
+        max_mismatch int: Maximum genotype distance allowed.
+        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
     """
     header = 'chrom\tstart\tend\tsample\tS*_score\tS*_SNP_number\tS*_SNPs'
     worker_func = _sstar_worker
@@ -91,6 +140,24 @@ def _process_sstar(win_step, win_len, output, thread, **kwargs):
 
 def _manager(windows, output, thread, header, worker_func, output_func, **kwargs):
     """
+    Description:
+        Manages multi-processing jobs.
+
+    Arguments:
+        windows list: List containing sliding windows across the genome.
+        output str: Name of the output file.
+        thread int: Number of threads.
+        header str: Header line for the output file.
+        worker_func func: Worker function.
+        output_func func: Output function.
+
+    Keywords arguments:
+        ref_data dict: Dictionary containing data from the reference population.
+        tgt_data dict: Dictionary containing data from the target population.
+        samples list: List containing sample information from the target population.
+        match_bonus int: Bonus for matching genotypes of two different variants.
+        max_mismatch int: Maximum genotype distance allowed.
+        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
     """
     try:
         from pytest_cov.embed import cleanup_on_sigterm
@@ -133,6 +200,15 @@ def _manager(windows, output, thread, header, worker_func, output_func, **kwargs
 
 def _archie_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penalty):
     """
+    Description:
+        Calculates statistics for archie.
+
+    Arguments:
+        in_queue multiprocessing.Queue: multiprocessing.Queue instance to receive parameters from the manager.
+        out_queue multiprocessing.Queue: multiprocessing.Queue instance to send results to the manager.
+        match_bonus int: Bonus for matching genotypes of two different variants.
+        max_mismatch int: Maximum genotype distance allowed.
+        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
     """
     while True:
         chr_name, start, end, ref_gts, tgt_gts, pos = in_queue.get()
@@ -155,6 +231,15 @@ def _archie_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_pena
 
 def _sstar_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penalty):
     """
+    Description:
+        Calculates S* scores for sstar.
+
+    Arguments:
+        in_queue multiprocessing.Queue: multiprocessing.Queue instance to receive parameters from the manager.
+        out_queue multiprocessing.Queue: multiprocessing.Queue instance to send results to the manager.
+        match_bonus int: Bonus for matching genotypes of two different variants.
+        max_mismatch int: Maximum genotype distance allowed.
+        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
     """
     while True:
         chr_name, start, end, ref_gts, tgt_gts, pos = in_queue.get()
@@ -164,6 +249,14 @@ def _sstar_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penal
 
 def _archie_output(output, header, samples, res):
     """
+    Description:
+        Outputs results from archie.
+
+    Arguments:
+        output str: Name of the output file.
+        header str: Header line for the output file.
+        samples list: List containing sample information.
+        res list: List containing results.
     """
     with open(output, 'w') as o:
         o.write(header+'\n')
@@ -197,6 +290,14 @@ def _archie_output(output, header, samples, res):
 
 def _sstar_output(output, header, samples, res):
     """
+    Description:
+        Outputs results from sstar.
+
+    Arguments:
+        output str: Name of the output file.
+        header str: Header line for the output file.
+        samples list: List containing sample information.
+        res list: List containing results.
     """
     with open(output, 'w') as o:
         o.write(header+'\n')
