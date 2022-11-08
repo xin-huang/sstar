@@ -19,7 +19,7 @@ import os
 import numpy as np
 import pandas as pd
 from multiprocessing import Process, Queue
-from sstar.utils import read_data, py2round, read_mapped_region_file, cal_matchpct
+from sstar.utils import read_data, read_mapped_region_file, cal_matchpct
 
 #@profile
 def cal_match_pct(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file, output, thread, score_file, mapped_region_file):
