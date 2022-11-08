@@ -311,8 +311,3 @@ def _sstar_output(output, header, samples, res):
             for i in range(len(samples)):
                 ind_name = samples[i]
                 o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{sstar_scores[i]}\t{sstar_snp_nums[i]}\t{haplotypes[i]}\n')
-
-
-if __name__ == '__main__':
-    process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 'test.sstar.out', 50000, 10000, 2, 5000, 5, -10000, process_archie=False)
-    process_data('../tests/data/test.score.data.vcf', '../tests/data/test.ref.ind.list', '../tests/data/test.tgt.ind.list', None, 'test.archie.out', 50000, 10000, 2, 5000, 5, -10000, process_archie=True)
