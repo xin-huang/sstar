@@ -193,10 +193,13 @@ def cal_sstar(tgt_gt, pos, method, match_bonus, max_mismatch, mismatch_penalty):
     for i in range(ind_num):
         pd_matrix, gd_matrix, sub_pos = _create_matrixes(tgt_gt, pos, i, method)
         sstar_score, haplotype = _cal_ind_sstar(pd_matrix, gd_matrix, sub_pos, match_bonus, max_mismatch, mismatch_penalty)
-        if haplotype is not None: sstar_snp_num = len(haplotype)
-        else: sstar_snp_num = 'NA'
-        if haplotype is not None: haplotype = ",".join([str(x) for x in haplotype])
-        else: haplotype = 'NA'
+        if sstar_score == -np.inf: sstar_score = 0
+        if (haplotype is not None) and (len(haplotype) != 0): 
+            sstar_snp_num = len(haplotype)
+            haplotype = ",".join([str(x) for x in haplotype])
+        else: 
+            sstar_snp_num = 'NA'
+            haplotype = 'NA'
         sstar_scores.append(sstar_score)
         sstar_snp_nums.append(sstar_snp_num)
         haplotypes.append(haplotype)

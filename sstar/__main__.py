@@ -23,8 +23,10 @@ def _set_sigpipe_handler():
 
 
 def _run_score(args):
-    from sstar.cal_sstar_stats import cal_s_star
-    cal_s_star(vcf=args.vcf, ref_ind_file=args.ref_ind, tgt_ind_file=args.tgt_ind, anc_allele_file=args.anc_allele, win_len=args.win_len, win_step=args.win_step, output=args.output, thread=args.thread, match_bonus=args.match_bonus, max_mismatch=args.max_mismatch, mismatch_penalty=args.mismatch_penalty)
+    #from sstar.cal_sstar_stats import cal_s_star
+    #cal_s_star(vcf=args.vcf, ref_ind_file=args.ref_ind, tgt_ind_file=args.tgt_ind, anc_allele_file=args.anc_allele, win_len=args.win_len, win_step=args.win_step, output=args.output, thread=args.thread, match_bonus=args.match_bonus, max_mismatch=args.max_mismatch, mismatch_penalty=args.mismatch_penalty)
+    from sstar.preprocess import process_data
+    process_data(vcf_file=args.vcf, ref_ind_file=args.ref_ind, tgt_ind_file=args.tgt_ind, anc_allele_file=args.anc_allele, win_len=args.win_len, win_step=args.win_step, output=args.output, thread=args.thread, match_bonus=args.match_bonus, max_mismatch=args.max_mismatch, mismatch_penalty=args.mismatch_penalty)
 
 
 def _run_quantile(args):

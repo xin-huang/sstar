@@ -39,7 +39,6 @@ def test_process_data(data):
 
     assert res == exp_res
 
-
     res = [line for line in open(pytest.archie_output, 'r').readlines()]
     exp_res = [line for line in open(pytest.archie_exp_output, 'r').readlines()]
 
