@@ -151,7 +151,7 @@ def _manager(windows, output, thread, header, worker_func, output_func, **kwargs
         worker_func func: Worker function.
         output_func func: Output function.
 
-    Keywords arguments:
+    Keyword arguments:
         ref_data dict: Dictionary containing data from the reference population.
         tgt_data dict: Dictionary containing data from the target population.
         samples list: List containing sample information from the target population.
