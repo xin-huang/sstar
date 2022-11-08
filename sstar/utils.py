@@ -449,9 +449,3 @@ def _cal_hap_stats(gt, hap, pos, src_variants, src_hom_variants, src_het_variant
             hap_sfs = np.nan
 
     return hap_variants_num, hap_site_num, hap_match_src_allele_num, hap_sfs, hap_match_pct
-
-def py2round(x, d=0):
-    p = 10 ** d
-    if x > 0: return float(math.floor((x * p) + 0.5))/p
-    elif x < 0: float(math.ceil((x * p) - 0.5))/p
-    else: return 0.0

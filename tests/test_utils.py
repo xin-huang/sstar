@@ -13,10 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 import allel
 import pytest
 import numpy as np
-from sstar.utils import parse_ind_file, read_geno_data, filter_data, read_data, get_ref_alt_allele, read_anc_allele, check_anc_allele, read_mapped_region_file, _cal_mapped_len, cal_matchpct
+from sstar.utils import *
+from sstar.utils import _cal_mapped_len, _cal_hap_stats
+
 
 @pytest.fixture
 def data():
@@ -27,6 +30,7 @@ def data():
     pytest.emp_ind_list = "./tests/data/test.empty.ind.list"
     pytest.emp_anc_allele = "./tests/data/test.empty.anc.allele.bed"
     pytest.mapped_regions = "tests/data/test.mapped.region.bed"
+
 
 def test_parse_inds_file(data):
     ref_ind = parse_ind_file(pytest.ref_ind_list)
@@ -41,6 +45,7 @@ def test_parse_inds_file(data):
     with pytest.raises(Exception) as e_info:
         emp_ind = parse_ind_file(pytest.emp_ind_list)
 
+
 def test_read_geno_data(data):
     ref_ind = parse_ind_file(pytest.ref_ind_list)
     d = read_geno_data(pytest.vcf, ref_ind, None, filter_missing=False)
@@ -52,6 +57,7 @@ def test_read_geno_data(data):
     assert np.array_equal(d['21']['REF'], vcf['variants/REF'])
     assert np.array_equal(d['21']['ALT'], vcf['variants/ALT'])
     assert np.array_equal(d['21']['GT'], vcf['calldata/GT'])
+
 
 def test_read_data(data):
     ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(pytest.vcf, pytest.ref_ind_list, pytest.tgt_ind_list, None, None)
@@ -76,6 +82,7 @@ def test_read_data(data):
     assert np.array_equal(tgt_data['21']['ALT'], tgt_vcf['variants/ALT'])
     assert np.array_equal(tgt_data['21']['GT'], tgt_vcf['calldata/GT'])
 
+
 def test_read_anc_allele(data):
     anc_allele = read_anc_allele(pytest.anc_allele)
 
@@ -89,6 +96,7 @@ def test_read_anc_allele(data):
 
     with pytest.raises(Exception) as e_info:
         anc_allele = read_anc_allele(pytest.emp_anc_allele)
+
 
 def test_get_ref_alt_allele(data):
     ref_ind = parse_ind_file(pytest.ref_ind_list)
@@ -115,6 +123,7 @@ def test_get_ref_alt_allele(data):
     assert ref_allele == exp_ref_allele
     assert alt_allele == exp_alt_allele
 
+
 def test_check_anc_allele(data):
     ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(pytest.vcf, pytest.ref_ind_list, pytest.tgt_ind_list, None, pytest.anc_allele)
   
@@ -129,6 +138,16 @@ def test_check_anc_allele(data):
     assert np.array_equal(ref_data['21']['GT'], exp_ref_gt)
     assert np.array_equal(tgt_data['21']['GT'], exp_tgt_gt)
     assert np.array_equal(tgt_data['21']['POS'], exp_tgt_pos)
+
+
+def test_create_windows(data):
+    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(pytest.vcf, pytest.ref_ind_list, pytest.tgt_ind_list, None, pytest.anc_allele)
+    windows = create_windows(tgt_data['21']['POS'], '21', 10000, 50000)
+
+    exp_windows = [('21', 0, 50000), ('21', 10000, 60000), ('21', 20000, 70000), ('21', 30000, 80000), ('21', 40000, 90000)]
+
+    assert windows == exp_windows
+
 
 def test_cal_mapped_len(data):
     mapped_intervals = read_mapped_region_file(pytest.mapped_regions)
@@ -145,6 +164,7 @@ def test_cal_mapped_len(data):
     assert len4 == 40000
     assert len5 == 18000
     assert len6 == 2000
+
 
 def test_cal_matchpct(data):
     ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data("./tests/data/test.match.rate.data.vcf", "./examples/data/ind_list/ref.ind.list", "./examples/data/ind_list/tgt.ind.list", "./examples/data/ind_list/nean.ind.list", None)
