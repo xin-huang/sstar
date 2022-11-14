@@ -18,18 +18,11 @@ import demes, msprime
 from multiprocessing import Process, Queue
 
 
-def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed=None, train_archie=False):
+def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed=None, train_archie=False):
     """
     """
-    demo_graph = demes.load(demo_model_file)
-    demography = msprime.Demography.from_demes(demo_graph)
-    samples = [
-        msprime.SampleSet(nref, ploidy=2, population=ref_id),
-        msprime.SampleSet(ntgt, ploidy=2, population=tgt_id),
-    ]
-
     # simulate data
-    _manager(nrep, demography, samples, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed)
+    _simulation_manager(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed)
 
     if train_archie:
         _train_archie()
@@ -47,7 +40,7 @@ def _train_sstar():
     pass
 
 
-def _manager(nrep, demography, samples, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed):
+def _simulation_manager(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed):
     """
     """
     try:
@@ -57,9 +50,16 @@ def _manager(nrep, demography, samples, seq_len, mut_rate, rec_rate, thread, out
     else:
         cleanup_on_sigterm()
 
+    demo_graph = demes.load(demo_model_file)
+    demography = msprime.Demography.from_demes(demo_graph)
+    samples = [
+        msprime.SampleSet(nref, ploidy=2, population=ref_id),
+        msprime.SampleSet(ntgt, ploidy=2, population=tgt_id),
+    ]
+
     res = []
     in_queue, out_queue = Queue(), Queue()
-    workers = [Process(target=_simulation, args=(in_queue, out_queue, demography, samples, seq_len, mut_rate, rec_rate, output_prefix, output_dir, seed)) for i in range(thread)]
+    workers = [Process(target=_simulation_worker, args=(in_queue, out_queue, demography, samples, tgt_id, src_id, seq_len, mut_rate, rec_rate, output_prefix, output_dir, seed)) for i in range(thread)]
 
     for i in range(nrep): in_queue.put(i)
 
@@ -73,7 +73,7 @@ def _manager(nrep, demography, samples, seq_len, mut_rate, rec_rate, thread, out
         for w in workers: w.join()
 
 
-def _simulation(in_queue, out_queue, demography, samples, seq_len, mut_rate, rec_rate, output_prefix, output_dir, seed):
+def _simulation_worker(in_queue, out_queue, demography, samples, tgt_id, src_id, seq_len, mut_rate, rec_rate, output_prefix, output_dir, seed):
     """
     """
     while True:
@@ -87,15 +87,34 @@ def _simulation(in_queue, out_queue, demography, samples, seq_len, mut_rate, rec
             random_seed=seed,
         )
         ts = msprime.sim_mutations(ts, rate=mut_rate, random_seed=seed)
+        true_tracts = _get_true_tracts(ts, tgt_id, src_id)
+
         ts.dump(output_dir+'/'+output_prefix+f'{rep}.ts')
+        with open(output_dir+'/'+output_prefix+f'{rep}.vcf', 'w') as o:
+            ts.write_vcf(o)
+        with open(output_dir+'/'+output_prefix+f'{rep}.true.tracts.bed', 'w') as o:
+            for t in true_tracts:
+                o.write(f'1\t{t[0]}\t{t[1]}\n')
+
         out_queue.put(rep)
 
 
-def _get_true_tracts():
+def _get_true_tracts(ts, tgt_id, src_id):
     """
     """
-    pass
+    tracts = []
+
+    for p in ts.populations():
+        source_id = [p.id for p in ts.populations() if p.metadata['name']==src_id][0]
+        target_id = [p.id for p in ts.populations() if p.metadata['name']==tgt_id][0]
+
+    for m in ts.migrations():
+        if m.dest == source_id: tracts.append((int(m.left), int(m.right)))
+
+    tracts.sort(key=lambda x:x[0])
+
+    return tracts
 
 
 if __name__ == '__main__':
-    train("./examples/models/BonoboGhost_4K19_no_introgression.yaml", 10, 10, 10, 'Western', 'Bonobo', 10000, 1e-8, 1e-8, 2, 'test', './examples')
+    train("./examples/models/BonoboGhost_4K19_no_introgression.yaml", 10, 10, 10, 'Western', 'Bonobo', 'Ghost', 10000, 1e-8, 1e-8, 2, 'test', './examples')
