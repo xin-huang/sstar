@@ -15,6 +15,7 @@
 
 
 import demes, msprime
+import pandas as pd
 from multiprocessing import Process, Queue
 
 
@@ -92,9 +93,14 @@ def _simulation_worker(in_queue, out_queue, demography, samples, tgt_id, src_id,
         ts.dump(output_dir+'/'+output_prefix+f'{rep}.ts')
         with open(output_dir+'/'+output_prefix+f'{rep}.vcf', 'w') as o:
             ts.write_vcf(o)
-        with open(output_dir+'/'+output_prefix+f'{rep}.true.tracts.bed', 'w') as o:
-            for t in true_tracts:
-                o.write(f'1\t{t[0]}\t{t[1]}\n')
+       
+        df = pd.DataFrame()
+        for n in true_tracts.keys():
+            true_tracts[n].sort(key=lambda x:(x[0], x[1], x[2]))
+            df2 = pd.DataFrame(true_tracts[n], columns=['chr', 'start', 'end', 'hap', 'ind'])
+            df = pd.concat([df, df2])
+
+        df.drop_duplicates(keep='first').to_csv(output_dir+'/'+output_prefix+f'{rep}.true.tracts.bed', sep="\t", header=False, index=False)
 
         out_queue.put(rep)
 
@@ -102,19 +108,29 @@ def _simulation_worker(in_queue, out_queue, demography, samples, tgt_id, src_id,
 def _get_true_tracts(ts, tgt_id, src_id):
     """
     """
-    tracts = []
+    tracts = {}
+    introgression = []
 
     for p in ts.populations():
         source_id = [p.id for p in ts.populations() if p.metadata['name']==src_id][0]
         target_id = [p.id for p in ts.populations() if p.metadata['name']==tgt_id][0]
 
-    for m in ts.migrations():
-        if m.dest == source_id: tracts.append((int(m.left), int(m.right)))
+    for i in range(ts.num_samples):
+        node = ts.node(i)
+        if node.population == target_id: tracts[node.id] = []
 
-    tracts.sort(key=lambda x:x[0])
+    for m in ts.migrations():
+        if m.dest == source_id: introgression.append(m)
+
+    for i in introgression:
+        for t in ts.trees():
+            if i.left > t.interval[0]: continue
+            if i.right <= t.interval[0]: break
+            for n in tracts.keys():
+                if t.is_descendant(n, i.node): tracts[n].append([1, int(i.left), int(i.right), f'hap_{int(n%2)}', f'tsk_{ts.node(n).individual}'])
 
     return tracts
 
 
 if __name__ == '__main__':
-    train("./examples/models/BonoboGhost_4K19_no_introgression.yaml", 10, 10, 10, 'Western', 'Bonobo', 'Ghost', 10000, 1e-8, 1e-8, 2, 'test', './examples')
+    train("./examples/models/BonoboGhost_4K19.yaml", 1000, 50, 50, 'Western', 'Bonobo', 'Ghost', 50000, 1e-8, 1e-8, 2, 'test', './sstar/test')
