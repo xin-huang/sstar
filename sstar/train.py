@@ -95,7 +95,7 @@ def _simulation_worker(in_queue, out_queue, demography, samples, tgt_id, src_id,
             ts.write_vcf(o)
        
         df = pd.DataFrame()
-        for n in true_tracts.keys():
+        for n in sorted(true_tracts.keys()):
             true_tracts[n].sort(key=lambda x:(x[0], x[1], x[2]))
             df2 = pd.DataFrame(true_tracts[n], columns=['chr', 'start', 'end', 'hap', 'ind'])
             df = pd.concat([df, df2])
@@ -107,6 +107,13 @@ def _simulation_worker(in_queue, out_queue, demography, samples, tgt_id, src_id,
 
 def _get_true_tracts(ts, tgt_id, src_id):
     """
+    Description:
+        Helper function to obtain ground truth introgressed tracts from tree-sequence.
+
+    Arguments:
+        ts tskit.TreeSqueuece: Tree-sequence containing ground truth introgressed tracts.
+        tgt_id str: Name of the target population. 
+        src_id str: Name of the source population.
     """
     tracts = {}
     introgression = []
@@ -130,6 +137,36 @@ def _get_true_tracts(ts, tgt_id, src_id):
                 if t.is_descendant(n, i.node): tracts[n].append([1, int(i.left), int(i.right), f'hap_{int(n%2)}', f'tsk_{ts.node(n).individual}'])
 
     return tracts
+
+
+def _label(tracts, archaic_prop, not_archaic_prop, seq_len):
+    """
+    Description:
+        Helper function to label a fragment as 'introgressed', 'not introgressed', or 'ambiguous'.
+
+    Arguments:
+        tracts str: Name of the file containing ground truth introgressed fragments.
+        archaic_prop float: Threshold to label a fragment as 'introgressed'.
+        not_archaic_prop float: Threshold to label a fragment as 'not introgressed'.
+        seq_len int: Length of the fragment.
+    """
+    def _add_label(row, archaic_prop, not_archaic_prop):
+        if row['prop'] > archaic_prop: return [1,0,0]
+        elif row['prop'] < not_archaic_prop: return [0,1,0]
+        else: return [0,0,1]
+
+    try:
+        df = pd.read_csv(tracts, sep="\t", header=None)
+    except pandas.errors.EmptyDataError:
+        return None
+
+    df.columns = ['chr', 'start', 'end', 'hap', 'ind']
+    df['len'] = df['end'] - df['start']
+    df = df.groupby(by=['hap', 'ind'])['len'].sum().reset_index()
+    df['prop'] = df['len'] / seq_len
+    df['label'] = df.apply(lambda row: _add_label(row, archaic_prop, not_archaic_prop), axis=1)
+
+    return df
 
 
 if __name__ == '__main__':
