@@ -47,7 +47,7 @@ And it should return some paths similar to
 	/path/to/conda/envs/sstar/bin/python
 	/path/to/conda/envs/sstar/bin/R
 
-### Citation
+### Citations
 
 If you find `sstar` is useful, please cite
 
