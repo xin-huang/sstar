@@ -46,3 +46,12 @@ And it should return some paths similar to
 
 	/path/to/conda/envs/sstar/bin/python
 	/path/to/conda/envs/sstar/bin/R
+
+### Citation
+
+If you find `sstar` is useful, please cite
+
+- Plagnol V, Wall JD. 2006. Possible ancestral structure in human populations. *PLoS Genet*. **2**: e105.
+- Vernot B, Akey JM. 2014. Resurrecting surviving Neandertal lineages from modern human genomes. *Science* **343**: 1017–1021.
+- Vernot B, et al. 2016. Excavating Neandertal and Denisovan DNA from the genomes of Melanesian individuals. *Science* **352**: 235–239.
+- Huang X, Kruisz P, Kuhlwilm M. 2022. sstar: A Python package for detecting archaic introgression from population genetic data with *S*\*. *Mol Biol Evol* **39**: msac212.
