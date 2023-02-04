@@ -17,7 +17,7 @@ The meaning of each column:
 - The quantile column is the quantile at which the S\* score in column 1 is observed in the simulated dataset 
 - The log(local_recomb_rate) column is the logarithm of the local recombination rate of a simulated dataset.
 
-Users also need to provide the file containing S\* scores estimated from real data (e.g. [test.score.exp.results](https://github.com/xin-huang/sstar/blob/main/tests/results/test.score.exp.results)). Users can use a BED file (e.g. [hum.windows.50k.10k.recomb.map](https://raw.githubusercontent.com/xin-huang/sstar/main/examples/data/real_data/hum.windows.50k.10k.recomb.map)) to specify local recombination rates across the genome.
+Users also need to provide the file containing S\* scores estimated from real data (e.g. [test.score.exp.results](https://github.com/xin-huang/sstar/blob/main/tests/results/test.score.exp.results)). Users can use a BED file (e.g. [hum.windows.50k.10k.recomb.map](https://raw.githubusercontent.com/xin-huang/sstar/main/examples/data/real_data/hum.windows.50k.10k.recomb.map)) to specify local recombination rates across the genome. If a window is not found in the recombination map, while it is in the output file from `sstar score`, then this window will be ignored when calculating significant thresholds.
 
 Users can estimate significant S\* score thresholds giving a quantile 0.99 with the following command:
 

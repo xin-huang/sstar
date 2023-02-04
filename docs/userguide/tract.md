@@ -8,7 +8,7 @@ To obtain candidate introgressed fragments from `sstar`, users should provide th
 
 If one source individual is available, users also can calculate source match rates and output these source match rates and candidate introgressed regions in a single BED file.
 
-	sstar --threshold test.tract.threshold --output-prefix test --match-rate test.tract.src1.match.rate
+	sstar tract --threshold test.tract.threshold --output-prefix test --match-rate test.tract.src1.match.rate
 
 If source genomes from two different source populations are available, users could provide the output (e.g. [test.tract.src1.match.rate](https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.src1.match.rate) and [test.tract.src2.match.rate](https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.src2.match.rate)) from `sstar matchrate`, and use the following command:
 
