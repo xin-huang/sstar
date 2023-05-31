@@ -17,6 +17,9 @@ import allel
 import math
 import numpy as np
 
+import pybedtools
+
+
 #@profile
 def parse_ind_file(filename):
     """
@@ -449,3 +452,31 @@ def _cal_hap_stats(gt, hap, pos, src_variants, src_hom_variants, src_het_variant
             hap_sfs = np.nan
 
     return hap_variants_num, hap_site_num, hap_match_src_allele_num, hap_sfs, hap_match_pct
+
+
+def cal_accuracy(true_tracts, inferred_tracts):
+    """
+    Description:
+        Helper function for calculating accuracy.
+
+    Arguments:
+        true_tracts str: Name of the BED file containing true introgresssed tracts.
+        inferred_tracts str: Name of the BED file containing inferred introgressed tracts.
+
+    Returns:
+        precision float: Amount of true introgressed tracts detected divided by amount of inferred introgressed tracts.
+        recall float: Amount ot true introgressed tracts detected divided by amount of true introgressed tracts.
+    """
+    truth_tracts = pybedtools.BedTool(true_tracts).sort().merge()
+    inferred_tracts =  pybedtools.BedTool(inferred_tracts).sort().merge()
+
+    total_inferred_tracts = sum([x.stop - x.start for x in (inferred_tracts)])
+    total_true_tracts =  sum([x.stop - x.start for x in (truth_tracts)])
+    true_positives = sum([x.stop - x.start for x in inferred_tracts.intersect(truth_tracts)])
+
+    if float(total_inferred_tracts) == 0: precision = np.nan
+    else: precision = true_positives / float(total_inferred_tracts) * 100
+    if float(total_true_tracts) == 0: recall = np.nan
+    else: recall = true_positives / float(total_true_tracts) * 100
+
+    return precision, recall

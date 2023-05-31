@@ -72,12 +72,18 @@ def _process_archie(win_step, win_len, output, thread, **kwargs):
         max_mismatch int: Maximum genotype distance allowed.
         mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
     """
+
+    global ind_num
+
     ind_num = len(kwargs['samples'])
     header = 'chrom\tstart\tend\tsample\t'
     header += '\t'.join([str(x)+'-ton' for x in range(ind_num*2+1)]) + '\t'
     header += '\t'.join(['pairwised_dist'+str(x+1) for x in range(ind_num*2)])
     header += '\tmean_pairwised_dist\tvar_pairwised_dist\tskew_pairwised_dist\tkurtosis_pairwised_dist'
     header += '\tmin_dist_to_ref\tS*_score\tprivate_SNP_num'
+
+    header += '\thaplo'
+
     worker_func = _archie_worker
     output_func = _archie_output
 
@@ -125,6 +131,7 @@ def _process_sstar(win_step, win_len, output, thread, **kwargs):
     worker_func = _sstar_worker
     output_func = _sstar_output
 
+
     for c in kwargs['tgt_data'].keys():
         # Remove variants observed in the reference population
         # Assume 1 is the derived allele
@@ -171,6 +178,7 @@ def _manager(windows, output, thread, header, worker_func, output_func, **kwargs
     workers = [Process(target=worker_func, args=(in_queue, out_queue, kwargs['match_bonus'], kwargs['max_mismatch'], kwargs['mismatch_penalty'])) for i in range(thread)]
 
     for i in range(len(windows)):
+
         chr_name, start, end = windows[i]
         tgt_gts = kwargs['tgt_data'][chr_name]['GT']
         pos = kwargs['tgt_data'][chr_name]['POS']
@@ -212,7 +220,12 @@ def _archie_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_pena
     """
     while True:
         chr_name, start, end, ref_gts, tgt_gts, pos = in_queue.get()
-        spectra = cal_n_ton(tgt_gts)
+
+        #spectra = cal_n_ton(tgt_gts)
+        spectra = cal_n_ton_v2a(tgt_gts)
+        #global ind_num
+        #spectra = cal_n_ton_v2(tgt_gts, ind_num)
+
         min_ref_dists = cal_ref_dist(ref_gts, tgt_gts)
         tgt_dists, mean_tgt_dists, var_tgt_dists, skew_tgt_dists, kurtosis_tgt_dists = cal_tgt_dist(tgt_gts)
 
@@ -223,8 +236,11 @@ def _archie_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_pena
 
         pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
         sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 'archie', match_bonus, max_mismatch, mismatch_penalty)
+   
+        
         out_queue.put((chr_name, start, end, 
-                       spectra, min_ref_dists, tgt_dists, 
+                       spectra, 
+                       min_ref_dists, tgt_dists, 
                        mean_tgt_dists, var_tgt_dists, skew_tgt_dists, 
                        kurtosis_tgt_dists, pvt_mut_nums, sstar_scores))
 
@@ -276,6 +292,7 @@ def _archie_output(output, header, samples, res):
             for i in range(len(samples)*2):
                 ind_name = samples[int(i/2)]
                 spectrum = "\t".join([str(x) for x in spectra[i]])
+
                 min_ref_dist = min_ref_dists[i]
                 tgt_dist = "\t".join([str(x) for x in tgt_dists[i]])
                 mean_tgt_dist = mean_tgt_dists[i]
@@ -284,7 +301,11 @@ def _archie_output(output, header, samples, res):
                 kurtosis_tgt_dist = kurtosis_tgt_dists[i]
                 pvt_mut_num = pvt_mut_nums[i]
                 sstar_score = sstar_scores[i]
-                o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{spectrum}\t{tgt_dist}\t{mean_tgt_dist}\t{var_tgt_dist}\t{skew_tgt_dist}\t{kurtosis_tgt_dist}\t{min_ref_dist}\t{sstar_score}\t{pvt_mut_num}\n')
+
+                haplo = i % 2
+
+                #o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{spectrum}\t{tgt_dist}\t{mean_tgt_dist}\t{var_tgt_dist}\t{skew_tgt_dist}\t{kurtosis_tgt_dist}\t{min_ref_dist}\t{sstar_score}\t{pvt_mut_num}\n')
+                o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{spectrum}\t{tgt_dist}\t{mean_tgt_dist}\t{var_tgt_dist}\t{skew_tgt_dist}\t{kurtosis_tgt_dist}\t{min_ref_dist}\t{sstar_score}\t{pvt_mut_num}\t{haplo}\n')
 
 
 def _sstar_output(output, header, samples, res):
@@ -310,3 +331,71 @@ def _sstar_output(output, header, samples, res):
             for i in range(len(samples)):
                 ind_name = samples[i]
                 o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{sstar_scores[i]}\t{sstar_snp_nums[i]}\t{haplotypes[i]}\n')
+
+
+#default parameters
+demo_model_file="./examples/models/BonoboGhost_4K19.yaml"
+nrep = 2
+nref = 25
+ntgt=25
+ref_id = 'Western'
+tgt_id = 'Bonobo'
+src_id = 'Ghost'
+seq_len = 10000000
+mut_rate = 1e-8
+rec_rate = 1e-8
+thread = 2
+output_prefix = 'testb'
+output_dir = "run_archienew11"
+seed = None
+
+def store_global_parameters(demo_model_file_new, nrep_new, nref_new, ntgt_new, ref_id_new, tgt_id_new, src_id_new, seq_len_new, mut_rate_new, rec_rate_new, thread_new, output_prefix_new, output_dir_new):
+    global demo_model_file
+    global demo_model_file 
+    global nrep 
+    global nref 
+    global ntgt 
+    global ref_id 
+    global tgt_id  
+    global src_id 
+    global seq_len 
+    global mut_rate 
+    global rec_rate 
+    global thread 
+    global output_prefix 
+    global output_dir 
+    global demo_model_file 
+    demo_model_file = demo_model_file_new
+    nrep = nrep_new
+    nref = nref_new
+    ntgt = ntgt_new
+    ref_id = ref_id_new
+    tgt_id  = tgt_id_new
+    src_id = src_id_new
+    seq_len = seq_len_new
+    mut_rate = mut_rate_new
+    rec_rate = rec_rate_new
+    thread = thread_new
+    output_prefix = output_prefix_new
+    output_dir = output_dir_new
+
+
+
+def load_global_parameters():
+    global demo_model_file
+    global demo_model_file 
+    global nrep 
+    global nref 
+    global ntgt 
+    global ref_id 
+    global tgt_id  
+    global src_id 
+    global seq_len 
+    global mut_rate 
+    global rec_rate 
+    global thread 
+    global output_prefix 
+    global output_dir 
+    global demo_model_file 
+    return(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir)
+

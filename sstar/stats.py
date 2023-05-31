@@ -19,23 +19,92 @@ import scipy.stats as sps
 from scipy.spatial import distance_matrix
 
 
+
+
 def cal_n_ton(tgt_gt):
     """
     Description:
         Calculates individual frequency spetra for haplotypes.
+    Arguments:
+        tgt_gt numpy.ndarray: Genotype matrix from the target population.
+    Returns:
+        spectra numpy.ndarray: Individual frequency spectra for haplotypes.
+    """
+
+
+    try:
+        mut_num, hap_num = tgt_gt.shape
+        iv = np.ones((hap_num, 1))
+        counts = tgt_gt*np.matmul(tgt_gt, iv)
+        spectra = np.array([np.bincount(counts[:,idx].astype('int8'), minlength=hap_num+1) for idx in range(hap_num)])
+        # ArchIE does not count non-segragating sites
+        spectra[:,0] = 0
+    except Exception as e: 
+        print(e)
+        import sys
+        print("shape of input genotype matrix:")
+        print(tgt_gt.shape)
+        print("unique values")
+        print(np.unique(tgt_gt))
+        np.set_printoptions(threshold=sys.maxsize)
+        print("input tgt_gt")
+        print(tgt_gt)
+
+
+    return spectra
+
+
+def cal_n_ton_v2a(tgt_gt):
+    """
+    Description:
+        Calculates individual frequency spetra for haplotypes - entries greater than 1 changed to 1.
+    Arguments:
+        tgt_gt numpy.ndarray: Genotype matrix from the target population.
+    Returns:
+        spectra numpy.ndarray: Individual frequency spectra for haplotypes.
+    """
+
+    mut_num, hap_num = tgt_gt.shape
+    iv = np.ones((hap_num, 1))
+    counts = tgt_gt*np.matmul(tgt_gt, iv)
+    spectra = np.array([np.bincount(np.array(counts[:,idx] > 0).astype('int8'), minlength=hap_num+1) for idx in range(hap_num)])
+    # ArchIE does not count non-segragating sites
+    spectra[:,0] = 0
+
+    return spectra
+
+
+def cal_n_ton_v2(tgt_gt, ind_num):
+    """
+    Description:
+        Alternative version for calculating individual frequency spetra for haplotypes.
 
     Arguments:
         tgt_gt numpy.ndarray: Genotype matrix from the target population.
+        ind_num int: number of individuals 
 
     Returns:
         spectra numpy.ndarray: Individual frequency spectra for haplotypes.
     """
+
     mut_num, hap_num = tgt_gt.shape
-    iv = np.ones((hap_num, 1))
-    counts = tgt_gt*np.matmul(tgt_gt, iv)
-    spectra = np.array([np.bincount(counts[:,idx].astype('int8'), minlength=hap_num+1) for idx in range(hap_num)])
-    # ArchIE does not count non-segragating sites
-    spectra[:,0] = 0
+    max_length = ind_num * 2 + 1
+
+    spectra = []
+    ih_counts = []
+    for ih in range(hap_num):
+        counts = []
+        for elem in tgt_gt:
+            if elem[ih] == 1:
+                counts.append(np.sum(np.array(elem) >0).astype(int))
+
+        spectrum = np.bincount(counts, minlength=hap_num+1)
+  
+        spectra.append(spectrum)
+
+    spectra_length = {len(e) for e in spectra}
+
+    spectra = np.asarray([np.pad(a[0:max_length], (0, max_length - len(a[0:max_length])), 'constant', constant_values=0) for a in spectra])
 
     return spectra
 
@@ -190,6 +259,7 @@ def cal_sstar(tgt_gt, pos, method, match_bonus, max_mismatch, mismatch_penalty):
     sstar_scores = []
     sstar_snp_nums = []
     haplotypes = []
+
     for i in range(ind_num):
         pd_matrix, gd_matrix, sub_pos = _create_matrixes(tgt_gt, pos, i, method)
         sstar_score, haplotype = _cal_ind_sstar(pd_matrix, gd_matrix, sub_pos, match_bonus, max_mismatch, mismatch_penalty)
