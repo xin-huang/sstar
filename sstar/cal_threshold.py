@@ -125,7 +125,7 @@ def _predict_res(gam, score_file, recomb_rate, recomb_map, quantile, fit_lr):
 
             line = "\t".join(meta_data[s][i])
             line += "\t" + str(null_score)
-            line += "\t" + str(10**data[s]['lr'][i])
+            line += "\t" + str(data[s]['lr'][i])
             line += "\t" + str(data[s]['q'][i])
             line += "\t" + sig
 
@@ -168,10 +168,10 @@ def _read_score_file(score_file, recomb_rate, recomb_map, quantile, fit_lr):
                 if fit_lr:
                     if recomb_map != None: 
                         key = chr_name+":"+win_start+"-"+win_end
-                        if key in recomb_map.keys(): local_recomb_rate = np.log10(recomb_map[key])
+                        if key in recomb_map.keys(): local_recomb_rate = recomb_map[key]
                         else: continue
                     else:
-                        local_recomb_rate = np.log10(recomb_rate)
+                        local_recomb_rate = recomb_rate
                 else: local_recomb_rate = np.nan
 
                 if sample not in data.keys(): 
