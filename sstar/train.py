@@ -24,13 +24,23 @@ import allel
 import stats
 import preprocess
 import os
+from concurrent.futures import ProcessPoolExecutor as Pool
 
-def get_all_folders_train(output_dir):
-    #res_dir = os.path.join("results", "simulated_data", output_dir, ref_tgt_folder)
-    rep_folders = []
-    for replicate, folder in enumerate(os.listdir(output_dir)):
-        rep_folders.append(os.path.join(output_dir, folder))
-    return rep_folders
+global output_dir
+global ref_ind_file
+global tgt_ind_file
+global anc_allele_file
+global win_len
+global win_step
+global thread
+global match_bonus
+global archaic_prop
+global mismatch_penalty
+global max_mismatch
+global process_archie
+global not_archaic_prop
+global seq_len
+
 
 def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed=None, train_archie=False):
     """
@@ -40,316 +50,10 @@ def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mu
     _simulation_manager(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed)
 
     if train_archie:
-        #_train_archie()
+        
         _train_archie(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir)
     else:
         _train_sstar()
-
-
-def _train_archie(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, scikit=True, statsmodels=True, drop_dynamic_cols=True):	
-
-    outputfolder = output_dir
-
-    #set filenames for individuals, reference and target
-    ref_ind_file = "new_sim" + "_nref" + str(nref) + "_ntgt" + str(ntgt) + ".ref.ind.list"
-    tgt_ind_file  = "new_sim" + "_nref" + str(nref) + "_ntgt" + str(ntgt) + ".tgt.ind.list"
-
-    create_ref_tgt_file(nref, ntgt, ref_ind_file, tgt_ind_file)
-
-    anc_allele_file = None
-
-    #set window length and stepsize
-    win_len = 50000
-    win_step = 50000
-   
-    #I think these parameters are NOT necessary for ArchIE - just retained for the signature of preprocess.process_data
-    match_bonus = 1
-    max_mismatch = 1
-    mismatch_penalty = 1
-
-    process_archie = True
-
-    #tracts with a proportion between not_archaic and archaic are labeled as ambiguous (in _label)
-    archaic_prop = 0.7
-    not_archaic_prop = 0.3
-
-    true_tracts = []
-
-    true_tracts_labeled = []
-
-    features = []
-
-    file_names = []
-
-    replicate_counter = 0
-
-    #reading of data, preprocessing - i.e., calculating statistics -, and obtaining & labeling of true tracts
-    for replicate, file in enumerate(os.listdir(output_dir)):
-        if file.endswith(".vcf"):
-
-            filename = os.path.splitext(file)[0]
-
-
-            feature_file = os.path.splitext(file)[0]+'.features'
-            #computation of statistics
-            preprocess.process_data(os.path.join(output_dir,file), ref_ind_file, tgt_ind_file, anc_allele_file, os.path.join(output_dir,feature_file), win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, process_archie)
-
-
-            true_tract = os.path.splitext(file)[0]+'.true.tracts.bed'
-            true_tracts.append ( pd.read_csv(os.path.join(output_dir, true_tract), sep="\t", header=None, names=['chr', 'start', 'end', 'hap', 'ind']) )
-
-            
-            #labeling of true tracts
-            true_tract_labeled = _label(os.path.join(output_dir, true_tract), archaic_prop, not_archaic_prop, seq_len)
-            if true_tract_labeled is not None:
-                true_tract_labeled["rep"] = replicate_counter
-
-            true_tracts_labeled.append(true_tract_labeled)
-
-            feature = pd.read_csv(os.path.join(output_dir, feature_file), sep="\t")
-            feature["rep"] = replicate_counter
-
-            features.append(feature)
-            file_names.append(filename)
-            replicate_counter = replicate_counter + 1
-
-
-    feature_df_labeleds = []
-
-    #Labeling of features
-    for i, feature_df in enumerate(features):
-
-        feature_df_labeled = label_feature_df_archie(feature_df, true_tracts_labeled[i])
-
-        feature_df_labeleds.append(feature_df_labeled)
-    
-    #create one big training dataframe
-    train_df = pd.concat(feature_df_labeleds)
-
-    #train_df.to_csv(os.path.join(outputfolder, "features_full.csv"))
-
-    #drop all unneccesary columns
-    train_df.drop(['rep', 'chrom', 'start', 'end', 'sample', 'interval', 'overlap', 'overlap_percentage', "label_one_1", "label_one_2", "label_one_3", "haplo"], axis=1, inplace=True, errors='ignore')
-
-    #drop_dynamic_cols indicate whether non-fixed size features should be dropped
-    if drop_dynamic_cols == True:
-        dynamic_cols = [col for col in train_df.columns if ('-ton' in col or col.startswith("pairwised_dist"))]
-        train_df.drop(dynamic_cols, axis=1, inplace = True, errors='ignore')
-
-
-    train_df.to_csv(os.path.join(outputfolder, "features_final.csv"))
-
-    #start training
-    scikit_file = output_prefix + ".scikit.pickle"
-    statsmodels_file = output_prefix + ".statsmodels.pickle"
-
-    #call training functions
-
-    train_statsmodels(train_df, statsmodels_file)
-
-    train_scikit(train_df, scikit_file)
-
-
-
-
-def _train_archie_folders(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, scikit=True, statsmodels=True, drop_dynamic_cols=True, do_training = False):	
-
-    outputfolder = output_dir + "_features_df"
-
-    if not os.path.exists(outputfolder):
-        os.makedirs(outputfolder)    
-
-    #set filenames for individuals, reference and target
-    ref_ind_file = "new_sim" + "_nref" + str(nref) + "_ntgt" + str(ntgt) + ".ref.ind.list"
-    tgt_ind_file  = "new_sim" + "_nref" + str(nref) + "_ntgt" + str(ntgt) + ".tgt.ind.list"
-
-    create_ref_tgt_file(nref, ntgt, ref_ind_file, tgt_ind_file)
-
-    anc_allele_file = None
-
-    #set window length and stepsize
-    win_len = 50000
-    win_step = 50000
-   
-    #I think these parameters are NOT necessary for ArchIE - just retained for the signature of preprocess.process_data
-    match_bonus = 1
-    max_mismatch = 1
-    mismatch_penalty = 1
-
-    process_archie = True
-
-    #tracts with a proportion between not_archaic and archaic are labeled as ambiguous (in _label)
-    archaic_prop = 0.7
-    not_archaic_prop = 0.3
-
-    true_tracts = []
-
-    true_tracts_labeled = []
-
-    features = []
-
-    file_names = []
-
-    replicate_counter = 0
-
-    #reading of data, preprocessing - i.e., calculating statistics -, and obtaining & labeling of true tracts
-    
-    for replicate1, folder in enumerate(os.listdir(output_dir)):
-        if os.path.isdir(os.path.join(output_dir, folder)):
-            for file in (os.listdir(os.path.join(output_dir, folder))):
-                if file.endswith(".vcf"):
-
-                    filename = os.path.splitext(file)[0]
-
-
-                    feature_file = os.path.splitext(file)[0]+'.features'
-                    #computation of statistics
-                    preprocess.process_data(os.path.join(output_dir,folder, file), ref_ind_file, tgt_ind_file, anc_allele_file, os.path.join(output_dir,folder,feature_file), win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, process_archie)
-
-
-                    true_tract = os.path.splitext(file)[0]+'.true.tracts.bed'
-                    true_tracts.append ( pd.read_csv(os.path.join(output_dir, folder, true_tract), sep="\t", header=None, names=['chr', 'start', 'end', 'hap', 'ind']) )
-
-                    
-                    #labeling of true tracts
-                    true_tract_labeled = _label(os.path.join(output_dir, folder, true_tract), archaic_prop, not_archaic_prop, seq_len)
-                    if true_tract_labeled is not None:
-                        true_tract_labeled["rep"] = replicate_counter
-
-                    true_tracts_labeled.append(true_tract_labeled)
-
-                    feature = pd.read_csv(os.path.join(output_dir, folder, feature_file), sep="\t")
-                    feature["rep"] = replicate_counter
-
-                    features.append(feature)
-                    file_names.append(filename)
-                    replicate_counter = replicate_counter + 1
-
-
-    feature_df_labeleds = []
-
-    #Labeling of features
-    for i, feature_df in enumerate(features):
-
-        feature_df_labeled = label_feature_df_archie(feature_df, true_tracts_labeled[i])
-
-        feature_df_labeleds.append(feature_df_labeled)
-    
-    #create one big training dataframe
-    train_df = pd.concat(feature_df_labeleds)
-
-    #train_df.to_csv(os.path.join(outputfolder, "features_full.csv"))
-
-    #drop all unneccesary columns
-    train_df.drop(['rep', 'chrom', 'start', 'end', 'sample', 'interval', 'overlap', 'overlap_percentage', "label_one_1", "label_one_2", "label_one_3", "haplo"], axis=1, inplace=True, errors='ignore')
-
-    #drop_dynamic_cols indicate whether non-fixed size features should be dropped
-    if drop_dynamic_cols == True:
-        dynamic_cols = [col for col in train_df.columns if ('-ton' in col or col.startswith("pairwised_dist"))]
-        train_df.drop(dynamic_cols, axis=1, inplace = True, errors='ignore')
-
-
-    train_df.to_csv(os.path.join(outputfolder, "features_final.csv"))
-
-
-    if do_training == True:
-        #start training
-        scikit_file = output_prefix + ".scikit.pickle"
-        statsmodels_file = output_prefix + ".statsmodels.pickle"
-
-        #call training functions
-
-        train_statsmodels(train_df, statsmodels_file)
-
-        train_scikit(train_df, scikit_file)
-
-
-#from multiprocessing import Pool
-from concurrent.futures import ProcessPoolExecutor as Pool
-def parallel_process_data(output_dir, output_tuples, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, process_archie, archaic_prop, not_archaic_prop, seq_len):
-    file = output_tuples[1]
-    replicate_counter = output_tuples[0]
-
-    
-    filename = os.path.splitext(file)[0]
-
-
-    feature_file = os.path.splitext(file)[0]+'.features'
-    #computation of statistics
-    preprocess.process_data(os.path.join(output_dir,file), ref_ind_file, tgt_ind_file, anc_allele_file, os.path.join(output_dir,feature_file), win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, process_archie)
-
-
-    true_tract = os.path.splitext(file)[0]+'.true.tracts.bed'
-    true_tract_data = pd.read_csv(os.path.join(output_dir, true_tract), sep="\t", header=None, names=['chr', 'start', 'end', 'hap', 'ind']) 
-    
-    
-    ###true_tracts.append ( true_tract_data)
-
-    
-    #labeling of true tracts
-    true_tract_labeled = _label(os.path.join(output_dir, true_tract), archaic_prop, not_archaic_prop, seq_len)
-    if true_tract_labeled is not None:
-        true_tract_labeled["rep"] = replicate_counter
-
-    #true_tracts_labeled.append(true_tract_labeled)
-
-    feature = pd.read_csv(os.path.join(output_dir, feature_file), sep="\t")
-    feature["rep"] = replicate_counter
-
-    #features.append(feature)
-    #file_names.append(filename)
-    #replicate_counter = replicate_counter + 1
-
-    return true_tract_labeled, feature
-
-
-def parallel_process_label_data(output_dir, output_tuples, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, process_archie, archaic_prop, not_archaic_prop, seq_len):
-    file = output_tuples[1]
-    replicate_counter = output_tuples[0]
-
-    
-    #not necessary anymore
-    #filename = os.path.splitext(file)[0]
-
-
-    feature_file = os.path.splitext(file)[0]+'.features'
-    #computation of statistics
-    preprocess.process_data(os.path.join(output_dir,file), ref_ind_file, tgt_ind_file, anc_allele_file, os.path.join(output_dir,feature_file), win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, process_archie)
-
-
-    true_tract = os.path.splitext(file)[0]+'.true.tracts.bed'
-    
-    #reading not necessary
-    #true_tract_data = pd.read_csv(os.path.join(output_dir, true_tract), sep="\t", header=None, names=['chr', 'start', 'end', 'hap', 'ind']) 
-    
-    
-    ###true_tracts.append ( true_tract_data)
-
-    
-    #labeling of true tracts
-    true_tract_labeled = _label(os.path.join(output_dir, true_tract), archaic_prop, not_archaic_prop, seq_len)
-    if true_tract_labeled is not None:
-        true_tract_labeled["rep"] = replicate_counter
-
-    #true_tracts_labeled.append(true_tract_labeled)
-
-    feature = pd.read_csv(os.path.join(output_dir, feature_file), sep="\t")
-    feature["rep"] = replicate_counter
-
-    #features.append(feature)
-    #file_names.append(filename)
-    
-    #replicate_counter = replicate_counter + 1
-
-
-      #for i, feature_df in enumerate(features):
-
-    feature_df_labeled = label_feature_df_archie(feature, true_tract_labeled)
-
-    #feature_df_labeleds.append(feature_df_labeled)
-
-    #return true_tract_labeled, feature
-    return feature_df_labeled
 
 
 
@@ -369,71 +73,29 @@ def parallel_process_label_data_sm(output_tuples):
     global not_archaic_prop
     global seq_len
 
-
     file = output_tuples[1]
     replicate_counter = output_tuples[0]
-
-    
-    #not necessary anymore
-    #filename = os.path.splitext(file)[0]
-
 
     feature_file = os.path.splitext(file)[0]+'.features'
     #computation of statistics
     preprocess.process_data(os.path.join(output_dir,file), ref_ind_file, tgt_ind_file, anc_allele_file, os.path.join(output_dir,feature_file), win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, process_archie)
 
-
     true_tract = os.path.splitext(file)[0]+'.true.tracts.bed'
-    
-    #reading not necessary
-    #true_tract_data = pd.read_csv(os.path.join(output_dir, true_tract), sep="\t", header=None, names=['chr', 'start', 'end', 'hap', 'ind']) 
-    
-    
-    ###true_tracts.append ( true_tract_data)
-
     
     #labeling of true tracts
     true_tract_labeled = _label(os.path.join(output_dir, true_tract), archaic_prop, not_archaic_prop, seq_len)
     if true_tract_labeled is not None:
         true_tract_labeled["rep"] = replicate_counter
 
-    #true_tracts_labeled.append(true_tract_labeled)
-
     feature = pd.read_csv(os.path.join(output_dir, feature_file), sep="\t")
     feature["rep"] = replicate_counter
 
-    #features.append(feature)
-    #file_names.append(filename)
-    
-    #replicate_counter = replicate_counter + 1
-
-
-      #for i, feature_df in enumerate(features):
 
     feature_df_labeled = label_feature_df_archie(feature, true_tract_labeled)
 
-    #feature_df_labeleds.append(feature_df_labeled)
-
-    #return true_tract_labeled, feature
     return feature_df_labeled
 
 
-global output_dir
-global ref_ind_file
-global tgt_ind_file
-global anc_allele_file
-global win_len
-global win_step
-global thread
-global match_bonus
-global archaic_prop
-global mismatch_penalty
-global max_mismatch
-global process_archie
-global not_archaic_prop
-global seq_len
-
-#def store_global(output_dir, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_step, thread, match_bonus, archaic_prop ,mismatch_penalty, max_mismatch, process_archie, not_archaic_prop, seq_len):
 def store_global(output_dir_new, ref_ind_file_new, tgt_ind_file_new, anc_allele_file_new, win_len_new, win_step_new, thread_new, match_bonus_new, archaic_prop_new ,mismatch_penalty_new, max_mismatch_new, process_archie_new, not_archaic_prop_new, seq_len_new):
     global output_dir
     global ref_ind_file
@@ -465,17 +127,37 @@ def store_global(output_dir_new, ref_ind_file_new, tgt_ind_file_new, anc_allele_
     seq_len = seq_len_new
 
 
-def _train_archie_return_df_wo_parallel(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, scikit=True, statsmodels=True, drop_dynamic_cols=True, do_training = False):	
+def _train_archie(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, scikit=True, statsmodels=True, drop_dynamic_cols=False, do_training = True):	
+    """
+    Description:
+        compute prdictions for files in all subdirectories of the path indicated by output_dirs
 
-    outputfolder = output_dir + "_features_df"
+    Arguments:
+        demo_model_file str: demographic model
+        nrep int: number of replicates
+        nref int: number of reference individuals
+        ntgt int: number of target individuals
+        ref_id str: name of reference population
+        tgt_id str: name of target population
+        src_id str: name os fource population
+        seq_len int: sequence length
+        mut_rate float: mutation rate
+        rec_rate float: recombination rate
+        threat int: number of threads
+        output_prefix str: string used to determine logistic regression model name
+        output_dir str: indicates folder with subdirectories containing files for prediction
+        scikit bool: if True, a model using scikit-learn is trained
+        statsmodels bool: if True, a model using statsmodels is trained
+        drop_dynamic_cols bool: if True, features of non-fixed size are removed
+        do_training: if True, models are trained; otherwise only statistics for training are computed
 
-    if not os.path.exists(outputfolder):
-        os.makedirs(outputfolder)    
-
+    Returns:
+        train_df DataFrame: contains all windows of train data and corresponding information (statistics, label,...)
+    """
     #set filenames for individuals, reference and target
     ref_ind_file = "new_sim" + "_nref" + str(nref) + "_ntgt" + str(ntgt) + ".ref.ind.list"
     tgt_ind_file  = "new_sim" + "_nref" + str(nref) + "_ntgt" + str(ntgt) + ".tgt.ind.list"
-
+    #create the files according to tski conventions
     create_ref_tgt_file(nref, ntgt, ref_ind_file, tgt_ind_file)
 
     anc_allele_file = None
@@ -495,127 +177,7 @@ def _train_archie_return_df_wo_parallel(demo_model_file, nrep, nref, ntgt, ref_i
     archaic_prop = 0.7
     not_archaic_prop = 0.3
 
-    true_tracts = []
-
-    true_tracts_labeled = []
-
-    features = []
-
-    file_names = []
-
-    replicate_counter = 0
-
-    #reading of data, preprocessing - i.e., calculating statistics -, and obtaining & labeling of true tracts
-    for replicate, file in enumerate(os.listdir(output_dir)):
-        if file.endswith(".vcf"):
-
-            filename = os.path.splitext(file)[0]
-
-
-            feature_file = os.path.splitext(file)[0]+'.features'
-            #computation of statistics
-            preprocess.process_data(os.path.join(output_dir,file), ref_ind_file, tgt_ind_file, anc_allele_file, os.path.join(output_dir,feature_file), win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, process_archie)
-
-
-            true_tract = os.path.splitext(file)[0]+'.true.tracts.bed'
-            true_tracts.append ( pd.read_csv(os.path.join(output_dir, true_tract), sep="\t", header=None, names=['chr', 'start', 'end', 'hap', 'ind']) )
-
-            
-            #labeling of true tracts
-            true_tract_labeled = _label(os.path.join(output_dir, true_tract), archaic_prop, not_archaic_prop, seq_len)
-            if true_tract_labeled is not None:
-                true_tract_labeled["rep"] = replicate_counter
-
-            true_tracts_labeled.append(true_tract_labeled)
-
-            feature = pd.read_csv(os.path.join(output_dir, feature_file), sep="\t")
-            feature["rep"] = replicate_counter
-
-            features.append(feature)
-            file_names.append(filename)
-            replicate_counter = replicate_counter + 1
-
-
-
-
-    feature_df_labeleds = []
-
-    #Labeling of features
-    for i, feature_df in enumerate(features):
-
-        feature_df_labeled = label_feature_df_archie(feature_df, true_tracts_labeled[i])
-
-        feature_df_labeleds.append(feature_df_labeled)
-    
-    #create one big training dataframe
-    train_df = pd.concat(feature_df_labeleds)
-
-    #train_df.to_csv(os.path.join(outputfolder, "features_full.csv"))
-
-    #drop all unneccesary columns
-    train_df.drop(['rep', 'chrom', 'start', 'end', 'sample', 'interval', 'overlap', 'overlap_percentage', "label_one_1", "label_one_2", "label_one_3", "haplo"], axis=1, inplace=True, errors='ignore')
-
-    #drop_dynamic_cols indicate whether non-fixed size features should be dropped
-    if drop_dynamic_cols == True:
-        dynamic_cols = [col for col in train_df.columns if ('-ton' in col or col.startswith("pairwised_dist"))]
-        train_df.drop(dynamic_cols, axis=1, inplace = True, errors='ignore')
-
-
-    #train_df.to_csv(os.path.join(outputfolder, "features_final.csv"))
-
-
-    if do_training == True:
-        #start training
-        scikit_file = output_prefix + ".scikit.pickle"
-        statsmodels_file = output_prefix + ".statsmodels.pickle"
-
-        #call training functions
-
-        train_statsmodels(train_df, statsmodels_file)
-
-        train_scikit(train_df, scikit_file)
-
-    return train_df
-
-
-
-def _train_archie_return_df(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, scikit=True, statsmodels=True, drop_dynamic_cols=True, do_training = False):	
-
-    #outputfolder = output_dir + "_features_df"
-    #if not os.path.exists(outputfolder):
-    #    os.makedirs(outputfolder)    
-
-    #set filenames for individuals, reference and target
-    ref_ind_file = "new_sim" + "_nref" + str(nref) + "_ntgt" + str(ntgt) + ".ref.ind.list"
-    tgt_ind_file  = "new_sim" + "_nref" + str(nref) + "_ntgt" + str(ntgt) + ".tgt.ind.list"
-
-    create_ref_tgt_file(nref, ntgt, ref_ind_file, tgt_ind_file)
-
-    anc_allele_file = None
-
-    #set window length and stepsize
-    win_len = 50000
-    win_step = 50000
-   
-    #I think these parameters are NOT necessary for ArchIE - just retained for the signature of preprocess.process_data
-    match_bonus = 1
-    max_mismatch = 1
-    mismatch_penalty = 1
-
-    process_archie = True
-
-    #tracts with a proportion between not_archaic and archaic are labeled as ambiguous (in _label)
-    archaic_prop = 0.7
-    not_archaic_prop = 0.3
-
-    true_tracts = []
-
-    true_tracts_labeled = []
-
-    features = []
-
-    file_names = []
-    
+    #store parameters globally so that they can be accessed from the parallelized pool
     store_global(output_dir, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_step, thread, match_bonus, archaic_prop ,mismatch_penalty, max_mismatch, process_archie, not_archaic_prop, seq_len)
 
     #nur fuer repl number
@@ -624,17 +186,13 @@ def _train_archie_return_df(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, s
         if file.endswith(".vcf"):
             output_tuples.append((replicate, file))
 
-   
-
     feature_df_labeleds = []
     pool = Pool()      
-
+    #call parallelized function which returns labelled training data
     feature_df_labeleds = pool.map(parallel_process_label_data_sm, output_tuples)
 
     #create one big training dataframe
     train_df = pd.concat(feature_df_labeleds)
-
-    #train_df.to_csv(os.path.join(outputfolder, "features_full.csv"))
 
     #drop all unneccesary columns
     train_df.drop(['rep', 'chrom', 'start', 'end', 'sample', 'interval', 'overlap', 'overlap_percentage', "label_one_1", "label_one_2", "label_one_3", "haplo"], axis=1, inplace=True, errors='ignore')
@@ -644,27 +202,47 @@ def _train_archie_return_df(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, s
         dynamic_cols = [col for col in train_df.columns if ('-ton' in col or col.startswith("pairwised_dist"))]
         train_df.drop(dynamic_cols, axis=1, inplace = True, errors='ignore')
 
-
     #train_df.to_csv(os.path.join(outputfolder, "features_final.csv"))
-
-
     if do_training == True:
         #start training
         scikit_file = output_prefix + ".scikit.pickle"
         statsmodels_file = output_prefix + ".statsmodels.pickle"
 
         #call training functions
-
         train_statsmodels(train_df, statsmodels_file)
-
         train_scikit(train_df, scikit_file)
 
     return train_df
 
 
+def _train_archie_folders(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, scikit=True, statsmodels=True, drop_dynamic_cols=True, do_training = False):	
+    """
+    Description:
+        compute prdictions for files in all subdirectories of the path indicated by output_dirs
 
+    Arguments:
+        demo_model_file str: demographic model
+        nrep int: number of replicates
+        nref int: number of reference individuals
+        ntgt int: number of target individuals
+        ref_id str: name of reference population
+        tgt_id str: name of target population
+        src_id str: name os fource population
+        seq_len int: sequence length
+        mut_rate float: mutation rate
+        rec_rate float: recombination rate
+        threat int: number of threads
+        output_prefix str: string used to determine logistic regression model name
+        output_dir str: indicates folder with subdirectories containing files for prediction
+        scikit bool: if True, a model using scikit-learn is trained
+        statsmodels bool: if True, a model using statsmodels is trained
+        drop_dynamic_cols bool: if True, features of non-fixed size are removed
+        do_training: if True, models are trained; otherwise only statistics for training are computed
 
-def _train_archie_folders_return_df(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, scikit=True, statsmodels=True, drop_dynamic_cols=True, do_training = False):	
+    Returns:
+        train_df DataFrame: contains all windows of train data and corresponding information (statistics, label,...)
+    """
+
 
     outputfolder = output_dir + "_features_df"
 
@@ -687,7 +265,6 @@ def _train_archie_folders_return_df(demo_model_file, nrep, nref, ntgt, ref_id, t
     match_bonus = 1
     max_mismatch = 1
     mismatch_penalty = 1
-
     process_archie = True
 
     #tracts with a proportion between not_archaic and archaic are labeled as ambiguous (in _label)
@@ -695,33 +272,25 @@ def _train_archie_folders_return_df(demo_model_file, nrep, nref, ntgt, ref_id, t
     not_archaic_prop = 0.3
 
     true_tracts = []
-
     true_tracts_labeled = []
-
     features = []
-
     file_names = []
-
     replicate_counter = 0
 
     #reading of data, preprocessing - i.e., calculating statistics -, and obtaining & labeling of true tracts
-    
     for replicate1, folder in enumerate(os.listdir(output_dir)):
         if os.path.isdir(os.path.join(output_dir, folder)):
             for file in (os.listdir(os.path.join(output_dir, folder))):
                 if file.endswith(".vcf"):
 
                     filename = os.path.splitext(file)[0]
-
-
                     feature_file = os.path.splitext(file)[0]+'.features'
+
                     #computation of statistics
                     preprocess.process_data(os.path.join(output_dir,folder, file), ref_ind_file, tgt_ind_file, anc_allele_file, os.path.join(output_dir,folder,feature_file), win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, process_archie)
 
-
                     true_tract = os.path.splitext(file)[0]+'.true.tracts.bed'
                     true_tracts.append ( pd.read_csv(os.path.join(output_dir, folder, true_tract), sep="\t", header=None, names=['chr', 'start', 'end', 'hap', 'ind']) )
-
                     
                     #labeling of true tracts
                     true_tract_labeled = _label(os.path.join(output_dir, folder, true_tract), archaic_prop, not_archaic_prop, seq_len)
@@ -737,14 +306,12 @@ def _train_archie_folders_return_df(demo_model_file, nrep, nref, ntgt, ref_id, t
                     file_names.append(filename)
                     replicate_counter = replicate_counter + 1
 
-
     feature_df_labeleds = []
 
     #Labeling of features
     for i, feature_df in enumerate(features):
 
         feature_df_labeled = label_feature_df_archie(feature_df, true_tracts_labeled[i])
-
         feature_df_labeleds.append(feature_df_labeled)
     
     #create one big training dataframe
@@ -760,9 +327,7 @@ def _train_archie_folders_return_df(demo_model_file, nrep, nref, ntgt, ref_id, t
         dynamic_cols = [col for col in train_df.columns if ('-ton' in col or col.startswith("pairwised_dist"))]
         train_df.drop(dynamic_cols, axis=1, inplace = True, errors='ignore')
 
-
     #train_df.to_csv(os.path.join(outputfolder, "features_final.csv"))
-
 
     if do_training == True:
         #start training
@@ -770,9 +335,7 @@ def _train_archie_folders_return_df(demo_model_file, nrep, nref, ntgt, ref_id, t
         statsmodels_file = output_prefix + ".statsmodels.pickle"
 
         #call training functions
-
         train_statsmodels(train_df, statsmodels_file)
-
         train_scikit(train_df, scikit_file)
 
     return train_df
@@ -828,7 +391,6 @@ def train_statsmodels(train_df, save_filename):
 
     
 
-
 def train_scikit(train_df, save_filename):
     """
     Description:
@@ -838,7 +400,7 @@ def train_scikit(train_df, save_filename):
         train_df DataFrame: Training data
         save_filename str: filename for output model
     """
-
+    import pickle
     from sklearn.linear_model import LogisticRegression
 
     y = train_df['label']
@@ -847,18 +409,15 @@ def train_scikit(train_df, save_filename):
     X.replace(np.nan, 0, inplace=True)
     X.replace(pd.NA, 0, inplace=True)
 
+    #training; currently, no regularization etc. is performed
     model = LogisticRegression(solver="newton-cg", penalty=None, max_iter=1000)
-
     model.fit(X,y.astype(int))
-
-    import pickle
 
     pickle.dump(model, open(save_filename, "wb"))
 
 
 def _train_sstar():
     pass
-
 
 
 
@@ -870,7 +429,8 @@ def label_feature_df_archie(feature_df, true_tract_list, discard_ambiguous=True,
     Arguments:
         feature_df DataFrame: (unlabeled) Training data
         true_tract_list DataFrame: true tracts to use for labeling
-        discard_ambiguous Boolean: discard tracts classified as ambiguous 
+        discard_ambiguous bool: discard tracts classified as ambiguous 
+        replicates bool: the dataset contains replicates
     """
 
     feature_df['label'] = 0
@@ -888,8 +448,6 @@ def label_feature_df_archie(feature_df, true_tract_list, discard_ambiguous=True,
         if replicates == True:
             replicate = int(entry[5])
         
-
-
         if replicates == True:
             conditions = (feature_df["sample"] == ind) & (feature_df["haplo"] == haplo) & (feature_df["rep"] == replicate)
         else:
@@ -908,11 +466,10 @@ def label_feature_df_archie(feature_df, true_tract_list, discard_ambiguous=True,
 
 
 
-
 def label_feature_df(feature_df, true_tract_list, only_above_threshold=False, discard_ambiguous=True, replicates=False):
     """
     Description:
-        Label data for training and compute overlap - NOT USED
+        Label data for training and compute overlap
 
     Arguments:
         feature_df DataFrame: (unlabeled) Training data
@@ -938,7 +495,6 @@ def label_feature_df(feature_df, true_tract_list, only_above_threshold=False, di
     label_two_index = feature_df.columns.get_loc("label_one_2")
     label_three_index = feature_df.columns.get_loc("label_one_3")
 
-
     overlap_index = feature_df.columns.get_loc("overlap")
     overlap_percentage_index = feature_df.columns.get_loc("overlap_percentage")
     start_index = feature_df.columns.get_loc("start")
@@ -962,7 +518,6 @@ def label_feature_df(feature_df, true_tract_list, only_above_threshold=False, di
         if replicates == True:
             replicate = int(entry[5])
         
-        if replicates == True:
             conditions=np.where((feature_array[:, sample_index] == ind) & ( feature_array[:, haplo_index]  == haplo) & ( feature_array[:, rep_index]  == replicate))
         else:
             conditions=np.where((feature_array[:, sample_index] == ind) & ( feature_array[:, haplo_index]  == haplo))
@@ -979,7 +534,6 @@ def label_feature_df(feature_df, true_tract_list, only_above_threshold=False, di
     feature_array[np.where((feature_array[:, overlap_percentage_index]  < 0.3)), label_three_index] = 1
 
     #back to pandas df for convenience
-
     feature_df = pd.DataFrame(feature_array, columns = feature_df.columns)
 
     if only_above_threshold == True:
@@ -991,7 +545,6 @@ def label_feature_df(feature_df, true_tract_list, only_above_threshold=False, di
     return feature_df
 
 #functions for calculating overlap
-
 def getOverlap_features_tracts_np(startvalue, tract_start, tract_end, feature_start, feature_end):
     return startvalue + max(0, min(tract_end, feature_end) - max(tract_start, feature_start))
 
@@ -999,31 +552,6 @@ def getOverlap_features_tracts_percentage_np(startvalue, tract_start, tract_end,
     overlap = max(0, min(tract_end, feature_end) - max(tract_start, feature_start))
     percentage = overlap / (feature_end - feature_start)
     percentage = percentage + startvalue
-    return percentage
-
-
-def getOverlap(tract_start, tract_end, feature_start, feature_end):
-    return max(0, min(tract_end, feature_end) - max(tract_start, feature_start))
-
-def getOverlapPercentage(tract_interval, feature_interval):
-    overlap = max(0, min(tract_interval[1], feature_interval[1]) - max(tract_interval[0], feature_interval[0]))
-    percentage = overlap / (feature_interval[1] - feature_interval[0])
-    return percentage
-
-def getOverlap_pd(tract_int, feature_int):
-    feature_start = feature_int.left
-    feature_end = feature_int.right
-    tract_start = tract_int.left
-    tract_end = tract_int.right
-    return max(0, min(feature_end, tract_end) - max(feature_start, tract_start))
-
-def getOverlapPercentage_pd(tract_int, feature_int):
-    feature_start = feature_int.left
-    feature_end = feature_int.right
-    tract_start = tract_int.left
-    tract_end = tract_int.right
-    overlap = max(0, min(feature_end, tract_end) - max(feature_start, tract_start))
-    percentage = overlap / (feature_end - feature_start)
     return percentage
 
 
@@ -1099,7 +627,6 @@ def _simulation_worker_folders(in_queue, out_queue, demography, samples, tgt_id,
     
     """
 
-
     while True:
         rep = in_queue.get()
         ts = msprime.sim_ancestry(
@@ -1111,22 +638,12 @@ def _simulation_worker_folders(in_queue, out_queue, demography, samples, tgt_id,
             random_seed=seed,
         )
 
-        #for var in ts.variants():
-            #print(var.site.position, var.alleles, var.genotypes, sep="\t")
-            #print(np.unique(var.alleles))
-            #print(np.unique(var.genotypes))
-
         #ts = msprime.sim_mutations(ts, rate=mut_rate, random_seed=seed)
+        #use BinaryMutationModel
         ts = msprime.sim_mutations(ts, rate=mut_rate, random_seed=seed, model=msprime.BinaryMutationModel())
         
-        #for var in ts.variants():   
-            #print(var.site.position, var.alleles, var.genotypes, sep="\t")
-            #print(np.unique(var.alleles))
-            #print(np.unique(var.genotypes))
-
         true_tracts = _get_true_tracts(ts, tgt_id, src_id)
 
-        
         os.makedirs(os.path.join(output_dir, str(rep)), exist_ok=True)
 
         ts.dump(output_dir+'/'+ str(rep) + '/' + output_prefix+f'{rep}.ts')
@@ -1141,8 +658,6 @@ def _simulation_worker_folders(in_queue, out_queue, demography, samples, tgt_id,
 
         df.drop_duplicates(keep='first').to_csv(output_dir+'/'+ str(rep) + '/' + output_prefix+f'{rep}.true.tracts.bed', sep="\t", header=False, index=False)
 
-
-
         out_queue.put(rep)
 
 def _simulation_worker(in_queue, out_queue, demography, samples, tgt_id, src_id, seq_len, mut_rate, rec_rate, output_prefix, output_dir, seed):
@@ -1150,7 +665,6 @@ def _simulation_worker(in_queue, out_queue, demography, samples, tgt_id, src_id,
     
     """
 
-    #global df
 
     while True:
         rep = in_queue.get()
@@ -1163,18 +677,10 @@ def _simulation_worker(in_queue, out_queue, demography, samples, tgt_id, src_id,
             random_seed=seed,
         )
 
-        #for var in ts.variants():
-            #print(var.site.position, var.alleles, var.genotypes, sep="\t")
-            #print(np.unique(var.alleles))
-            #print(np.unique(var.genotypes))
 
         #ts = msprime.sim_mutations(ts, rate=mut_rate, random_seed=seed)
+        # BinaryMutationModel
         ts = msprime.sim_mutations(ts, rate=mut_rate, random_seed=seed, model=msprime.BinaryMutationModel())
-        
-        #for var in ts.variants():   
-            #print(var.site.position, var.alleles, var.genotypes, sep="\t")
-            #print(np.unique(var.alleles))
-            #print(np.unique(var.genotypes))
 
         true_tracts = _get_true_tracts(ts, tgt_id, src_id)
 
@@ -1189,8 +695,6 @@ def _simulation_worker(in_queue, out_queue, demography, samples, tgt_id, src_id,
             df = pd.concat([df, df2])
 
         df.drop_duplicates(keep='first').to_csv(output_dir+'/'+output_prefix+f'{rep}.true.tracts.bed', sep="\t", header=False, index=False)
-
-
 
         out_queue.put(rep)
 
@@ -1267,20 +771,26 @@ def _label(tracts, archaic_prop, not_archaic_prop, seq_len, add_ind=None):
     df['prop'] = df['len'] / seq_len
     df['label'] = df.apply(lambda row: _add_label(row, archaic_prop, not_archaic_prop), axis=1)
 
-    #sep="\t", header=None, names=['chr', 'start', 'end', 'hap', 'ind']
     return df
-
-
-
-
-def train_parameters_archienew_fin(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir):
-
-    preprocess.store_global_parameters(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir)
-
-    train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, train_archie=True)
 
 
 if __name__ == '__main__':
     outputfolder = "example_output"
-    train("./examples/models/BonoboGhost_4K19.yaml", 100, 50, 50, 'Western', 'Bonobo', 'Ghost', 50000, 1e-8, 1e-8, 2, 'testa', outputfolder, train_archie=True)
+    demo_model_file = "./examples/models/BonoboGhost_4K19.yaml"
+    nrep = 100
+    nref = 50 
+    ntgt = 50 
+    ref_id = 'Western'
+    tgt_id = 'Bonobo'
+    src_id = 'Ghost'
+    seq_len = 50000
+    mut_rate = 1e-8
+    rec_rate = 1e-8
+    thread = 2
+    output_prefix = "train_prefix"
+    output_dir = outputfolder
+    train_archie = True
+    preprocess.store_global_parameters(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir)
+
+    train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, train_archie)
 
