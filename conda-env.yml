@@ -9,8 +9,9 @@ dependencies:
         - pip
         - python=3.8
         - scikit-allel
+        - scikit-learn
         - scipy
-        - snakemake
+        - statsmodels
         - r-base=4.1.2
         - r-essentials=4.1
         - rpy2
