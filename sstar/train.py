@@ -14,6 +14,7 @@
 # limitations under the License.
 
 
+import os
 import demes, msprime
 import pandas as pd
 from multiprocessing import Process, Queue
@@ -87,11 +88,16 @@ def _simulation_worker(in_queue, out_queue, demography, samples, tgt_id, src_id,
             record_migrations=True,
             random_seed=seed,
         )
-        ts = msprime.sim_mutations(ts, rate=mut_rate, random_seed=seed)
+        ts = msprime.sim_mutations(ts, rate=mut_rate, random_seed=seed, model=msprime.BinaryMutationModel())
         true_tracts = _get_true_tracts(ts, tgt_id, src_id)
 
-        ts.dump(output_dir+'/'+output_prefix+f'{rep}.ts')
-        with open(output_dir+'/'+output_prefix+f'{rep}.vcf', 'w') as o:
+        os.makedirs(os.path.join(output_dir, str(rep)), exist_ok=True)
+        ts_file  = output_dir + '/' + str(rep) + '/' + output_prefix + f'{rep}.ts'
+        vcf_file = output_dir + '/' + str(rep) + '/' + output_prefix + f'{rep}.vcf'
+        bed_file = output_dir + '/' + str(rep) + '/' + output_prefix + f'{rep}.true.tracts.bed'
+
+        ts.dump(ts_file)
+        with open(vcf_file, 'w') as o:
             ts.write_vcf(o)
        
         df = pd.DataFrame()
@@ -100,7 +106,7 @@ def _simulation_worker(in_queue, out_queue, demography, samples, tgt_id, src_id,
             df2 = pd.DataFrame(true_tracts[n], columns=['chr', 'start', 'end', 'hap', 'ind'])
             df = pd.concat([df, df2])
 
-        df.drop_duplicates(keep='first').to_csv(output_dir+'/'+output_prefix+f'{rep}.true.tracts.bed', sep="\t", header=False, index=False)
+        df.drop_duplicates(keep='first').to_csv(bed_file, sep="\t", header=False, index=False)
 
         out_queue.put(rep)
 
