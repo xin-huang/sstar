@@ -4,6 +4,7 @@ channels:
         - bioconda
 dependencies:
         - demes
+        - msprime
         - numpy
         - pandas
         - pip
@@ -11,6 +12,7 @@ dependencies:
         - scikit-allel
         - scipy
         - snakemake
+        - statsmodels
         - r-base=4.1.2
         - r-essentials=4.1
         - rpy2
