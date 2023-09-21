@@ -205,7 +205,7 @@ def _preprocess_archie_worker(in_queue, out_queue, **kwargs):
         try: 
             true_tract_df = pd.read_csv(bed_file, sep="\t", header=None)
         except pd.errors.EmptyDataError:
-            feature_df['label'] = 0
+            feature_df['label'] = 0.0
         else:
             true_tract_df.columns = ['chr', 'start', 'end', 'hap', 'sample']
             true_tract_df['len'] = true_tract_df['end'] - true_tract_df['start']
