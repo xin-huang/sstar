@@ -73,7 +73,7 @@ def _process_archie(win_step, win_len, output, thread, **kwargs):
         mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
     """
     ind_num = len(kwargs['samples'])
-    header = 'chrom\tstart\tend\tsample\t'
+    header = 'chrom\tstart\tend\tsample\thap\t'
     header += '\t'.join([str(x)+'-ton' for x in range(ind_num*2+1)]) + '\t'
     header += '\t'.join(['pairwised_dist'+str(x+1) for x in range(ind_num*2)])
     header += '\tmean_pairwised_dist\tvar_pairwised_dist\tskew_pairwised_dist\tkurtosis_pairwised_dist'
@@ -275,6 +275,7 @@ def _archie_output(output, header, samples, res):
             sstar_scores = item[11]
             for i in range(len(samples)*2):
                 ind_name = samples[int(i/2)]
+                hap_name = f'hap{i%2+1}'
                 spectrum = "\t".join([str(x) for x in spectra[i]])
                 min_ref_dist = min_ref_dists[i]
                 tgt_dist = "\t".join([str(x) for x in tgt_dists[i]])
@@ -284,7 +285,7 @@ def _archie_output(output, header, samples, res):
                 kurtosis_tgt_dist = kurtosis_tgt_dists[i]
                 pvt_mut_num = pvt_mut_nums[i]
                 sstar_score = sstar_scores[i]
-                o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{spectrum}\t{tgt_dist}\t{mean_tgt_dist}\t{var_tgt_dist}\t{skew_tgt_dist}\t{kurtosis_tgt_dist}\t{min_ref_dist}\t{sstar_score}\t{pvt_mut_num}\n')
+                o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{hap_name}\t{spectrum}\t{tgt_dist}\t{mean_tgt_dist}\t{var_tgt_dist}\t{skew_tgt_dist}\t{kurtosis_tgt_dist}\t{min_ref_dist}\t{sstar_score}\t{pvt_mut_num}\n')
 
 
 def _sstar_output(output, header, samples, res):

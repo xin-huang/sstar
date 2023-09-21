@@ -18,7 +18,7 @@ import os
 import demes, msprime
 import pandas as pd
 from multiprocessing import Process, Queue
-from sstar.utils import read_data
+from sstar.preprocess import process_data
 
 
 def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed=None, train_archie=False):
@@ -30,10 +30,10 @@ def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mu
              ref_id=ref_id, tgt_id=tgt_id, src_id=src_id, 
              seq_len=seq_len, mut_rate=mut_rate, rec_rate=rec_rate, 
              output_prefix=output_prefix, output_dir=output_dir, seed=seed)
-    # label data
-    #_manager(worker_func=_label_worker, nrep=nrep, thread=thread,
-    #         archaic_prop=0.7, not_archaic_prop=0.3, seq_len=seq_len,
-    #         output_prefix=output_prefix, output_dir=output_dir)
+
+    _manager(worker_func=_preprocess_archie_worker, nrep=nrep, thread=thread,
+             output_prefix=output_prefix, output_dir=output_dir,
+             win_len=50000, win_step=50000, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000)
 
     if train_archie:
         _train_archie()
@@ -180,7 +180,7 @@ def _get_true_tracts(ts, tgt_id, src_id):
     return tracts
 
 
-def _preprocess_worker(in_queue, out_queue, **kwargs):
+def _preprocess_archie_worker(in_queue, out_queue, **kwargs):
     """
     """
     while True:
@@ -190,8 +190,13 @@ def _preprocess_worker(in_queue, out_queue, **kwargs):
         bed_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.true.tracts.bed'
         ref_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.ref.ind.list'
         tgt_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.tgt.ind.list'
+        feature_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.features'
 
-        ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, None)
+        process_data(vcf_file=vcf_file, ref_ind_file=ref_ind_file, tgt_ind_file=tgt_ind_file,
+                     anc_allele_file=None, output=feature_file, thread=1, process_archie=True,
+                     win_len=kwargs['win_len'], win_step=kwargs['win_step'],
+                     match_bonus=kwargs['match_bonus'], max_mismatch=kwargs['max_mismatch'], 
+                     mismatch_penalty=kwargs['mismatch_penalty'])
 
         out_queue.put(rep)
 
