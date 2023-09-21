@@ -203,15 +203,16 @@ def _preprocess_archie_worker(in_queue, out_queue, **kwargs):
 
         try: 
             true_tract_df = pd.read_csv(bed_file, sep="\t", header=None)
+        except pd.errors.EmptyDataError:
+            feature_df['label'] = 0
+        else:
             true_tract_df.columns = ['chr', 'start', 'end', 'hap', 'ind']
             true_tract_df['len'] = true_tract_df['end'] - true_tract_df['start']
             true_tract_df = true_tract_df.groupby(by=['ind', 'hap'])['len'].sum().reset_index()
             true_tract_df['prop'] = true_tract_df['len'] / kwargs['seq_len']
             true_tract_df['label'] = true_tract_df.apply(lambda row: _add_label(row, kwargs['archaic_prop'], kwargs['not_archaic_prop']), axis=1)
-        except pd.errors.EmptyDataError:
-            feature_df['label'] = 0
-            
-        feature_df.to_csv(feature_file, sep="\t")
+        finally:
+            feature_df.to_csv(feature_file, sep="\t")
 
         out_queue.put(rep)
 
