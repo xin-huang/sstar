@@ -16,7 +16,7 @@ setup(
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/xin-huang/sstar",
-    author="Xin Huang",
+    author="Xin Huang, Joesf Hackl",
     author_email="xinhuang.res@gmail.com",
     license="Apache-2.0",
     classifiers=[
@@ -33,6 +33,7 @@ setup(
         "rpy2",
         "scikit-allel",
         "scipy",
+        "statsmodels",
     ],
     entry_points={"console_scripts": ["sstar=sstar.__main__:main"]},
 )

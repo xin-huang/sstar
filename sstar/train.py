@@ -1,5 +1,5 @@
 # Apache License Version 2.0
-# Copyright 2022 Xin Huang
+# Copyright 2023 Xin Huang
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,11 @@ def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mu
     """
     """
     # simulate data
-    _simulation_manager(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed)
+    _manager(worker_func=_simulation_worker, nrep=nrep, thread=thread,
+             demo_model_file=demo_model_file, nref=nref, ntgt=ntgt, 
+             ref_id=ref_id, tgt_id=tgt_id, src_id=src_id, 
+             seq_len=seq_len, mut_rate=mut_rate, rec_rate=rec_rate, 
+             output_prefix=output_prefix, output_dir=output_dir, seed=seed)
 
     if train_archie:
         _train_archie()
@@ -42,7 +46,7 @@ def _train_sstar():
     pass
 
 
-def _simulation_manager(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed):
+def _manager(worker_func, nrep, thread, **kwargs):
     """
     """
     try:
@@ -52,16 +56,9 @@ def _simulation_manager(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_i
     else:
         cleanup_on_sigterm()
 
-    demo_graph = demes.load(demo_model_file)
-    demography = msprime.Demography.from_demes(demo_graph)
-    samples = [
-        msprime.SampleSet(nref, ploidy=2, population=ref_id),
-        msprime.SampleSet(ntgt, ploidy=2, population=tgt_id),
-    ]
-
     res = []
     in_queue, out_queue = Queue(), Queue()
-    workers = [Process(target=_simulation_worker, args=(in_queue, out_queue, demography, samples, tgt_id, src_id, seq_len, mut_rate, rec_rate, output_prefix, output_dir, seed)) for i in range(thread)]
+    workers = [Process(target=worker_func, args=(in_queue, out_queue), kwargs=kwargs) for i in range(thread)]
 
     for i in range(nrep): in_queue.put(i)
 
@@ -75,26 +72,34 @@ def _simulation_manager(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_i
         for w in workers: w.join()
 
 
-def _simulation_worker(in_queue, out_queue, demography, samples, tgt_id, src_id, seq_len, mut_rate, rec_rate, output_prefix, output_dir, seed):
+def _simulation_worker(in_queue, out_queue, **kwargs):
     """
     """
     while True:
         rep = in_queue.get()
+
+        demo_graph = demes.load(kwargs['demo_model_file'])
+        demography = msprime.Demography.from_demes(demo_graph)
+        samples = [
+            msprime.SampleSet(kwargs['nref'], ploidy=2, population=kwargs['ref_id']),
+            msprime.SampleSet(kwargs['ntgt'], ploidy=2, population=kwargs['tgt_id']),
+        ]
+
         ts = msprime.sim_ancestry(
-            recombination_rate=rec_rate,
-            sequence_length=seq_len,
+            recombination_rate=kwargs['rec_rate'],
+            sequence_length=kwargs['seq_len'],
             samples=samples,
             demography=demography,
             record_migrations=True,
-            random_seed=seed,
+            random_seed=kwargs['seed'],
         )
-        ts = msprime.sim_mutations(ts, rate=mut_rate, random_seed=seed, model=msprime.BinaryMutationModel())
-        true_tracts = _get_true_tracts(ts, tgt_id, src_id)
+        ts = msprime.sim_mutations(ts, rate=kwargs['mut_rate'], random_seed=kwargs['seed'], model=msprime.BinaryMutationModel())
+        true_tracts = _get_true_tracts(ts, kwargs['tgt_id'], kwargs['src_id'])
 
-        os.makedirs(os.path.join(output_dir, str(rep)), exist_ok=True)
-        ts_file  = output_dir + '/' + str(rep) + '/' + output_prefix + f'{rep}.ts'
-        vcf_file = output_dir + '/' + str(rep) + '/' + output_prefix + f'{rep}.vcf'
-        bed_file = output_dir + '/' + str(rep) + '/' + output_prefix + f'{rep}.true.tracts.bed'
+        os.makedirs(os.path.join(kwargs['output_dir'], str(rep)), exist_ok=True)
+        ts_file  = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.ts'
+        vcf_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.vcf'
+        bed_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.true.tracts.bed'
 
         ts.dump(ts_file)
         with open(vcf_file, 'w') as o:
@@ -145,7 +150,7 @@ def _get_true_tracts(ts, tgt_id, src_id):
     return tracts
 
 
-def _label(tracts, archaic_prop, not_archaic_prop, seq_len):
+def _label_worker(tracts, archaic_prop, not_archaic_prop, seq_len):
     """
     Description:
         Helper function to label a fragment as 'introgressed', 'not introgressed', or 'ambiguous'.
