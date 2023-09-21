@@ -192,6 +192,7 @@ def _preprocess_archie_worker(in_queue, out_queue, **kwargs):
         ref_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.ref.ind.list'
         tgt_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.tgt.ind.list'
         feature_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.features'
+        label_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.true.tracts.label'
 
         process_data(vcf_file=vcf_file, ref_ind_file=ref_ind_file, tgt_ind_file=tgt_ind_file,
                      anc_allele_file=None, output=feature_file, thread=1, process_archie=True,
@@ -206,46 +207,16 @@ def _preprocess_archie_worker(in_queue, out_queue, **kwargs):
         except pd.errors.EmptyDataError:
             feature_df['label'] = 0
         else:
-            true_tract_df.columns = ['chr', 'start', 'end', 'hap', 'ind']
+            true_tract_df.columns = ['chr', 'start', 'end', 'hap', 'sample']
             true_tract_df['len'] = true_tract_df['end'] - true_tract_df['start']
-            true_tract_df = true_tract_df.groupby(by=['ind', 'hap'])['len'].sum().reset_index()
+            true_tract_df = true_tract_df.groupby(by=['sample', 'hap'])['len'].sum().reset_index()
             true_tract_df['prop'] = true_tract_df['len'] / kwargs['seq_len']
             true_tract_df['label'] = true_tract_df.apply(lambda row: _add_label(row, kwargs['archaic_prop'], kwargs['not_archaic_prop']), axis=1)
+            #true_tract_df.to_csv(label_file, sep="\t")
+            feature_df = feature_df.merge(true_tract_df.drop(columns=['len', 'prop']), 
+                                          left_on=['sample', 'hap'], right_on=['sample', 'hap'], how='left').fillna(0)
         finally:
-            feature_df.to_csv(feature_file, sep="\t")
-
-        out_queue.put(rep)
-
-
-#def _label_worker(tracts, archaic_prop, not_archaic_prop, seq_len):
-def _label_worker(in_queue, out_queue, **kwargs):
-    """
-    Description:
-        Helper function to label a fragment as 'introgressed', 'not introgressed', or 'ambiguous'.
-
-    Arguments:
-        tracts str: Name of the file containing ground truth introgressed fragments.
-        archaic_prop float: Threshold to label a fragment as 'introgressed'.
-        not_archaic_prop float: Threshold to label a fragment as 'not introgressed'.
-        seq_len int: Length of the fragment.
-    """
-
-    while True:
-        rep = in_queue.get()
-        bed_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.true.tracts.bed'
-        label_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.true.tracts.label'
-
-        try:
-            df = pd.read_csv(bed_file, sep="\t", header=None)
-        except pd.errors.EmptyDataError:
-            return None
-
-        df.columns = ['chr', 'start', 'end', 'hap', 'ind']
-        df['len'] = df['end'] - df['start']
-        df = df.groupby(by=['hap', 'ind'])['len'].sum().reset_index()
-        df['prop'] = df['len'] / kwargs['seq_len']
-        df['label'] = df.apply(lambda row: _add_label(row, kwargs['archaic_prop'], kwargs['not_archaic_prop']), axis=1)
-        df.to_csv(bed_file, sep="\t", header=False, index=False)
+            feature_df.to_csv(feature_file, sep="\t", index=False)
 
         out_queue.put(rep)
 
@@ -253,10 +224,10 @@ def _label_worker(in_queue, out_queue, **kwargs):
 def _add_label(row, archaic_prop, not_archaic_prop):
     """
     """
-    if row['prop'] > archaic_prop: return [1,0,0]
-    elif row['prop'] < not_archaic_prop: return [0,1,0]
-    else: return [0,0,1]
+    if row['prop'] > archaic_prop: return 1.0
+    elif row['prop'] < not_archaic_prop: return 0.0
+    else: return -1.0
 
 
 if __name__ == '__main__':
-    train("./examples/models/BonoboGhost_4K19.yaml", 10, 50, 50, 'Western', 'Bonobo', 'Ghost', 50000, 1e-8, 1e-8, 2, 'test', './sstar/test')
+    train("./examples/models/BonoboGhost_4K19.yaml", 1000, 50, 50, 'Western', 'Bonobo', 'Ghost', 50000, 1e-8, 1e-8, 2, 'test', './sstar/test')

@@ -275,7 +275,7 @@ def _archie_output(output, header, samples, res):
             sstar_scores = item[11]
             for i in range(len(samples)*2):
                 ind_name = samples[int(i/2)]
-                hap_name = f'hap{i%2+1}'
+                hap_name = f'hap_{i%2}'
                 spectrum = "\t".join([str(x) for x in spectra[i]])
                 min_ref_dist = min_ref_dists[i]
                 tgt_dist = "\t".join([str(x) for x in tgt_dists[i]])
