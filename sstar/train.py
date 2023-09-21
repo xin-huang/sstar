@@ -18,6 +18,7 @@ import os
 import demes, msprime
 import pandas as pd
 from multiprocessing import Process, Queue
+from sstar.utils import read_data
 
 
 def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed=None, train_archie=False):
@@ -29,6 +30,10 @@ def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mu
              ref_id=ref_id, tgt_id=tgt_id, src_id=src_id, 
              seq_len=seq_len, mut_rate=mut_rate, rec_rate=rec_rate, 
              output_prefix=output_prefix, output_dir=output_dir, seed=seed)
+    # label data
+    #_manager(worker_func=_label_worker, nrep=nrep, thread=thread,
+    #         archaic_prop=0.7, not_archaic_prop=0.3, seq_len=seq_len,
+    #         output_prefix=output_prefix, output_dir=output_dir)
 
     if train_archie:
         _train_archie()
@@ -100,6 +105,10 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
         ts_file  = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.ts'
         vcf_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.vcf'
         bed_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.true.tracts.bed'
+        ref_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.ref.ind.list'
+        tgt_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.tgt.ind.list'
+
+        _create_ref_tgt_file(kwargs['nref'], kwargs['ntgt'], ref_ind_file, tgt_ind_file)
 
         ts.dump(ts_file)
         with open(vcf_file, 'w') as o:
@@ -114,6 +123,27 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
         df.drop_duplicates(keep='first').to_csv(bed_file, sep="\t", header=False, index=False)
 
         out_queue.put(rep)
+
+
+def _create_ref_tgt_file(nref, ntgt, ref_ind_file, tgt_ind_file, identifier="tsk_"):
+    """
+    Description:
+        Helper function that creates approriate reference and target individual files.
+
+    Arguments:
+        nref int: number of reference individuals
+        ntgt int: number of target individuals
+        ref_ind_file str: Name of the reference individuals output file
+        tgt_ind_file str: Name of the target individuals output file
+        identifier str: string to prepend at the beginning of the individual number
+    """
+    with open(ref_ind_file, 'w') as f:
+        for i in range(nref):
+            f.write(identifier + str(i) + "\n")
+
+    with open(tgt_ind_file, 'w') as f:
+        for i in range(i+1, nref + ntgt):
+            f.write(identifier + str(i) + "\n")
 
 
 def _get_true_tracts(ts, tgt_id, src_id):
@@ -150,7 +180,24 @@ def _get_true_tracts(ts, tgt_id, src_id):
     return tracts
 
 
-def _label_worker(tracts, archaic_prop, not_archaic_prop, seq_len):
+def _preprocess_worker(in_queue, out_queue, **kwargs):
+    """
+    """
+    while True:
+        rep = in_queue.get()
+
+        vcf_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.vcf'
+        bed_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.true.tracts.bed'
+        ref_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.ref.ind.list'
+        tgt_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.tgt.ind.list'
+
+        ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, None)
+
+        out_queue.put(rep)
+
+
+#def _label_worker(tracts, archaic_prop, not_archaic_prop, seq_len):
+def _label_worker(in_queue, out_queue, **kwargs):
     """
     Description:
         Helper function to label a fragment as 'introgressed', 'not introgressed', or 'ambiguous'.
@@ -161,24 +208,34 @@ def _label_worker(tracts, archaic_prop, not_archaic_prop, seq_len):
         not_archaic_prop float: Threshold to label a fragment as 'not introgressed'.
         seq_len int: Length of the fragment.
     """
-    def _add_label(row, archaic_prop, not_archaic_prop):
-        if row['prop'] > archaic_prop: return [1,0,0]
-        elif row['prop'] < not_archaic_prop: return [0,1,0]
-        else: return [0,0,1]
 
-    try:
-        df = pd.read_csv(tracts, sep="\t", header=None)
-    except pandas.errors.EmptyDataError:
-        return None
+    while True:
+        rep = in_queue.get()
+        bed_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.true.tracts.bed'
+        label_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.true.tracts.label'
 
-    df.columns = ['chr', 'start', 'end', 'hap', 'ind']
-    df['len'] = df['end'] - df['start']
-    df = df.groupby(by=['hap', 'ind'])['len'].sum().reset_index()
-    df['prop'] = df['len'] / seq_len
-    df['label'] = df.apply(lambda row: _add_label(row, archaic_prop, not_archaic_prop), axis=1)
+        try:
+            df = pd.read_csv(bed_file, sep="\t", header=None)
+        except pd.errors.EmptyDataError:
+            return None
 
-    return df
+        df.columns = ['chr', 'start', 'end', 'hap', 'ind']
+        df['len'] = df['end'] - df['start']
+        df = df.groupby(by=['hap', 'ind'])['len'].sum().reset_index()
+        df['prop'] = df['len'] / kwargs['seq_len']
+        df['label'] = df.apply(lambda row: _add_label(row, kwargs['archaic_prop'], kwargs['not_archaic_prop']), axis=1)
+        df.to_csv(bed_file, sep="\t", header=False, index=False)
+
+        out_queue.put(rep)
+
+
+def _add_label(row, archaic_prop, not_archaic_prop):
+    """
+    """
+    if row['prop'] > archaic_prop: return [1,0,0]
+    elif row['prop'] < not_archaic_prop: return [0,1,0]
+    else: return [0,0,1]
 
 
 if __name__ == '__main__':
-    train("./examples/models/BonoboGhost_4K19.yaml", 1000, 50, 50, 'Western', 'Bonobo', 'Ghost', 50000, 1e-8, 1e-8, 2, 'test', './sstar/test')
+    train("./examples/models/BonoboGhost_4K19.yaml", 10, 50, 50, 'Western', 'Bonobo', 'Ghost', 50000, 1e-8, 1e-8, 2, 'test', './sstar/test')
