@@ -33,7 +33,8 @@ def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mu
 
     _manager(worker_func=_preprocess_archie_worker, nrep=nrep, thread=thread,
              output_prefix=output_prefix, output_dir=output_dir,
-             win_len=50000, win_step=50000, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000)
+             win_len=seq_len, win_step=seq_len, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000,
+             seq_len=seq_len, archaic_prop=0.7, not_archaic_prop=0.3)
 
     if train_archie:
         _train_archie()
@@ -197,6 +198,20 @@ def _preprocess_archie_worker(in_queue, out_queue, **kwargs):
                      win_len=kwargs['win_len'], win_step=kwargs['win_step'],
                      match_bonus=kwargs['match_bonus'], max_mismatch=kwargs['max_mismatch'], 
                      mismatch_penalty=kwargs['mismatch_penalty'])
+
+        feature_df = pd.read_csv(feature_file, sep="\t")
+
+        try: 
+            true_tract_df = pd.read_csv(bed_file, sep="\t", header=None)
+            true_tract_df.columns = ['chr', 'start', 'end', 'hap', 'ind']
+            true_tract_df['len'] = true_tract_df['end'] - true_tract_df['start']
+            true_tract_df = true_tract_df.groupby(by=['ind', 'hap'])['len'].sum().reset_index()
+            true_tract_df['prop'] = true_tract_df['len'] / kwargs['seq_len']
+            true_tract_df['label'] = true_tract_df.apply(lambda row: _add_label(row, kwargs['archaic_prop'], kwargs['not_archaic_prop']), axis=1)
+        except pd.errors.EmptyDataError:
+            feature_df['label'] = 0
+            
+        feature_df.to_csv(feature_file, sep="\t")
 
         out_queue.put(rep)
 
