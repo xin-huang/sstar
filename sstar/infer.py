@@ -17,9 +17,16 @@
 from sstar.preprocess import process_data
 
 
-def infer(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, model_file, output_file, algorithm=None):
+def infer(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, model_file, output_dir, output_prefix, algorithm=None):
     """
     """
+    feature_file = output_dir + '/' + output_prefix + '.features'
+
+    process_data(vcf_file=vcf_file, ref_ind_file=ref_ind_file, tgt_ind_file=tgt_ind_file,
+                 anc_allele_file=anc_allele_file, output=feature_file, thread=thread,
+                 win_len=win_len, win_step=win_step, match_bonus=match_bonus, max_mismatch=max_mismatch, 
+                 mismatch_penalty=mismatch_penalty)
+
     if algorithm == 'logistic_regression':
         _infer_logistic_regression()
     elif algorithm == 'extra_trees':
@@ -43,4 +50,6 @@ def _infer_sstar():
 
 
 if __name__ == '__main__':
-    infer()
+    infer(vcf_file="./examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="./examples/data/ind_list/ref.ind.list", tgt_ind_file="./examples/data/ind_list/tgt.ind.list", 
+          anc_allele_file=None, win_len=50000, win_step=50000, thread=8, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000, model_file="./examples/pre-trained/test.logistic.regression.model", 
+          output_dir="./sstar/test", output_prefix="test", algorithm="logistic_regression")

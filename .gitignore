@@ -5,6 +5,7 @@ dist/*
 .pytest_cache/*
 .benchmarks/*
 */.snakemake/*
+examples/pre-trained/*
 examples/snakepipe/results/*
 examples/snakepipe/.snakemake/*
 examples/snakepipe/logs_slurm/*
