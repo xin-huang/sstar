@@ -21,7 +21,7 @@ from multiprocessing import Process, Queue
 from sstar.preprocess import process_data
 
 
-def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed=None, train_archie=False):
+def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, algorithm=None, seed=None):
     """
     """
     # simulate data
@@ -31,20 +31,29 @@ def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mu
              seq_len=seq_len, mut_rate=mut_rate, rec_rate=rec_rate, 
              output_prefix=output_prefix, output_dir=output_dir, seed=seed)
 
+
+    if algorithm == 'logistic_regression':
+        _train_logistic_regression(nrep=nrep, thread=thread, output_prefix=output_prefix, output_dir=output_dir,
+                                   seq_len=seq_len, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000, archaic_prop=0.7, not_archaic_prop=0.3)
+    elif algorithm == 'extra_trees':
+        _train_extra_trees()
+    elif (algorithm == 'sstar') or (algorithm is None):
+        _train_sstar()
+    else:
+        raise Exception(f'The {algorithm} algorithm is NOT available!')
+
+
+def _train_logistic_regression(nrep, thread, output_prefix, output_dir, seq_len, match_bonus, max_mismatch, mismatch_penalty, archaic_prop, not_archaic_prop):
+    """
+    """
     _manager(worker_func=_preprocess_archie_worker, nrep=nrep, thread=thread,
              output_prefix=output_prefix, output_dir=output_dir,
-             win_len=seq_len, win_step=seq_len, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000,
-             seq_len=seq_len, archaic_prop=0.7, not_archaic_prop=0.3)
-
-    if train_archie:
-        _train_archie()
-    else:
-        _train_sstar()
+             win_len=seq_len, win_step=seq_len, match_bonus=match_bonus, 
+             max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty,
+             seq_len=seq_len, archaic_prop=archaic_prop, not_archaic_prop=not_archaic_prop)
 
 
-def _train_archie():
-    """
-    """
+def _train_extra_trees():
     pass
 
 
@@ -230,4 +239,4 @@ def _add_label(row, archaic_prop, not_archaic_prop):
 
 
 if __name__ == '__main__':
-    train("./examples/models/BonoboGhost_4K19.yaml", 1000, 50, 50, 'Western', 'Bonobo', 'Ghost', 50000, 1e-8, 1e-8, 2, 'test', './sstar/test')
+    train("./examples/models/BonoboGhost_4K19.yaml", 1000, 50, 50, 'Western', 'Bonobo', 'Ghost', 50000, 1e-8, 1e-8, 2, 'test', './sstar/test', algorithm='logistic_regression', seed=913)
