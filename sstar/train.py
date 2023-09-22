@@ -22,7 +22,8 @@ from sstar.preprocess import process_data
 from sstar.models import train_logistic_regression
 
 
-def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, algorithm=None, seed=None):
+def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, 
+          match_bonus, max_mismatch, mismatch_penalty, archaic_prop, not_archaic_prop, algorithm=None, seed=None):
     """
     """
     # simulate data
@@ -34,7 +35,8 @@ def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mu
 
     if algorithm == 'logistic_regression':
         _train_logistic_regression(nrep=nrep, thread=thread, output_prefix=output_prefix, output_dir=output_dir,
-                                   seq_len=seq_len, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000, archaic_prop=0.7, not_archaic_prop=0.3)
+                                   seq_len=seq_len, match_bonus=match_bonus, max_mismatch=max_mismatch, 
+                                   mismatch_penalty=mismatch_penalty, archaic_prop=archaic_prop, not_archaic_prop=not_archaic_prop)
     elif algorithm == 'extra_trees':
         _train_extra_trees()
     elif (algorithm == 'sstar') or (algorithm is None):
@@ -252,4 +254,7 @@ def _add_label(row, archaic_prop, not_archaic_prop):
 
 
 if __name__ == '__main__':
-    train("./examples/models/BonoboGhost_4K19.yaml", 1000, 50, 50, 'Western', 'Bonobo', 'Ghost', 50000, 1e-8, 1e-8, 2, 'test', './sstar/test', algorithm='logistic_regression', seed=913)
+    train(demo_model_file="./examples/models/BonoboGhost_4K19.yaml", nrep=1000, nref=50, ntgt=50, 
+          ref_id='Western', tgt_id='Bonobo', src_id='Ghost', seq_len=50000, mut_rate=1e-8, rec_rate=1e-8, thread=2, 
+          output_prefix='test', output_dir='./sstar/test', match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000, 
+          archaic_prop=0.7, not_archaic_prop=0.3, algorithm='logistic_regression', seed=913)

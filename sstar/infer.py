@@ -17,7 +17,7 @@
 from sstar.preprocess import process_data
 
 
-def infer(vcf_file, model_file, output_file, algorithm=None):
+def infer(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, model_file, output_file, algorithm=None):
     """
     """
     if algorithm == 'logistic_regression':
@@ -26,6 +26,8 @@ def infer(vcf_file, model_file, output_file, algorithm=None):
         _infer_extra_trees()
     elif (algorithm == 'sstar') or (algorithm is None):
         _infer_sstar()
+    else:
+        raise Exception(f'The {algorithm} algorithm is NOT available!')
 
 
 def _infer_logistic_regression():
