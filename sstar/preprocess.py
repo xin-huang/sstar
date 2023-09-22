@@ -21,7 +21,7 @@ from sstar.stats import *
 from sstar.utils import read_data, filter_data, create_windows
 
 
-def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, output, win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, process_archie=False):
+def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, output, win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, only_sstar=False):
     """
     Description:
         Processes genotype data.
@@ -38,25 +38,25 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, output, 
         match_bonus int: Bonus for matching genotypes of two different variants.
         max_mismatch int: Maximum genotype distance allowed.
         mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
-        process_archie bool: If True, process the data for using archie; If False, process the data for using sstar.
+        only_sstar bool: If True, only calculate the S* statistic; If False, calculate the S* statistic and others.
     """
     ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, anc_allele_file)
     chr_names = tgt_data.keys()
 
-    if process_archie: 
-        _process_archie(win_step, win_len, output, thread, 
-                        ref_data=ref_data, tgt_data=tgt_data, samples=tgt_samples, 
-                        match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
-    else: 
+    if only_sstar: 
         _process_sstar(win_step, win_len, output, thread, 
                        ref_data=ref_data, tgt_data=tgt_data, ref_samples=ref_samples, tgt_samples=tgt_samples, 
                        match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
+    else:
+        _process(win_step, win_len, output, thread, 
+                 ref_data=ref_data, tgt_data=tgt_data, samples=tgt_samples, 
+                 match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
 
 
-def _process_archie(win_step, win_len, output, thread, **kwargs):
+def _process(win_step, win_len, output, thread, **kwargs):
     """
     Description:
-        Processes genotype data for using archie.
+        Processes genotype data with the S* statistic and others.
 
     Arguments:
         win_step int: Length of sliding windows.
@@ -78,8 +78,8 @@ def _process_archie(win_step, win_len, output, thread, **kwargs):
     header += '\t'.join(['pairwised_dist'+str(x+1) for x in range(ind_num*2)])
     header += '\tmean_pairwised_dist\tvar_pairwised_dist\tskew_pairwised_dist\tkurtosis_pairwised_dist'
     header += '\tmin_dist_to_ref\tS*_score\tprivate_SNP_num'
-    worker_func = _archie_worker
-    output_func = _archie_output
+    worker_func = _worker
+    output_func = _output
 
     for c in kwargs['tgt_data'].keys():
         ref_gts = kwargs['ref_data'][c]['GT']
@@ -104,7 +104,7 @@ def _process_archie(win_step, win_len, output, thread, **kwargs):
 def _process_sstar(win_step, win_len, output, thread, **kwargs):
     """
     Description:
-        Processes genotype data for using sstar.
+        Processes genotype data with the S* statistic only.
 
     Arguments:
         win_step int: Length of sliding windows.
@@ -198,10 +198,10 @@ def _manager(windows, output, thread, header, worker_func, output_func, **kwargs
     output_func(output, header, kwargs['samples'], res)
 
 
-def _archie_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penalty):
+def _worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penalty):
     """
     Description:
-        Calculates statistics for archie.
+        Calculates statistics.
 
     Arguments:
         in_queue multiprocessing.Queue: multiprocessing.Queue instance to receive parameters from the manager.
@@ -247,10 +247,10 @@ def _sstar_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penal
         out_queue.put((chr_name, start, end, sstar_scores, sstar_snp_nums, haplotypes))
 
 
-def _archie_output(output, header, samples, res):
+def _output(output, header, samples, res):
     """
     Description:
-        Outputs results from archie.
+        Outputs features.
 
     Arguments:
         output str: Name of the output file.

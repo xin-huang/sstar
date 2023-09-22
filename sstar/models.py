@@ -40,6 +40,10 @@ def train_logistic_regression(train_df, model_file):
     result.save(model_file)
 
 
+def infer_logistic_regression():
+    pass
+
+
 def train_sstar():
     pass
 

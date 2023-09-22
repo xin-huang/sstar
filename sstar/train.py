@@ -217,7 +217,7 @@ def _preprocess_logistic_regression_worker(in_queue, out_queue, **kwargs):
         label_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.true.tracts.label'
 
         process_data(vcf_file=vcf_file, ref_ind_file=ref_ind_file, tgt_ind_file=tgt_ind_file,
-                     anc_allele_file=None, output=feature_file, thread=1, process_archie=True,
+                     anc_allele_file=None, output=feature_file, thread=1,
                      win_len=kwargs['win_len'], win_step=kwargs['win_step'],
                      match_bonus=kwargs['match_bonus'], max_mismatch=kwargs['max_mismatch'], 
                      mismatch_penalty=kwargs['mismatch_penalty'])
