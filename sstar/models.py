@@ -19,7 +19,7 @@ import statsmodels.formula.api as smf
 import numpy as np
 
 
-def train_logistic_regression(df, model_file):
+def train_logistic_regression(train_df, model_file):
     """
     Description:
         Function for training of the statsmodels logistic classification.
@@ -29,13 +29,20 @@ def train_logistic_regression(df, model_file):
         save_filename str: filename for output model
     """
     sm_data_exog = train_df.copy()
-    sm_data_exog.drop(["label"], axis=1, inplace=True)
-    sm_data_exog.replace(np.nan, 0, inplace=True)
+    sm_data_exog.drop(['label'], axis=1, inplace=True)
     sm_data_exog = sm.add_constant(sm_data_exog, prepend=False)
 
-    sm_data_endog = train_df["label"]
+    sm_data_endog = train_df['label']
 
     glm_binom = sm.GLM(sm_data_endog.astype(int), sm_data_exog.astype(float),family=sm.families.Binomial())
     result = glm_binom.fit()
 
-    result.save(save_filename)
+    result.save(model_file)
+
+
+def train_sstar():
+    pass
+
+
+def train_extra_trees():
+    pass

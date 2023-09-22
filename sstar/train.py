@@ -19,6 +19,7 @@ import demes, msprime
 import pandas as pd
 from multiprocessing import Process, Queue
 from sstar.preprocess import process_data
+from sstar.models import train_logistic_regression
 
 
 def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, algorithm=None, seed=None):
@@ -57,8 +58,12 @@ def _train_logistic_regression(nrep, thread, output_prefix, output_dir, seq_len,
         df = pd.read_csv(feature_file, sep="\t")
         feature_df = pd.concat([feature_df, df])
 
-    #feature_df = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'hap'])
-    feature_df.to_csv(output_dir + '/' + output_prefix + '.all.features', sep="\t", index=False)
+    all_feature_file = output_dir + '/' + output_prefix + '.all.features'
+    model_file = output_dir + '/' + output_prefix + '.logistic.regression.model'
+
+    feature_df.to_csv(all_feature_file, sep="\t", index=False)
+    feature_df = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'hap'])
+    train_logistic_regression(feature_df, model_file)
 
 
 def _train_extra_trees():
