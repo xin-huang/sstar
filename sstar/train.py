@@ -31,7 +31,6 @@ def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mu
              seq_len=seq_len, mut_rate=mut_rate, rec_rate=rec_rate, 
              output_prefix=output_prefix, output_dir=output_dir, seed=seed)
 
-
     if algorithm == 'logistic_regression':
         _train_logistic_regression(nrep=nrep, thread=thread, output_prefix=output_prefix, output_dir=output_dir,
                                    seq_len=seq_len, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000, archaic_prop=0.7, not_archaic_prop=0.3)
@@ -46,11 +45,20 @@ def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mu
 def _train_logistic_regression(nrep, thread, output_prefix, output_dir, seq_len, match_bonus, max_mismatch, mismatch_penalty, archaic_prop, not_archaic_prop):
     """
     """
-    _manager(worker_func=_preprocess_archie_worker, nrep=nrep, thread=thread,
+    _manager(worker_func=_preprocess_logistic_regression_worker, nrep=nrep, thread=thread,
              output_prefix=output_prefix, output_dir=output_dir,
              win_len=seq_len, win_step=seq_len, match_bonus=match_bonus, 
              max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty,
              seq_len=seq_len, archaic_prop=archaic_prop, not_archaic_prop=not_archaic_prop)
+
+    feature_df = pd.DataFrame()
+    for i in range(nrep):
+        feature_file = output_dir + '/' + str(i) + '/' + output_prefix + f'.{i}.features'
+        df = pd.read_csv(feature_file, sep="\t")
+        feature_df = pd.concat([feature_df, df])
+
+    #feature_df = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'hap'])
+    feature_df.to_csv(output_dir + '/' + output_prefix + '.all.features', sep="\t", index=False)
 
 
 def _train_extra_trees():
@@ -112,11 +120,11 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
         true_tracts = _get_true_tracts(ts, kwargs['tgt_id'], kwargs['src_id'])
 
         os.makedirs(os.path.join(kwargs['output_dir'], str(rep)), exist_ok=True)
-        ts_file  = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.ts'
-        vcf_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.vcf'
-        bed_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.true.tracts.bed'
-        ref_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.ref.ind.list'
-        tgt_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.tgt.ind.list'
+        ts_file  = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.ts'
+        vcf_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.vcf'
+        bed_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.true.tracts.bed'
+        ref_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.ref.ind.list'
+        tgt_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.tgt.ind.list'
 
         _create_ref_tgt_file(kwargs['nref'], kwargs['ntgt'], ref_ind_file, tgt_ind_file)
 
@@ -190,18 +198,18 @@ def _get_true_tracts(ts, tgt_id, src_id):
     return tracts
 
 
-def _preprocess_archie_worker(in_queue, out_queue, **kwargs):
+def _preprocess_logistic_regression_worker(in_queue, out_queue, **kwargs):
     """
     """
     while True:
         rep = in_queue.get()
 
-        vcf_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.vcf'
-        bed_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.true.tracts.bed'
-        ref_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.ref.ind.list'
-        tgt_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.tgt.ind.list'
-        feature_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.features'
-        label_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'{rep}.true.tracts.label'
+        vcf_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.vcf'
+        bed_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.true.tracts.bed'
+        ref_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.ref.ind.list'
+        tgt_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.tgt.ind.list'
+        feature_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.features'
+        label_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.true.tracts.label'
 
         process_data(vcf_file=vcf_file, ref_ind_file=ref_ind_file, tgt_ind_file=tgt_ind_file,
                      anc_allele_file=None, output=feature_file, thread=1, process_archie=True,
