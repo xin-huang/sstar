@@ -212,6 +212,7 @@ def _preprocess_archie_worker(in_queue, out_queue, **kwargs):
             true_tract_df = true_tract_df.groupby(by=['sample', 'hap'])['len'].sum().reset_index()
             true_tract_df['prop'] = true_tract_df['len'] / kwargs['seq_len']
             true_tract_df['label'] = true_tract_df.apply(lambda row: _add_label(row, kwargs['archaic_prop'], kwargs['not_archaic_prop']), axis=1)
+            true_tract_df.to_csv(label_file, sep="\t", index=False)
             feature_df = feature_df.merge(true_tract_df.drop(columns=['len', 'prop']), 
                                           left_on=['sample', 'hap'], right_on=['sample', 'hap'], how='left').fillna(0)
         finally:
