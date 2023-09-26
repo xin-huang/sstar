@@ -22,7 +22,7 @@ from sstar.utils import multiprocessing_manager
 
 
 def train(nrep, seq_len, thread, training_data_prefix, training_data_dir, 
-          match_bonus, max_mismatch, mismatch_penalty, archaic_prop, not_archaic_prop, algorithm=None, seed=None):
+          match_bonus, max_mismatch, mismatch_penalty, archaic_prop, not_archaic_prop, algorithm=None):
     """
     """
     multiprocessing_manager(worker_func=_preprocess_worker, nrep=nrep, thread=thread,

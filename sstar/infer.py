@@ -16,13 +16,15 @@
 
 import os
 from sstar.preprocess import process_data
+from sstar.models import LogisticRegression, ExtraTrees, Sstar
 
 
-def infer(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, model_file, output_dir, output_prefix, algorithm=None):
+def infer(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_step, thread, 
+          match_bonus, max_mismatch, mismatch_penalty, model_file, prediction_dir, prediction_prefix, algorithm=None):
     """
     """
-    os.makedirs(output_dir, exist_ok=True)
-    feature_file = output_dir + '/' + output_prefix + '.features'
+    os.makedirs(prediction_dir, exist_ok=True)
+    feature_file = prediction_dir + '/' + prediction_prefix + '.features'
 
     process_data(vcf_file=vcf_file, ref_ind_file=ref_ind_file, tgt_ind_file=tgt_ind_file,
                  anc_allele_file=anc_allele_file, output=feature_file, thread=thread,
@@ -30,28 +32,23 @@ def infer(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_st
                  mismatch_penalty=mismatch_penalty)
 
     if algorithm == 'logistic_regression':
-        _infer_logistic_regression()
+        prediction_file = prediction_dir + '/' + prediction_prefix + '.logistic.regression.predicted.bed'
+        model = LogisticRegression()
     elif algorithm == 'extra_trees':
-        _infer_extra_trees()
+        prediction_file = prediction_dir + '/' + prediction_prefix + '.extra.trees.predicted.bed'
+        model = ExtraTrees()
     elif (algorithm == 'sstar') or (algorithm is None):
-        _infer_sstar()
+        prediction_file = prediction_dir + '/' + prediction_prefix + '.sstar.predicted.bed'
+        model = Sstar()
     else:
         raise Exception(f'The {algorithm} algorithm is NOT available!')
 
-
-def _infer_logistic_regression():
-    pass
-
-
-def _infer_extra_trees():
-    pass
-
-
-def _infer_sstar():
-    pass
+    model.infer(feature_file, prediction_file)
 
 
 if __name__ == '__main__':
-    infer(vcf_file="./examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="./examples/data/ind_list/ref.ind.list", tgt_ind_file="./examples/data/ind_list/tgt.ind.list", 
-          anc_allele_file=None, win_len=50000, win_step=50000, thread=8, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000, model_file="./examples/pre-trained/test.logistic.regression.model", 
-          output_dir="./sstar/test", output_prefix="test", algorithm="logistic_regression")
+    infer(vcf_file="./examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", 
+          ref_ind_file="./examples/data/ind_list/ref.ind.list", tgt_ind_file="./examples/data/ind_list/tgt.ind.list", 
+          anc_allele_file=None, win_len=50000, win_step=50000, thread=8, 
+          match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000, model_file="./examples/pre-trained/test.logistic.regression.model", 
+          prediction_dir="./sstar/test", prediction_prefix="test", algorithm="logistic_regression")
