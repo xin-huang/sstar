@@ -14,8 +14,6 @@
 # limitations under the License.
 
 
-import os
-import demes, msprime
 import pandas as pd
 from multiprocessing import Process, Queue
 from sstar.preprocess import process_data
