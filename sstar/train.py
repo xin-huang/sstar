@@ -20,6 +20,7 @@ import pandas as pd
 from multiprocessing import Process, Queue
 from sstar.preprocess import process_data
 from sstar.models import train_logistic_regression
+from sstar.utils import multiprocessing_manager
 
 
 def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, 
@@ -27,7 +28,7 @@ def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mu
     """
     """
     # simulate data
-    _manager(worker_func=_simulation_worker, nrep=nrep, thread=thread,
+    multiprocessing_manager(worker_func=_simulation_worker, nrep=nrep, thread=thread,
              demo_model_file=demo_model_file, nref=nref, ntgt=ntgt, 
              ref_id=ref_id, tgt_id=tgt_id, src_id=src_id, 
              seq_len=seq_len, mut_rate=mut_rate, rec_rate=rec_rate, 
@@ -48,7 +49,7 @@ def train(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mu
 def _train_logistic_regression(nrep, thread, output_prefix, output_dir, seq_len, match_bonus, max_mismatch, mismatch_penalty, archaic_prop, not_archaic_prop):
     """
     """
-    _manager(worker_func=_preprocess_logistic_regression_worker, nrep=nrep, thread=thread,
+    multiprocessing_manager(worker_func=_preprocess_logistic_regression_worker, nrep=nrep, thread=thread,
              output_prefix=output_prefix, output_dir=output_dir,
              win_len=seq_len, win_step=seq_len, match_bonus=match_bonus, 
              max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty,
@@ -74,32 +75,6 @@ def _train_extra_trees():
 
 def _train_sstar():
     pass
-
-
-def _manager(worker_func, nrep, thread, **kwargs):
-    """
-    """
-    try:
-        from pytest_cov.embed import cleanup_on_sigterm
-    except ImportError:
-        pass
-    else:
-        cleanup_on_sigterm()
-
-    res = []
-    in_queue, out_queue = Queue(), Queue()
-    workers = [Process(target=worker_func, args=(in_queue, out_queue), kwargs=kwargs) for i in range(thread)]
-
-    for i in range(nrep): in_queue.put(i)
-
-    try:
-        for w in workers: w.start()
-        for i in range(nrep):
-            item = out_queue.get()
-            if item != '': res.append(item)
-        for w in workers: w.terminate()
-    finally:
-        for w in workers: w.join()
 
 
 def _simulation_worker(in_queue, out_queue, **kwargs):

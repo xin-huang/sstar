@@ -16,6 +16,7 @@
 import allel
 import math
 import numpy as np
+from multiprocessing import Process, Queue
 
 #@profile
 def parse_ind_file(filename):
@@ -305,7 +306,34 @@ def create_windows(pos, chr_name, win_step, win_len):
     return windows
 
 
+def multiprocessing_manager(worker_func, nrep, thread, **kwargs):
+    """
+    """
+    try:
+        from pytest_cov.embed import cleanup_on_sigterm
+    except ImportError:
+        pass
+    else:
+        cleanup_on_sigterm()
+
+    res = []
+    in_queue, out_queue = Queue(), Queue()
+    workers = [Process(target=worker_func, args=(in_queue, out_queue), kwargs=kwargs) for i in range(thread)]
+
+    for i in range(nrep): in_queue.put(i)
+
+    try:
+        for w in workers: w.start()
+        for i in range(nrep):
+            item = out_queue.get()
+            if item != '': res.append(item)
+        for w in workers: w.terminate()
+    finally:
+        for w in workers: w.join()
+
+
 #@profile
+# should move this to stats.py
 def cal_matchpct(chr_name, mapped_intervals, data, src_data, tgt_ind_index, src_ind_index, hap_index, win_start, win_end, sample_size):
     """
     Description:
