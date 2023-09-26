@@ -24,19 +24,19 @@ class Model(ABC):
     """
     """
     @abstractmethod
-    def train(self):
+    def train(self, train_df, model_file):
         pass
 
 
     @abstractmethod
-    def infer(self):
+    def infer(self, test_df, prediction_file):
         pass
 
 
 class LogisticRegression(Model):
     """
     """
-    def train():
+    def train(self, train_df, model_file):
         """
         Description:
             Function for training of the statsmodels logistic classification.
@@ -51,10 +51,14 @@ class LogisticRegression(Model):
 
         sm_data_endog = train_df['label']
 
-        glm_binom = sm.GLM(sm_data_endog.astype(int), sm_data_exog.astype(float),family=sm.families.Binomial())
+        glm_binom = sm.GLM(sm_data_endog.astype(int), sm_data_exog.astype(float), family=sm.families.Binomial())
         result = glm_binom.fit()
 
         result.save(model_file)
+
+
+    def infer(self, test_df, prediction_file):
+        pass
 
 
 class ExtraTrees(Model):
