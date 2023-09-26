@@ -17,36 +17,53 @@
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 import numpy as np
+from abc import ABC, abstractmethod
 
 
-def train_logistic_regression(train_df, model_file):
+class Model(ABC):
     """
-    Description:
-        Function for training of the statsmodels logistic classification.
-
-    Arguments:
-        train_df pandas.DataFrame: Training data
-        save_filename str: filename for output model
     """
-    sm_data_exog = train_df.copy()
-    sm_data_exog.drop(['label'], axis=1, inplace=True)
-    sm_data_exog = sm.add_constant(sm_data_exog, prepend=False)
-
-    sm_data_endog = train_df['label']
-
-    glm_binom = sm.GLM(sm_data_endog.astype(int), sm_data_exog.astype(float),family=sm.families.Binomial())
-    result = glm_binom.fit()
-
-    result.save(model_file)
+    @abstractmethod
+    def train(self):
+        pass
 
 
-def infer_logistic_regression(test_df, model_file, output_file):
+    @abstractmethod
+    def infer(self):
+        pass
+
+
+class LogisticRegression(Model):
+    """
+    """
+    def train():
+        """
+        Description:
+            Function for training of the statsmodels logistic classification.
+
+        Arguments:
+            train_df pandas.DataFrame: Training data
+            save_filename str: filename for output model
+        """
+        sm_data_exog = train_df.copy()
+        sm_data_exog.drop(['label'], axis=1, inplace=True)
+        sm_data_exog = sm.add_constant(sm_data_exog, prepend=False)
+
+        sm_data_endog = train_df['label']
+
+        glm_binom = sm.GLM(sm_data_endog.astype(int), sm_data_exog.astype(float),family=sm.families.Binomial())
+        result = glm_binom.fit()
+
+        result.save(model_file)
+
+
+class ExtraTrees(Model):
+    """
+    """
     pass
 
 
-def train_sstar():
-    pass
-
-
-def train_extra_trees():
+class Sstar(Model):
+    """
+    """
     pass
