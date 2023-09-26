@@ -33,6 +33,7 @@ def infer(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_st
                  mismatch_penalty=mismatch_penalty)
 
     feature_df = pd.read_csv(feature_file, sep="\t")
+    feature_df = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'hap'])
 
     if algorithm == 'logistic_regression':
         prediction_file = prediction_dir + '/' + prediction_prefix + '.logistic.regression.predicted.bed'
@@ -53,5 +54,5 @@ if __name__ == '__main__':
     infer(vcf_file="./examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", 
           ref_ind_file="./examples/data/ind_list/ref.ind.list", tgt_ind_file="./examples/data/ind_list/tgt.ind.list", 
           anc_allele_file=None, win_len=50000, win_step=50000, thread=8, 
-          match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000, model_file="./examples/pre-trained/test.logistic.regression.model", 
+          match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000, model_file="./sstar/test/test.logistic.regression.model", 
           prediction_dir="./sstar/test", prediction_prefix="test", algorithm="logistic_regression")

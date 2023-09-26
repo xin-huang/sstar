@@ -14,11 +14,13 @@
 # limitations under the License
 
 
+import pickle
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 import numpy as np
 import pandas as pd
 from abc import ABC, abstractmethod
+from sklearn.linear_model import LogisticRegression as LR
 
 
 class Model(ABC):
@@ -47,7 +49,8 @@ class LogisticRegression(Model):
             save_filename str: filename for output model
         """
         sm_data_exog = train_df.copy()
-        sm_data_exog.drop(['label'], axis=1, inplace=True)
+        sm_data_exog = sm_data_exog.drop(columns=['label'])
+        #sm_data_exog.drop(['label'], axis=1, inplace=True)
         sm_data_exog = sm.add_constant(sm_data_exog, prepend=False)
 
         sm_data_endog = train_df['label']
@@ -57,21 +60,30 @@ class LogisticRegression(Model):
 
         result.save(model_file)
 
+        #data = train_df.copy()
+        #data = data.drop(columns=['label'])
+        #label = train_df['label']
+
+        #model = LR(solver="newton-cg", penalty=None, max_iter=1000)
+        #model.fit(data, label.astype(int))
+
+        #pickle.dump(model, open(model_file, "wb"))
+
 
     def infer(self, model_file, test_df, prediction_file):
         """
         """
         model = sm.load(model_file)
 
+        sm_data_exog = test_df.copy()
+
         #replace nan values
-        test_df.replace(np.nan, 0, inplace=True)
-        test_df.replace(pd.NA, 0, inplace=True)
+        sm_data_exog.replace(np.nan, 0, inplace=True)
+        sm_data_exog.replace(pd.NA, 0, inplace=True)
 
-        #remove columns unnecessary for prediction
-        test_df.drop(['chrom', 'start', 'end', 'sample', 'hap'], axis=1, inplace=True, errors='ignore')
-
-        test_df = test_df.astype(float)
-        predictions = model.predict(sm.add_constant(test_df, prepend=False))
+        sm_data_exog = sm.add_constant(sm_data_exog, prepend=False)
+        sm_data_exog = sm_data_exog.astype(float)
+        predictions = model.predict(sm_data_exog)
 
         predictions.to_csv(prediction_file, index=False)
 
