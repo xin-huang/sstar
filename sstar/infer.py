@@ -14,12 +14,14 @@
 # limitations under the License.
 
 
+import os
 from sstar.preprocess import process_data
 
 
 def infer(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, model_file, output_dir, output_prefix, algorithm=None):
     """
     """
+    os.makedirs(output_dir, exist_ok=True)
     feature_file = output_dir + '/' + output_prefix + '.features'
 
     process_data(vcf_file=vcf_file, ref_ind_file=ref_ind_file, tgt_ind_file=tgt_ind_file,

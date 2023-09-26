@@ -40,7 +40,7 @@ def train_logistic_regression(train_df, model_file):
     result.save(model_file)
 
 
-def infer_logistic_regression():
+def infer_logistic_regression(test_df, model_file, output_file):
     pass
 
 
