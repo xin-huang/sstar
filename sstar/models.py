@@ -17,6 +17,7 @@
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 import numpy as np
+import pandas as pd
 from abc import ABC, abstractmethod
 
 
@@ -29,7 +30,7 @@ class Model(ABC):
 
 
     @abstractmethod
-    def infer(self, test_df, prediction_file):
+    def infer(self, model_file, test_df, prediction_file):
         pass
 
 
@@ -57,8 +58,22 @@ class LogisticRegression(Model):
         result.save(model_file)
 
 
-    def infer(self, test_df, prediction_file):
-        pass
+    def infer(self, model_file, test_df, prediction_file):
+        """
+        """
+        model = sm.load(model_file)
+
+        #replace nan values
+        test_df.replace(np.nan, 0, inplace=True)
+        test_df.replace(pd.NA, 0, inplace=True)
+
+        #remove columns unnecessary for prediction
+        test_df.drop(['chrom', 'start', 'end', 'sample', 'hap'], axis=1, inplace=True, errors='ignore')
+
+        test_df = test_df.astype(float)
+        predictions = model.predict(sm.add_constant(test_df, prepend=False))
+
+        predictions.to_csv(prediction_file, index=False)
 
 
 class ExtraTrees(Model):

@@ -15,6 +15,7 @@
 
 
 import os
+import pandas as pd
 from sstar.preprocess import process_data
 from sstar.models import LogisticRegression, ExtraTrees, Sstar
 
@@ -31,6 +32,8 @@ def infer(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_st
                  win_len=win_len, win_step=win_step, match_bonus=match_bonus, max_mismatch=max_mismatch, 
                  mismatch_penalty=mismatch_penalty)
 
+    feature_df = pd.read_csv(feature_file, sep="\t")
+
     if algorithm == 'logistic_regression':
         prediction_file = prediction_dir + '/' + prediction_prefix + '.logistic.regression.predicted.bed'
         model = LogisticRegression()
@@ -43,7 +46,7 @@ def infer(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_st
     else:
         raise Exception(f'The {algorithm} algorithm is NOT available!')
 
-    model.infer(feature_file, prediction_file)
+    model.infer(model_file, feature_df, prediction_file)
 
 
 if __name__ == '__main__':
