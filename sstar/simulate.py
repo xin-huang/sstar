@@ -135,6 +135,6 @@ def _get_true_tracts(ts, tgt_id, src_id):
 
 
 if __name__ == '__main__':
-    simulate(demo_model_file="./examples/models/BonoboGhost_4K19.yaml", nrep=1000, nref=5, ntgt=10, 
+    simulate(demo_model_file="./examples/models/BonoboGhost_4K19.yaml", nrep=1000, nref=50, ntgt=50, 
              ref_id='Western', tgt_id='Bonobo', src_id='Ghost', seq_len=50000, mut_rate=1e-8, rec_rate=1e-8, thread=2, 
              output_prefix='test', output_dir='./sstar/test', seed=913)

@@ -48,26 +48,14 @@ class LogisticRegression(Model):
             train_df pandas.DataFrame: Training data
             save_filename str: filename for output model
         """
-        sm_data_exog = train_df.copy()
-        sm_data_exog = sm_data_exog.drop(columns=['label'])
-        #sm_data_exog.drop(['label'], axis=1, inplace=True)
-        sm_data_exog = sm.add_constant(sm_data_exog, prepend=False)
+        data = train_df.copy()
+        data = data.drop(columns=['label'])
+        label = train_df['label']
 
-        sm_data_endog = train_df['label']
+        model = LR(solver="newton-cg", penalty=None, max_iter=1000)
+        model.fit(data, label.astype(int))
 
-        glm_binom = sm.GLM(sm_data_endog.astype(int), sm_data_exog.astype(float), family=sm.families.Binomial())
-        result = glm_binom.fit()
-
-        result.save(model_file)
-
-        #data = train_df.copy()
-        #data = data.drop(columns=['label'])
-        #label = train_df['label']
-
-        #model = LR(solver="newton-cg", penalty=None, max_iter=1000)
-        #model.fit(data, label.astype(int))
-
-        #pickle.dump(model, open(model_file, "wb"))
+        pickle.dump(model, open(model_file, "wb"))
 
 
     def infer(self, model_file, test_df, prediction_file):
