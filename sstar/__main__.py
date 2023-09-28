@@ -56,7 +56,11 @@ def _run_simulation(args):
 
 
 def _run_training(args):
-    pass
+    from sstar.train import train
+    train(nrep=args.replicate, seq_len=args.seq_len, thread=args.thread, 
+          training_data_prefix=args.training_data_prefix, training_data_dir=args.training_data_dir, 
+          match_bonus=args.match_bonus, max_mismatch=args.max_mismatch, mismatch_penalty=args.mismatch_penalty, 
+          archaic_prop=args.intro_prop, not_archaic_prop=args.not_intro_prop, algorithm=args.model)
 
 
 def _run_inference(args):
@@ -193,6 +197,17 @@ def _s_star_cli_parser():
 
     # Arguments for the train subcommand
     parser = subparsers.add_parser('train', help='Train a statistical/machine learning model.')
+    parser.add_argument('--seq-len', type=int, required=True, help="Length of the simulated genomes.", dest='seq_len')
+    parser.add_argument('--training-data-prefix', type=str, required=True, help="Prefix of the training data file name.", dest='training_data_prefix')
+    parser.add_argument('--training-data-dir', type=str, required=True, help="Directory of the training data.", dest='training_data_dir')
+    parser.add_argument('--model', type=str, default=None, help="Statistical/machine learning model for the training.")
+    parser.add_argument('--introgressed-prop', type=float, default=0.7, help="Proportion that determines a fragment as introgressed.", dest="intro_prop")
+    parser.add_argument('--not-introgressed-prop', type=float, default=0.3, help="Proportion that determinse a fragment as non-introgressed", dest="not_intro_prop")
+    parser.add_argument('--match-bonus', type=int, default=5000, help='Bonus for matching genotypes of two different variants. Default: 5000.', dest='match_bonus')
+    parser.add_argument('--max-mismatch', type=int, default=5, help='Maximum genotype distance allowed. Default: 5.', dest='max_mismatch')
+    parser.add_argument('--mismatch-penalty', type=int, default=-10000, help='Penalty for mismatching genotypes of two different variants. Default: -10000.', dest='mismatch_penalty')
+    parser.add_argument('--replicate', type=int, required=True, help="Number of replications in the training data.")
+    parser.add_argument('--thread', type=int, default=1, help="Number of threads for the training. Default: 1.")
     parser.set_defaults(runner=_run_training)
 
     # Arguments for the infer subcommand

@@ -53,7 +53,7 @@ class LogisticRegression(Model):
         labels = train_df['label']
 
         model = LR(solver="newton-cg", penalty=None, max_iter=1000)
-        model.fit(data, label.astype(int))
+        model.fit(data, labels.astype(int))
 
         pickle.dump(model, open(model_file, "wb"))
 
