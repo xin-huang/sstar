@@ -37,7 +37,7 @@ def train(nrep, seq_len, thread, training_data_prefix, training_data_dir,
         df = pd.read_csv(feature_file, sep="\t")
         feature_df = pd.concat([feature_df, df])
 
-    all_feature_file = training_data_dir + '/' + training_data_prefix + '.all.features'
+    all_feature_file = training_data_dir + '/' + training_data_prefix + '.training.all.features'
 
     feature_df.to_csv(all_feature_file, sep="\t", index=False)
     feature_df = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'hap'])

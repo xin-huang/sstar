@@ -50,7 +50,7 @@ class LogisticRegression(Model):
         """
         data = train_df.copy()
         data = data.drop(columns=['label'])
-        label = train_df['label']
+        labels = train_df['label']
 
         model = LR(solver="newton-cg", penalty=None, max_iter=1000)
         model.fit(data, label.astype(int))
@@ -61,19 +61,14 @@ class LogisticRegression(Model):
     def infer(self, model_file, test_df, prediction_file):
         """
         """
-        model = sm.load(model_file)
+        with open(model_file, 'rb') as f:
+            model = pickle.load(f)
 
-        sm_data_exog = test_df.copy()
+        data = test_df.copy()
+        labels = model.predict(data)
+        test_df['label'] = labels
 
-        #replace nan values
-        sm_data_exog.replace(np.nan, 0, inplace=True)
-        sm_data_exog.replace(pd.NA, 0, inplace=True)
-
-        sm_data_exog = sm.add_constant(sm_data_exog, prepend=False)
-        sm_data_exog = sm_data_exog.astype(float)
-        predictions = model.predict(sm_data_exog)
-
-        predictions.to_csv(prediction_file, index=False)
+        test_df.to_csv(prediction_file, sep="\t", index=False)
 
 
 class ExtraTrees(Model):
