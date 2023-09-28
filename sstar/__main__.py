@@ -50,7 +50,9 @@ def _run_tract(args):
 
 
 def _run_simulation(args):
-    pass
+    from sstar.simulate import simulate
+    simulate(demo_model_file=args.demes, nrep=args.replicate, nref=args.nref, ntgt=args.ntgt, ref_id=args.ref_id, tgt_id=args.tgt_id, src_id=args.src_id, ploidy=args.ploidy,
+             seq_len=args.seq_len, mut_rate=args.mut_rate, rec_rate=args.rec_rate, thread=args.thread, output_prefix=args.output_prefix, output_dir=args.output_dir, seed=args.seed)
 
 
 def _run_training(args):
@@ -172,6 +174,21 @@ def _s_star_cli_parser():
 
     # Arguments for the simulate subcommand
     parser = subparsers.add_parser('simulate', help='Simulate data for training.')
+    parser.add_argument('--demes', type=str, required=True, help="Demographic model in the DEMES format.")
+    parser.add_argument('--nref', type=int, required=True, help="Number of samples in the reference population.")
+    parser.add_argument('--ntgt', type=int, required=True, help="Number of samples in the target population.")
+    parser.add_argument('--ref-id', type=str, required=True, help="Name of the reference population in the demographic model.", dest='ref_id')
+    parser.add_argument('--tgt-id', type=str, required=True, help="Name of the target population in the demographic model.", dest='tgt_id')
+    parser.add_argument('--src-id', type=str, required=True, help="Name of the source population in the demographic model.", dest='src_id')
+    parser.add_argument('--seq-len', type=int, required=True, help="Length of the simulated genomes.", dest='seq_len')
+    parser.add_argument('--ploidy', type=str, default=2, help="Ploidy of the simulated genomes. Default: 2.")
+    parser.add_argument('--mut-rate', type=float, default=1e-8, help="Mutation rate per base pair per generation for the simulation. Default: 1e-8.", dest='mut_rate')
+    parser.add_argument('--rec-rate', type=float, default=1e-8, help="Recombination rate per base pair per generation for the simulation. Default: 1e-8.", dest='rec_rate')
+    parser.add_argument('--replicate', type=int, required=True, help="Number of replications for the simulation.")
+    parser.add_argument('--output-prefix', type=str, required=True, help="Prefix of the output file name.", dest='output_prefix')
+    parser.add_argument('--output-dir', type=str, required=True, help="Directory of the output files.", dest='output_dir')
+    parser.add_argument('--thread', type=int, default=1, help="Number of threads for the simulation. Default: 1.")
+    parser.add_argument('--seed', type=int, default=None, help="Random seed for the simulation. Default: None.")
     parser.set_defaults(runner=_run_simulation)
 
     # Arguments for the train subcommand

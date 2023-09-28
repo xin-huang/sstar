@@ -21,12 +21,12 @@ from multiprocessing import Process, Queue
 from sstar.utils import multiprocessing_manager
 
 
-def simulate(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed=None):
+def simulate(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, ploidy, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed):
     """
     """
     multiprocessing_manager(worker_func=_simulation_worker, nrep=nrep, thread=thread,
                             demo_model_file=demo_model_file, nref=nref, ntgt=ntgt, 
-                            ref_id=ref_id, tgt_id=tgt_id, src_id=src_id, 
+                            ref_id=ref_id, tgt_id=tgt_id, src_id=src_id, ploidy=ploidy,
                             seq_len=seq_len, mut_rate=mut_rate, rec_rate=rec_rate, 
                             output_prefix=output_prefix, output_dir=output_dir, seed=seed)
 
@@ -40,8 +40,8 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
         demo_graph = demes.load(kwargs['demo_model_file'])
         demography = msprime.Demography.from_demes(demo_graph)
         samples = [
-            msprime.SampleSet(kwargs['nref'], ploidy=2, population=kwargs['ref_id']),
-            msprime.SampleSet(kwargs['ntgt'], ploidy=2, population=kwargs['tgt_id']),
+            msprime.SampleSet(kwargs['nref'], ploidy=kwargs['ploidy'], population=kwargs['ref_id']),
+            msprime.SampleSet(kwargs['ntgt'], ploidy=kwargs['ploidy'], population=kwargs['tgt_id']),
         ]
 
         ts = msprime.sim_ancestry(
@@ -136,5 +136,5 @@ def _get_true_tracts(ts, tgt_id, src_id):
 
 if __name__ == '__main__':
     simulate(demo_model_file="./examples/models/BonoboGhost_4K19.yaml", nrep=1000, nref=50, ntgt=50, 
-             ref_id='Western', tgt_id='Bonobo', src_id='Ghost', seq_len=50000, mut_rate=1e-8, rec_rate=1e-8, thread=2, 
+             ref_id='Western', tgt_id='Bonobo', src_id='Ghost', ploidy=2, seq_len=50000, mut_rate=1e-8, rec_rate=1e-8, thread=2, 
              output_prefix='test', output_dir='./sstar/test', seed=913)
