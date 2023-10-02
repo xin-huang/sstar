@@ -57,14 +57,18 @@ def _run_simulation(args):
 
 def _run_training(args):
     from sstar.train import train
-    train(nrep=args.replicate, seq_len=args.seq_len, thread=args.thread, 
+    train(nrep=args.replicate, seq_len=args.seq_len, thread=args.thread, model_file=args.model_file, 
           training_data_prefix=args.training_data_prefix, training_data_dir=args.training_data_dir, 
           match_bonus=args.match_bonus, max_mismatch=args.max_mismatch, mismatch_penalty=args.mismatch_penalty, 
           archaic_prop=args.intro_prop, not_archaic_prop=args.not_intro_prop, algorithm=args.model)
 
 
 def _run_inference(args):
-    pass
+    from sstar.infer import infer
+    infer(vcf_file=args.vcf, ref_ind_file=args.ref_ind, tgt_ind_file=args.tgt_ind, anc_allele_file=args.anc_allele, 
+          win_len=args.win_len, win_step=args.win_step, thread=args.thread, model_file=args.model_file,
+          match_bonus=args.match_bonus, max_mismatch=args.max_mismatch, mismatch_penalty=args.mismatch_penalty, 
+          prediction_dir=args.prediction_dir, prediction_prefix=args.prediction_prefix, algorithm=args.model)
 
 
 def _add_common_args(parser):
@@ -197,9 +201,11 @@ def _s_star_cli_parser():
 
     # Arguments for the train subcommand
     parser = subparsers.add_parser('train', help='Train a statistical/machine learning model.')
+    parser.add_argument('--vcf', type=str, required=True, help='Name of the VCF file containing genotypes from samples.')
     parser.add_argument('--seq-len', type=int, required=True, help="Length of the simulated genomes.", dest='seq_len')
     parser.add_argument('--training-data-prefix', type=str, required=True, help="Prefix of the training data file name.", dest='training_data_prefix')
     parser.add_argument('--training-data-dir', type=str, required=True, help="Directory of the training data.", dest='training_data_dir')
+    parser.add_argument('--model-file', type=str, required=True, help="The file storing the trained model.", dest='model_file')
     parser.add_argument('--model', type=str, default=None, help="Statistical/machine learning model for the training. Implemented models: extra_trees, logistic_regression, sstar.")
     parser.add_argument('--introgressed-prop', type=float, default=0.7, help="Proportion that determines a fragment as introgressed. Default: 0.7.", dest="intro_prop")
     parser.add_argument('--not-introgressed-prop', type=float, default=0.3, help="Proportion that determinse a fragment as non-introgressed. Default: 0.3.", dest="not_intro_prop")
@@ -212,6 +218,20 @@ def _s_star_cli_parser():
 
     # Arguments for the infer subcommand
     parser = subparsers.add_parser('infer', help='Infer ghost introgressed fragments with a given statistical/machine learning model.')
+    parser.add_argument('--vcf', type=str, required=True, help='Name of the VCF file containing genotypes from samples.')
+    parser.add_argument('--ref', type=str, required=True, help='Name of the file containing population information for samples without introgression.', dest='ref_ind')
+    parser.add_argument('--tgt', type=str, required=True, help='Name of the file containing population information for samples for detecting ghost introgressed fragments.', dest='tgt_ind')
+    parser.add_argument('--anc-allele', type=str, default=None, help='Name of the BED format file containing ancestral allele information, otherwise assuming the REF allele is the ancestral allele and the ALT allele is the derived allele. Default: None.', dest='anc_allele')
+    parser.add_argument('--win-len', type=int, default=50000, help='Length of the window to calculate statistics as input features. Default: 50000.', dest='win_len')
+    parser.add_argument('--win-step', type=int, default=10000, help='Step size for moving windows along genomes when calculating statistics. Default: 10000.', dest='win_step')
+    parser.add_argument('--prediction-prefix', type=str, required=True, help="Prefix of the prediction file name.", dest='prediction_prefix')
+    parser.add_argument('--prediction-dir', type=str, required=True, help="Directory of the prediction files.", dest='prediction_dir')
+    parser.add_argument('--model-file', type=str, required=True, help="The file storing the trained model.", dest='model_file')
+    parser.add_argument('--model', type=str, default=None, help="Statistical/machine learning model for the training. Implemented models: extra_trees, logistic_regression, sstar.")
+    parser.add_argument('--match-bonus', type=int, default=5000, help='Bonus for matching genotypes of two different variants when calculating the S* statistic. Default: 5000.', dest='match_bonus')
+    parser.add_argument('--max-mismatch', type=int, default=5, help='Maximum genotype distance allowed when calculating the S* statistic. Default: 5.', dest='max_mismatch')
+    parser.add_argument('--mismatch-penalty', type=int, default=-10000, help='Penalty for mismatching genotypes of two different variants when calculating the S* statistic. Default: -10000.', dest='mismatch_penalty')
+    parser.add_argument('--thread', type=int, default=1, help="Number of threads for the training. Default: 1.")
     parser.set_defaults(runner=_run_inference)
 
     return top_parser

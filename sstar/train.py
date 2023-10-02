@@ -21,7 +21,7 @@ from sstar.models import LogisticRegression, ExtraTrees, Sstar
 from sstar.utils import multiprocessing_manager
 
 
-def train(nrep, seq_len, thread, training_data_prefix, training_data_dir, 
+def train(nrep, seq_len, thread, training_data_prefix, training_data_dir, model_file,
           match_bonus, max_mismatch, mismatch_penalty, archaic_prop, not_archaic_prop, algorithm=None):
     """
     """
@@ -43,13 +43,10 @@ def train(nrep, seq_len, thread, training_data_prefix, training_data_dir,
     feature_df = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'hap'])
 
     if algorithm == 'logistic_regression':
-        model_file = training_data_dir + '/' + training_data_prefix + '.logistic.regression.model'
         model = LogisticRegression()
     elif algorithm == 'extra_trees':
-        model_file = training_data_dir + '/' + training_data_prefix + '.extra.trees.model'
         model = ExtraTrees()
     elif (algorithm == 'sstar') or (algorithm is None):
-        model_file = training_data_dir + '/' + training_data_prefix + '.sstar.model'
         model = Sstar()
     else:
         raise Exception(f'The {algorithm} algorithm is NOT available!')
