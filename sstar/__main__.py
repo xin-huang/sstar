@@ -192,7 +192,7 @@ def _s_star_cli_parser():
     parser.add_argument('--ploidy', type=str, default=2, help="Ploidy of the simulated genomes. Default: 2.")
     parser.add_argument('--mut-rate', type=float, default=1e-8, help="Mutation rate per base pair per generation for the simulation. Default: 1e-8.", dest='mut_rate')
     parser.add_argument('--rec-rate', type=float, default=1e-8, help="Recombination rate per base pair per generation for the simulation. Default: 1e-8.", dest='rec_rate')
-    parser.add_argument('--replicate', type=int, required=True, help="Number of replications for the simulation.")
+    parser.add_argument('--replicate', type=int, default=1, help="Number of replications for the simulation. Default: 1.")
     parser.add_argument('--output-prefix', type=str, required=True, help="Prefix of the output file name.", dest='output_prefix')
     parser.add_argument('--output-dir', type=str, required=True, help="Directory of the output files.", dest='output_dir')
     parser.add_argument('--thread', type=int, default=1, help="Number of threads for the simulation. Default: 1.")
