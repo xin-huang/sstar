@@ -126,8 +126,10 @@ def _get_true_tracts(ts, tgt_id, src_id):
 
     for i in introgression:
         for t in ts.trees():
-            if i.left > t.interval[0]: continue
-            if i.right <= t.interval[0]: break
+            # Tree-sequences are sorted by the left ends of the intervals.
+            # Can skip those tree-sequences are not overlapped with the interval of i.
+            if i.left > t.interval.right: continue
+            if i.right <= t.interval.left: break 
             for n in tracts.keys():
                 if t.is_descendant(n, i.node): tracts[n].append([1, int(i.left), int(i.right), f'hap_{int(n%2)}', f'tsk_{ts.node(n).individual}'])
 
