@@ -71,6 +71,14 @@ def _run_inference(args):
           prediction_dir=args.prediction_dir, prediction_prefix=args.prediction_prefix, algorithm=args.model)
 
 
+def _run_preprocess(args):
+    pass
+
+
+def _run_plot(args):
+    pass
+
+
 def _add_common_args(parser):
     parser.add_argument('--anc-allele', type=str, dest='anc_allele', default=None, help='name of the BED format file containing ancestral allele information, otherwise assuming the REF allele is the ancestral allele and the ALT allele is the derived allele; default: None')
     parser.add_argument('--output', type=str, required=True, help='name of the output file')
@@ -180,8 +188,14 @@ def _s_star_cli_parser():
     #parser.add_argument('--diff', type=float, default=0, help='difference between src1 match rates (src1_match_rate) and src2 match rates (src2_match_rate); if src1_match_rate - src2_match_rate > diff, then this fragment is assigned to src1, if src1_match_rate - src2_match_rate < diff, then this fragment is assigned to src2; default: 0')
     #parser.set_defaults(runner=_run_tract)
 
+    parser = subparsers.add_parser('preprocess', help='Preprocessing real data for inference.')
+    parser.set_defaults(runner=_run_preprocess)
+
+    parser = subparsers.add_parser('plot', help='Plotting precision-recall curves for performance measurement.')
+    parser.set_defaults(runner=_run_plot)
+
     # Arguments for the simulate subcommand
-    parser = subparsers.add_parser('simulate', help='Simulate data for training.')
+    parser = subparsers.add_parser('simulate', help='Simulating data for training.')
     parser.add_argument('--demes', type=str, required=True, help="Demographic model in the DEMES format.")
     parser.add_argument('--nref', type=int, required=True, help="Number of samples in the reference population.")
     parser.add_argument('--ntgt', type=int, required=True, help="Number of samples in the target population.")
@@ -200,7 +214,7 @@ def _s_star_cli_parser():
     parser.set_defaults(runner=_run_simulation)
 
     # Arguments for the train subcommand
-    parser = subparsers.add_parser('train', help='Train a statistical/machine learning model.')
+    parser = subparsers.add_parser('train', help='Training a statistical/machine learning model.')
     parser.add_argument('--vcf', type=str, required=True, help='Name of the VCF file containing genotypes from samples.')
     parser.add_argument('--seq-len', type=int, required=True, help="Length of the simulated genomes.", dest='seq_len')
     parser.add_argument('--training-data-prefix', type=str, required=True, help="Prefix of the training data file name.", dest='training_data_prefix')
@@ -217,7 +231,7 @@ def _s_star_cli_parser():
     parser.set_defaults(runner=_run_training)
 
     # Arguments for the infer subcommand
-    parser = subparsers.add_parser('infer', help='Infer ghost introgressed fragments with a given statistical/machine learning model.')
+    parser = subparsers.add_parser('infer', help='Inferring ghost introgressed fragments with a given statistical/machine learning model.')
     parser.add_argument('--vcf', type=str, required=True, help='Name of the VCF file containing genotypes from samples.')
     parser.add_argument('--ref', type=str, required=True, help='Name of the file containing population information for samples without introgression.', dest='ref_ind')
     parser.add_argument('--tgt', type=str, required=True, help='Name of the file containing population information for samples for detecting ghost introgressed fragments.', dest='tgt_ind')
