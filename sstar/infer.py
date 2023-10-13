@@ -16,22 +16,12 @@
 
 import os
 import pandas as pd
-from sstar.preprocess import process_data
 from sstar.models import LogisticRegression, ExtraTrees, Sstar
 
 
-def infer(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, win_len, win_step, thread, 
-          match_bonus, max_mismatch, mismatch_penalty, model_file, prediction_dir, prediction_prefix, algorithm=None):
+def infer(feature_file, model_file, prediction_dir, prediction_prefix, algorithm=None):
     """
     """
-    os.makedirs(prediction_dir, exist_ok=True)
-    feature_file = prediction_dir + '/' + prediction_prefix + '.features'
-
-    process_data(vcf_file=vcf_file, ref_ind_file=ref_ind_file, tgt_ind_file=tgt_ind_file,
-                 anc_allele_file=anc_allele_file, output=feature_file, thread=thread,
-                 win_len=win_len, win_step=win_step, match_bonus=match_bonus, max_mismatch=max_mismatch, 
-                 mismatch_penalty=mismatch_penalty)
-
     feature_df = pd.read_csv(feature_file, sep="\t")
     feature_df = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'hap'])
 
