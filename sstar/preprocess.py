@@ -21,7 +21,7 @@ from sstar.stats import *
 from sstar.utils import read_data, filter_data, create_windows
 
 
-def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, output, win_len, win_step, thread, match_bonus, max_mismatch, mismatch_penalty, only_sstar=False):
+def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_file, output, win_len, win_step, thread):
     """
     Description:
         Processes genotype data.
@@ -31,14 +31,11 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, output, 
         ref_ind_file str: Name of the file containing sample information from the reference population.
         tgt_ind_file str: Name of the file containing sample information from the target population.
         anc_allele_file str: Name of the file containing ancestral allele information.
+        feature_file str: Name of the YAML file specifying what features should be used. 
         output str: Name of the output file.
         win_len int: Length of sliding windows.
         win_step int: Step size of sliding windows.
         thread int: Number of threads.
-        match_bonus int: Bonus for matching genotypes of two different variants.
-        max_mismatch int: Maximum genotype distance allowed.
-        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
-        only_sstar bool: If True, only calculate the S* statistic; If False, calculate the S* statistic and others.
     """
     ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, anc_allele_file)
     chr_names = tgt_data.keys()

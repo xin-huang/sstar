@@ -104,7 +104,7 @@ def cal_pvt_mut_num(ref_gt, tgt_gt):
     return pvt_mut_num
 
 
-def cal_sstar(tgt_gt, pos, method, match_bonus, max_mismatch, mismatch_penalty):
+def cal_sstar(tgt_gt, pos, method, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000):
     """
     Description:
         Calculates sstar scores for a given genotype matrix.

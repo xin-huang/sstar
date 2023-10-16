@@ -73,7 +73,7 @@ def _run_preprocess(args):
     from sstar.preprocess import process_data
     process_data(vcf_file=args.vcf_file, ref_ind_file=args.ref_ind_file, tgt_ind_file=args.tgt_ind_file,
                  anc_allele_file=args.anc_allele_file, output=args.output, thread=thread,
-                 win_len=args.win_len, win_step=args.win_step, feature=args.feature)
+                 win_len=args.win_len, win_step=args.win_step, feature_file=args.feature)
 
 
 def _run_plot(args):
