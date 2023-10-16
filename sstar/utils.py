@@ -106,7 +106,7 @@ def filter_data(data, c, index):
     return data
 
 #@profile
-def read_data(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file):
+def read_data(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file, phased):
     """
     Description:
         Helper function for reading data from reference and target populations.
@@ -117,6 +117,7 @@ def read_data(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file):
         tgt_ind_file str: Name of the file containing sample information from target populations.
         src_ind_file str: Name of the file containing sample information from source populations.
         anc_allele_file str: Name of the file containing ancestral allele information.
+        phased bool: If True, use phased genotypes; otherwise, use unphased genotypes.
 
     Returns:
         ref_data dict: Genotype data from reference populations.
@@ -154,6 +155,13 @@ def read_data(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file):
             if src_ind_file != None:
                 index = np.logical_not(np.in1d(src_data[c]['POS'], fixed_pos))
                 src_data = filter_data(src_data, c, index)
+
+    if not phased:
+        for c in chr_names:
+            ref_data[c]['GT'] = np.sum(ref_data[c]['GT'], axis=2)
+            tgt_data[c]['GT'] = np.sum(tgt_data[c]['GT'], axis=2)
+            if src_ind_file != None: src_data[c]['GT'] = np.sum(src_data[c]['GT'], axis=2)
+
 
     return ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples
 

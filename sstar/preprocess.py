@@ -16,12 +16,13 @@
 
 import os
 import numpy as np
+import yaml
 from multiprocessing import Process, Queue
 from sstar.stats import *
 from sstar.utils import read_data, filter_data, create_windows
 
 
-def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_file, output, win_len, win_step, thread):
+def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_file, output, win_len, win_step, thread, phased):
     """
     Description:
         Processes genotype data.
@@ -36,18 +37,27 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
         win_len int: Length of sliding windows.
         win_step int: Step size of sliding windows.
         thread int: Number of threads.
+        phased bool: If True, use phased genotypes; otherwise, use unphased genotypes.
     """
-    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, anc_allele_file)
-    chr_names = tgt_data.keys()
+    with open(feature_file, 'r') as f:
+        features = yaml.safe_load(f)
 
-    if only_sstar: 
-        _process_sstar(win_step, win_len, output, thread, 
-                       ref_data=ref_data, tgt_data=tgt_data, ref_samples=ref_samples, tgt_samples=tgt_samples, 
-                       match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
-    else:
-        _process(win_step, win_len, output, thread, 
-                 ref_data=ref_data, tgt_data=tgt_data, samples=tgt_samples, 
-                 match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
+    print(features)
+
+    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, anc_allele_file, phased)
+    chr_names = tgt_data.keys()
+    if 'genotypes' in features['features']: 
+        for c in chr_names:
+            print(tgt_data[c]['GT'][0])
+
+    #if only_sstar: 
+    #    _process_sstar(win_step, win_len, output, thread, 
+    #                   ref_data=ref_data, tgt_data=tgt_data, ref_samples=ref_samples, tgt_samples=tgt_samples, 
+    #                   match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
+    #else:
+    #    _process(win_step, win_len, output, thread, 
+    #             ref_data=ref_data, tgt_data=tgt_data, samples=tgt_samples, 
+    #             match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
 
 
 def _process(win_step, win_len, output, thread, **kwargs):
@@ -308,3 +318,7 @@ def _sstar_output(output, header, samples, res):
             for i in range(len(samples)):
                 ind_name = samples[i]
                 o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{sstar_scores[i]}\t{sstar_snp_nums[i]}\t{haplotypes[i]}\n')
+
+
+if __name__ == '__main__':
+    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_file="examples/pre-trained/test.features.yaml", output="sstar/test.preprocess.out", win_len=50000, win_step=10000, thread=1, phased=False)
