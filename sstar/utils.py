@@ -314,7 +314,7 @@ def create_windows(pos, chr_name, win_step, win_len):
     return windows
 
 
-def multiprocessing_manager(worker_func, nrep, thread, windows=None, **kwargs):
+def multiprocessing_manager(worker_func, nrep, thread, windows=None, ref_data=None, tgt_data=None, **kwargs):
     """
     Description:
 
@@ -338,12 +338,12 @@ def multiprocessing_manager(worker_func, nrep, thread, windows=None, **kwargs):
     else:
         for i in range(nrep):
             chr_name, start, end = windows[i]
-            tgt_gts = kwargs['tgt_data'][chr_name]['GT']
-            pos = kwargs['tgt_data'][chr_name]['POS']
+            tgt_gts = tgt_data[chr_name]['GT']
+            pos = tgt_data[chr_name]['POS']
             idx = (pos>start)*(pos<=end)
             sub_ref_gts = None
             sub_tgt_gts = tgt_gts[idx]
-            ref_gts = kwargs['ref_data'][chr_name]['GT']
+            ref_gts = ref_data[chr_name]['GT']
             sub_ref_gts = ref_gts[idx]
             sub_pos = pos[idx]
             in_queue.put((chr_name, start, end, sub_ref_gts, sub_tgt_gts, sub_pos))

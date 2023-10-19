@@ -42,7 +42,7 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
     with open(feature_file, 'r') as f:
         features = yaml.safe_load(f)
 
-    #print(features)
+    print(features)
 
     ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, anc_allele_file, phased)
 
@@ -51,7 +51,12 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
 
     res = multiprocessing_manager(worker_func=preprocess_worker, nrep=len(windows), thread=thread, windows=windows, ref_data=ref_data, tgt_data=tgt_data, features=features)
 
+    # x[0]: the chromosome name in number
+    # x[1]: the start of the window
+    # x[2]: the end of the window
     res.sort(key=lambda x: (x[0], x[1], x[2]))
+
+    print(res)
 
     #if 'genotypes' in features['features']: 
     #    for c in chr_names:
@@ -70,8 +75,26 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
 def preprocess_worker(in_queue, out_queue, **kwargs):
     """
     """
-    pass
+    while True:
+        chr_name, start, end, ref_gts, tgt_gts, pos = in_queue.get()
 
+        if 'genotypes' in kwargs['features']['features']:
+            out_queue.put((chr_name, start, end, ref_gts, tgt_gts))
+        #spectra = cal_n_ton(tgt_gts)
+        #min_ref_dists = cal_ref_dist(ref_gts, tgt_gts)
+        #tgt_dists, mean_tgt_dists, var_tgt_dists, skew_tgt_dists, kurtosis_tgt_dists = cal_tgt_dist(tgt_gts)
+
+        #variants_not_in_ref = np.sum(ref_gts, axis=1)==0
+        #sub_ref_gts = ref_gts[variants_not_in_ref]
+        #sub_tgt_gts = tgt_gts[variants_not_in_ref]
+        #sub_pos = pos[variants_not_in_ref]
+
+        #pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
+        #sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 'archie', match_bonus, max_mismatch, mismatch_penalty)
+        #out_queue.put((chr_name, start, end, 
+        #               spectra, min_ref_dists, tgt_dists, 
+        #               mean_tgt_dists, var_tgt_dists, skew_tgt_dists, 
+        #               kurtosis_tgt_dists, pvt_mut_nums, sstar_scores))
 
 
 def _process(win_step, win_len, output, thread, **kwargs):
