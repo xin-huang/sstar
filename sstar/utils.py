@@ -314,8 +314,13 @@ def create_windows(pos, chr_name, win_step, win_len):
     return windows
 
 
-def multiprocessing_manager(worker_func, nrep, thread, **kwargs):
+def multiprocessing_manager(worker_func, nrep, thread, windows=None, **kwargs):
     """
+    Description:
+
+    Arguments:
+
+    Returns:
     """
     try:
         from pytest_cov.embed import cleanup_on_sigterm
@@ -328,7 +333,20 @@ def multiprocessing_manager(worker_func, nrep, thread, **kwargs):
     in_queue, out_queue = Queue(), Queue()
     workers = [Process(target=worker_func, args=(in_queue, out_queue), kwargs=kwargs) for i in range(thread)]
 
-    for i in range(nrep): in_queue.put(i)
+    if windows is None:
+        for i in range(nrep): in_queue.put(i)
+    else:
+        for i in range(nrep):
+            chr_name, start, end = windows[i]
+            tgt_gts = kwargs['tgt_data'][chr_name]['GT']
+            pos = kwargs['tgt_data'][chr_name]['POS']
+            idx = (pos>start)*(pos<=end)
+            sub_ref_gts = None
+            sub_tgt_gts = tgt_gts[idx]
+            ref_gts = kwargs['ref_data'][chr_name]['GT']
+            sub_ref_gts = ref_gts[idx]
+            sub_pos = pos[idx]
+            in_queue.put((chr_name, start, end, sub_ref_gts, sub_tgt_gts, sub_pos))
 
     try:
         for w in workers: w.start()
@@ -338,6 +356,8 @@ def multiprocessing_manager(worker_func, nrep, thread, **kwargs):
         for w in workers: w.terminate()
     finally:
         for w in workers: w.join()
+
+    return res
 
 
 #@profile

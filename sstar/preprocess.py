@@ -19,7 +19,7 @@ import numpy as np
 import yaml
 from multiprocessing import Process, Queue
 from sstar.stats import *
-from sstar.utils import read_data, filter_data, create_windows
+from sstar.utils import read_data, filter_data, create_windows, multiprocessing_manager
 
 
 def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_file, output, win_len, win_step, thread, phased):
@@ -42,13 +42,20 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
     with open(feature_file, 'r') as f:
         features = yaml.safe_load(f)
 
-    print(features)
+    #print(features)
 
     ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, anc_allele_file, phased)
-    chr_names = tgt_data.keys()
-    if 'genotypes' in features['features']: 
-        for c in chr_names:
-            print(tgt_data[c]['GT'][0])
+
+    for c in tgt_data.keys():
+        windows = create_windows(tgt_data[c]['POS'], c, win_step, win_len)
+
+    res = multiprocessing_manager(worker_func=preprocess_worker, nrep=len(windows), thread=thread, windows=windows, ref_data=ref_data, tgt_data=tgt_data, features=features)
+
+    res.sort(key=lambda x: (x[0], x[1], x[2]))
+
+    #if 'genotypes' in features['features']: 
+    #    for c in chr_names:
+    #        print(tgt_data[c]['GT'][0])
 
     #if only_sstar: 
     #    _process_sstar(win_step, win_len, output, thread, 
@@ -58,6 +65,13 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
     #    _process(win_step, win_len, output, thread, 
     #             ref_data=ref_data, tgt_data=tgt_data, samples=tgt_samples, 
     #             match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
+
+
+def preprocess_worker(in_queue, out_queue, **kwargs):
+    """
+    """
+    pass
+
 
 
 def _process(win_step, win_len, output, thread, **kwargs):
