@@ -45,9 +45,13 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
     print(features)
 
     ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, anc_allele_file, phased)
+    print(ref_data['21']['GT'].shape)
+    print(ref_data['21']['GT'][0])
 
     for c in tgt_data.keys():
         windows = create_windows(tgt_data[c]['POS'], c, win_step, win_len)
+
+    print(len(windows))
 
     res = multiprocessing_manager(worker_func=preprocess_worker, nrep=len(windows), thread=thread, windows=windows, ref_data=ref_data, tgt_data=tgt_data, features=features)
 
@@ -77,9 +81,20 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
     """
     while True:
         chr_name, start, end, ref_gts, tgt_gts, pos = in_queue.get()
+        variants_not_in_ref = np.sum(ref_gts, axis=1)==0
+        sub_ref_gts = ref_gts[variants_not_in_ref]
+        sub_tgt_gts = tgt_gts[variants_not_in_ref]
+        sub_pos = pos[variants_not_in_ref]
+
+        res = (chr_name, start, end)
 
         if 'genotypes' in kwargs['features']['features']:
-            out_queue.put((chr_name, start, end, ref_gts, tgt_gts))
+            res += (ref_gts, tgt_gts)
+        if 'number of private mutations' in kwargs['features']['features']:
+            pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
+            res += (pvt_mut_nums,)
+
+        out_queue.put(res)
         #spectra = cal_n_ton(tgt_gts)
         #min_ref_dists = cal_ref_dist(ref_gts, tgt_gts)
         #tgt_dists, mean_tgt_dists, var_tgt_dists, skew_tgt_dists, kurtosis_tgt_dists = cal_tgt_dist(tgt_gts)
@@ -358,4 +373,4 @@ def _sstar_output(output, header, samples, res):
 
 
 if __name__ == '__main__':
-    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_file="examples/pre-trained/test.features.yaml", output="sstar/test.preprocess.out", win_len=50000, win_step=10000, thread=1, phased=False)
+    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_file="examples/pre-trained/test.features.yaml", output="sstar/test.preprocess.out", win_len=50000, win_step=10000, thread=1, phased=True)

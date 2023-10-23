@@ -156,12 +156,17 @@ def read_data(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file, ph
                 index = np.logical_not(np.in1d(src_data[c]['POS'], fixed_pos))
                 src_data = filter_data(src_data, c, index)
 
-    if not phased:
+    if phased:
+        for c in chr_names:
+            mut_num, ind_num, ploidy = ref_data[c]['GT'].shape
+            ref_data[c]['GT'] = np.reshape(ref_data[c]['GT'].values, (mut_num, ind_num * ploidy))
+            mut_num, ind_num, ploidy = tgt_data[c]['GT'].shape
+            tgt_data[c]['GT'] = np.reshape(tgt_data[c]['GT'].values, (mut_num, ind_num * ploidy))
+    else:
         for c in chr_names:
             ref_data[c]['GT'] = np.sum(ref_data[c]['GT'], axis=2)
             tgt_data[c]['GT'] = np.sum(tgt_data[c]['GT'], axis=2)
             if src_ind_file != None: src_data[c]['GT'] = np.sum(src_data[c]['GT'], axis=2)
-
 
     return ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples
 
@@ -338,13 +343,12 @@ def multiprocessing_manager(worker_func, nrep, thread, windows=None, ref_data=No
     else:
         for i in range(nrep):
             chr_name, start, end = windows[i]
+            ref_gts = ref_data[chr_name]['GT']
             tgt_gts = tgt_data[chr_name]['GT']
             pos = tgt_data[chr_name]['POS']
             idx = (pos>start)*(pos<=end)
-            sub_ref_gts = None
-            sub_tgt_gts = tgt_gts[idx]
-            ref_gts = ref_data[chr_name]['GT']
             sub_ref_gts = ref_gts[idx]
+            sub_tgt_gts = tgt_gts[idx]
             sub_pos = pos[idx]
             in_queue.put((chr_name, start, end, sub_ref_gts, sub_tgt_gts, sub_pos))
 
