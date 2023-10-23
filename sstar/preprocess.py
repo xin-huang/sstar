@@ -42,16 +42,10 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
     with open(feature_file, 'r') as f:
         features = yaml.safe_load(f)
 
-    print(features)
-
     ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, anc_allele_file, phased)
-    print(ref_data['21']['GT'].shape)
-    print(ref_data['21']['GT'][0])
 
     for c in tgt_data.keys():
         windows = create_windows(tgt_data[c]['POS'], c, win_step, win_len)
-
-    print(len(windows))
 
     res = multiprocessing_manager(worker_func=preprocess_worker, nrep=len(windows), thread=thread, windows=windows, ref_data=ref_data, tgt_data=tgt_data, features=features)
 
@@ -93,23 +87,20 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
         if 'number of private mutations' in kwargs['features']['features']:
             pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
             res += (pvt_mut_nums,)
+        if 'haplotype allele frequency spectra' in kwargs['features']['features']:
+            spectra = cal_n_ton(tgt_gts)
+            res += (spectra,)
+        if 'pairwise distances between the reference and target populations' in kwargs['features']['features']:
+            min_ref_dists = cal_ref_dist(ref_gts, tgt_gts)
+            res += (min_ref_dists,)
+        if 'pairwise distances within the target population' in kwargs['features']['features']:
+            tgt_dists, mean_tgt_dists, var_tgt_dists, skew_tgt_dists, kurtosis_tgt_dists = cal_tgt_dist(tgt_gts)
+            res += (tgt_dists, mean_tgt_dists, var_tgt_dists, skew_tgt_dists, kurtosis_tgt_dists)
+        if 'sstar' in kwargs['features']['features']:
+            sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 'archie')
+            res += (sstar_scores,)
 
         out_queue.put(res)
-        #spectra = cal_n_ton(tgt_gts)
-        #min_ref_dists = cal_ref_dist(ref_gts, tgt_gts)
-        #tgt_dists, mean_tgt_dists, var_tgt_dists, skew_tgt_dists, kurtosis_tgt_dists = cal_tgt_dist(tgt_gts)
-
-        #variants_not_in_ref = np.sum(ref_gts, axis=1)==0
-        #sub_ref_gts = ref_gts[variants_not_in_ref]
-        #sub_tgt_gts = tgt_gts[variants_not_in_ref]
-        #sub_pos = pos[variants_not_in_ref]
-
-        #pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
-        #sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 'archie', match_bonus, max_mismatch, mismatch_penalty)
-        #out_queue.put((chr_name, start, end, 
-        #               spectra, min_ref_dists, tgt_dists, 
-        #               mean_tgt_dists, var_tgt_dists, skew_tgt_dists, 
-        #               kurtosis_tgt_dists, pvt_mut_nums, sstar_scores))
 
 
 def _process(win_step, win_len, output, thread, **kwargs):
