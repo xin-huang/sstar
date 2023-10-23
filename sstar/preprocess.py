@@ -43,7 +43,7 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
 
     features = features['features']
 
-    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, anc_allele_file, features['genotypes']['phased'])
+    ref_data, ref_samples, tgt_data, tgt_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, features['genotypes']['phased'])
 
     for c in tgt_data.keys():
         windows = create_windows(tgt_data[c]['POS'], c, win_step, win_len)
@@ -193,115 +193,6 @@ def _process_sstar(win_step, win_len, output, thread, **kwargs):
     _manager(windows, output, thread, header, worker_func, output_func,
              ref_data=None, tgt_data=kwargs['tgt_data'], samples=kwargs['tgt_samples'], 
              match_bonus=kwargs['match_bonus'], max_mismatch=kwargs['max_mismatch'], mismatch_penalty=kwargs['mismatch_penalty'])
-
-
-def _manager(windows, output, thread, header, worker_func, output_func, **kwargs):
-    """
-    Description:
-        Manages multi-processing jobs.
-
-    Arguments:
-        windows list: List containing sliding windows across the genome.
-        output str: Name of the output file.
-        thread int: Number of threads.
-        header str: Header line for the output file.
-        worker_func func: Worker function.
-        output_func func: Output function.
-
-    Keyword arguments:
-        ref_data dict: Dictionary containing data from the reference population.
-        tgt_data dict: Dictionary containing data from the target population.
-        samples list: List containing sample information from the target population.
-        match_bonus int: Bonus for matching genotypes of two different variants.
-        max_mismatch int: Maximum genotype distance allowed.
-        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
-    """
-    try:
-        from pytest_cov.embed import cleanup_on_sigterm
-    except ImportError:
-        pass
-    else:
-        cleanup_on_sigterm()
-
-    res = []
-    in_queue, out_queue = Queue(), Queue()
-    workers = [Process(target=worker_func, args=(in_queue, out_queue, kwargs['match_bonus'], kwargs['max_mismatch'], kwargs['mismatch_penalty'])) for i in range(thread)]
-
-    for i in range(len(windows)):
-        chr_name, start, end = windows[i]
-        tgt_gts = kwargs['tgt_data'][chr_name]['GT']
-        pos = kwargs['tgt_data'][chr_name]['POS']
-        idx = (pos>start)*(pos<=end)
-        sub_ref_gts = None
-        sub_tgt_gts = tgt_gts[idx]
-        if kwargs['ref_data'] is not None:
-            ref_gts = kwargs['ref_data'][chr_name]['GT']
-            sub_ref_gts = ref_gts[idx]
-        sub_pos = pos[idx]
-        in_queue.put((chr_name, start, end, sub_ref_gts, sub_tgt_gts, sub_pos))
-
-    try:
-        for w in workers: w.start()
-
-        for i in range(len(windows)):
-            item = out_queue.get()
-            if item != '': res.append(item)
-
-        for w in workers: w.terminate()
-    finally:
-        for w in workers: w.join()
-
-    res.sort(key=lambda x: (x[0], x[1], x[2]))
-    output_func(output, header, kwargs['samples'], res)
-
-
-def _worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penalty):
-    """
-    Description:
-        Calculates statistics.
-
-    Arguments:
-        in_queue multiprocessing.Queue: multiprocessing.Queue instance to receive parameters from the manager.
-        out_queue multiprocessing.Queue: multiprocessing.Queue instance to send results to the manager.
-        match_bonus int: Bonus for matching genotypes of two different variants.
-        max_mismatch int: Maximum genotype distance allowed.
-        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
-    """
-    while True:
-        chr_name, start, end, ref_gts, tgt_gts, pos = in_queue.get()
-        spectra = cal_n_ton(tgt_gts)
-        min_ref_dists = cal_ref_dist(ref_gts, tgt_gts)
-        tgt_dists, mean_tgt_dists, var_tgt_dists, skew_tgt_dists, kurtosis_tgt_dists = cal_tgt_dist(tgt_gts)
-
-        variants_not_in_ref = np.sum(ref_gts, axis=1)==0
-        sub_ref_gts = ref_gts[variants_not_in_ref]
-        sub_tgt_gts = tgt_gts[variants_not_in_ref]
-        sub_pos = pos[variants_not_in_ref]
-
-        pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
-        sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 'archie', match_bonus, max_mismatch, mismatch_penalty)
-        out_queue.put((chr_name, start, end, 
-                       spectra, min_ref_dists, tgt_dists, 
-                       mean_tgt_dists, var_tgt_dists, skew_tgt_dists, 
-                       kurtosis_tgt_dists, pvt_mut_nums, sstar_scores))
-
-
-def _sstar_worker(in_queue, out_queue, match_bonus, max_mismatch, mismatch_penalty):
-    """
-    Description:
-        Calculates S* scores for sstar.
-
-    Arguments:
-        in_queue multiprocessing.Queue: multiprocessing.Queue instance to receive parameters from the manager.
-        out_queue multiprocessing.Queue: multiprocessing.Queue instance to send results to the manager.
-        match_bonus int: Bonus for matching genotypes of two different variants.
-        max_mismatch int: Maximum genotype distance allowed.
-        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
-    """
-    while True:
-        chr_name, start, end, ref_gts, tgt_gts, pos = in_queue.get()
-        sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(tgt_gts, pos, 'vernot2016', match_bonus, max_mismatch, mismatch_penalty)
-        out_queue.put((chr_name, start, end, sstar_scores, sstar_snp_nums, haplotypes))
 
 
 def _output(output, header, samples, res):
