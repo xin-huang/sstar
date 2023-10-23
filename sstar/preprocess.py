@@ -63,51 +63,52 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
     """
     while True:
         chr_name, start, end, ref_gts, tgt_gts, pos = in_queue.get()
-        variants_not_in_ref = np.sum(ref_gts, axis=1)==0
+        variants_not_in_ref = np.sum(ref_gts, axis=1) == 0
         sub_ref_gts = ref_gts[variants_not_in_ref]
         sub_tgt_gts = tgt_gts[variants_not_in_ref]
         sub_pos = pos[variants_not_in_ref]
 
-        res = (chr_name, start, end)
+        items = dict()
 
         if ('genotypes' in kwargs['features'].keys()) and (kwargs['features']['genotypes']['output'] is True):
-            res += (ref_gts, tgt_gts)
+            items['ref_gts'] = ref_gts
+            items['tgt_gts'] = tgt_gts
         if ('number of private mutations' in kwargs['features'].keys()) and (kwargs['features']['number of private mutations']['output'] is True):
             pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
-            res += (pvt_mut_nums,)
+            items['pvt_mut_nums'] = pvt_mut_nums
         if ('individual allele frequency spectra' in kwargs['features'].keys()) and (kwargs['features']['individual allele frequency spectra']['output'] is True):
             spectra = cal_n_ton(tgt_gts)
-            res += (spectra,)
+            items['spectra'] = spectra
         if 'pairwise distances' in kwargs['features'].keys():
             if ('reference and target populations' in kwargs['features']['pairwise distances'].keys()) and (kwargs['features']['pairwise distances']['reference and target populations']['output'] is True):
                 ref_dists = cal_dist(ref_gts, tgt_gts)
-                if kwargs['features']['pairwise distances']['reference and target populations']['all'] is True: res += (ref_dists,)
-                if kwargs['features']['pairwise distances']['reference and target populations']['minimum'] is True: res += (np.min(ref_dists, axis=1),)
-                if kwargs['features']['pairwise distances']['reference and target populations']['maximum'] is True: res += (np.max(ref_dists, axis=1),)
-                if kwargs['features']['pairwise distances']['reference and target populations']['mean'] is True: res += (np.mean(ref_dists, axis=1),)
-                if kwargs['features']['pairwise distances']['reference and target populations']['median'] is True: res += (np.median(ref_dists, axis=1),)
-                if kwargs['features']['pairwise distances']['reference and target populations']['variance'] is True: res += (np.var(ref_dists, axis=1),)
-                if kwargs['features']['pairwise distances']['reference and target populations']['skew'] is True: res += (np.skew(ref_dists, axis=1),)
-                if kwargs['features']['pairwise distances']['reference and target populations']['kurtosis'] is True: res += (np.kurtosis(ref_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['reference and target populations']['all'] is True: items['all_ref_dists'] = ref_dists
+                if kwargs['features']['pairwise distances']['reference and target populations']['minimum'] is True: items['min_ref_dists'] = np.min(ref_dists, axis=1)
+                if kwargs['features']['pairwise distances']['reference and target populations']['maximum'] is True: items['max_ref_dists'] = np.max(ref_dists, axis=1)
+                if kwargs['features']['pairwise distances']['reference and target populations']['mean'] is True: items['mean_ref_dists'] = np.mean(ref_dists, axis=1)
+                if kwargs['features']['pairwise distances']['reference and target populations']['median'] is True: items['median_ref_dists'] = np.median(ref_dists, axis=1)
+                if kwargs['features']['pairwise distances']['reference and target populations']['variance'] is True: items['var_ref_dists'] = np.var(ref_dists, axis=1)
+                if kwargs['features']['pairwise distances']['reference and target populations']['skew'] is True: items['skew_ref_dists'] = np.skew(ref_dists, axis=1)
+                if kwargs['features']['pairwise distances']['reference and target populations']['kurtosis'] is True: items['kurtosis_ref_dists'] = np.kurtosis(ref_dists, axis=1)
             if ('target population only' in kwargs['features'].keys()) and (kwargs['features']['pairwise distances']['target population only']['output'] is True):
                 tgt_dists = cal_dist(tgt_gts, tgt_gts)
-                if kwargs['features']['pairwise distances']['target population only']['all'] is True: res += (tgt_dists,)
-                if kwargs['features']['pairwise distances']['target population only']['minimum'] is True: res += (np.min(tgt_dists, axis=1),)
-                if kwargs['features']['pairwise distances']['target population only']['maximum'] is True: res += (np.max(tgt_dists, axis=1),)
-                if kwargs['features']['pairwise distances']['target population only']['mean'] is True: res += (np.mean(tgt_dists, axis=1),)
-                if kwargs['features']['pairwise distances']['target population only']['median'] is True: res += (np.median(tgt_dists, axis=1),)
-                if kwargs['features']['pairwise distances']['target population only']['variance'] is True: res += (np.var(tgt_dists, axis=1),)
-                if kwargs['features']['pairwise distances']['target population only']['skew'] is True: res += (np.skew(tgt_dists, axis=1),)
-                if kwargs['features']['pairwise distances']['target population only']['kurtosis'] is True: res += (np.kurtosis(tgt_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['target population only']['all'] is True: items['all_tgt_dists'] = tgt_dists
+                if kwargs['features']['pairwise distances']['target population only']['minimum'] is True: items['min_tgt_dists'] = np.min(tgt_dists, axis=1)
+                if kwargs['features']['pairwise distances']['target population only']['maximum'] is True: items['max_tgt_dists'] = np.max(tgt_dists, axis=1)
+                if kwargs['features']['pairwise distances']['target population only']['mean'] is True: items['mean_tgt_dists'] = np.mean(tgt_dists, axis=1)
+                if kwargs['features']['pairwise distances']['target population only']['median'] is True: items['median_tgt_dists'] = np.median(tgt_dists, axis=1)
+                if kwargs['features']['pairwise distances']['target population only']['variance'] is True: items['var_tgt_dists'] = np.var(tgt_dists, axis=1)
+                if kwargs['features']['pairwise distances']['target population only']['skew'] is True: items['skew_tgt_dists'] = np.skew(tgt_dists, axis=1)
+                if kwargs['features']['pairwise distances']['target population only']['kurtosis'] is True: items['kurtosis_tgt_dists'] = np.kurtosis(tgt_dists, axis=1)
         if ('sstar' in kwargs['features'].keys()) and (kwargs['features']['sstar']['output'] is True):
             sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 
                                                                  method=kwargs['features']['sstar']['genotype distance'], 
                                                                  match_bonus=kwargs['features']['sstar']['match bonus'],
                                                                  max_mismatch=kwargs['features']['sstar']['max mismatch'],
                                                                  mismatch_penalty=kwargs['features']['sstar']['mismatch penalty'])
-            res += (sstar_scores,)
+            items['sstar'] = sstar_scores
 
-        out_queue.put(res)
+        out_queue.put((chr_name, start, end, items))
 
 
 def _process(win_step, win_len, output, thread, **kwargs):
@@ -153,10 +154,6 @@ def _process(win_step, win_len, output, thread, **kwargs):
         kwargs['tgt_data'][c]['GT'] = tgt_gts
         windows = create_windows(kwargs['tgt_data'][c]['POS'], c, win_step, win_len)
 
-    _manager(windows, output, thread, header, worker_func, output_func, 
-             ref_data=kwargs['ref_data'], tgt_data=kwargs['tgt_data'], samples=kwargs['samples'],
-             match_bonus=kwargs['match_bonus'], max_mismatch=kwargs['max_mismatch'], mismatch_penalty=kwargs['mismatch_penalty'])
-
 
 def _process_sstar(win_step, win_len, output, thread, **kwargs):
     """
@@ -189,10 +186,6 @@ def _process_sstar(win_step, win_len, output, thread, **kwargs):
         kwargs['tgt_data'] = filter_data(kwargs['tgt_data'], c, variants_not_in_ref)
         kwargs['tgt_data'][c]['GT'] = np.sum(kwargs['tgt_data'][c]['GT'], axis=2)
         windows = create_windows(kwargs['tgt_data'][c]['POS'], c, win_step, win_len)
-
-    _manager(windows, output, thread, header, worker_func, output_func,
-             ref_data=None, tgt_data=kwargs['tgt_data'], samples=kwargs['tgt_samples'], 
-             match_bonus=kwargs['match_bonus'], max_mismatch=kwargs['max_mismatch'], mismatch_penalty=kwargs['mismatch_penalty'])
 
 
 def _output(output, header, samples, res):
