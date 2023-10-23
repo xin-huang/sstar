@@ -22,7 +22,7 @@ from sstar.stats import *
 from sstar.utils import read_data, filter_data, create_windows, multiprocessing_manager
 
 
-def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_file, output, win_len, win_step, thread, phased):
+def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_file, output, win_len, win_step, thread):
     """
     Description:
         Processes genotype data.
@@ -37,12 +37,13 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
         win_len int: Length of sliding windows.
         win_step int: Step size of sliding windows.
         thread int: Number of threads.
-        phased bool: If True, use phased genotypes; otherwise, use unphased genotypes.
     """
     with open(feature_file, 'r') as f:
         features = yaml.safe_load(f)
 
-    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, anc_allele_file, phased)
+    features = features['features']
+
+    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, None, anc_allele_file, features['genotypes']['phased'])
 
     for c in tgt_data.keys():
         windows = create_windows(tgt_data[c]['POS'], c, win_step, win_len)
@@ -82,22 +83,26 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
 
         res = (chr_name, start, end)
 
-        if 'genotypes' in kwargs['features']['features']:
+        if ('genotypes' in kwargs['features'].keys()) and (kwargs['features']['genotypes']['output'] is True):
             res += (ref_gts, tgt_gts)
-        if 'number of private mutations' in kwargs['features']['features']:
+        if 'number of private mutations' in kwargs['features'].keys():
             pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
             res += (pvt_mut_nums,)
-        if 'haplotype allele frequency spectra' in kwargs['features']['features']:
+        if 'haplotype allele frequency spectra' in kwargs['features'].keys():
             spectra = cal_n_ton(tgt_gts)
             res += (spectra,)
-        if 'pairwise distances between the reference and target populations' in kwargs['features']['features']:
+        if 'pairwise distances between the reference and target populations' in kwargs['features'].keys():
             min_ref_dists = cal_ref_dist(ref_gts, tgt_gts)
             res += (min_ref_dists,)
-        if 'pairwise distances within the target population' in kwargs['features']['features']:
+        if 'pairwise distances within the target population' in kwargs['features'].keys():
             tgt_dists, mean_tgt_dists, var_tgt_dists, skew_tgt_dists, kurtosis_tgt_dists = cal_tgt_dist(tgt_gts)
             res += (tgt_dists, mean_tgt_dists, var_tgt_dists, skew_tgt_dists, kurtosis_tgt_dists)
-        if 'sstar' in kwargs['features']['features']:
-            sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 'archie')
+        if ('sstar' in kwargs['features'].keys()) and (kwargs['features']['sstar']['output'] is True):
+            sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 
+                                                                 method=kwargs['features']['sstar']['genotype distance'], 
+                                                                 match_bonus=kwargs['features']['sstar']['match bonus'],
+                                                                 max_mismatch=kwargs['features']['sstar']['max mismatch'],
+                                                                 mismatch_penalty=kwargs['features']['sstar']['mismatch penalty'])
             res += (sstar_scores,)
 
         out_queue.put(res)
@@ -364,4 +369,4 @@ def _sstar_output(output, header, samples, res):
 
 
 if __name__ == '__main__':
-    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_file="examples/pre-trained/test.features.yaml", output="sstar/test.preprocess.out", win_len=50000, win_step=10000, thread=1, phased=True)
+    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_file="examples/pre-trained/test.features.yaml", output="sstar/test.preprocess.out", win_len=50000, win_step=10000, thread=1)
