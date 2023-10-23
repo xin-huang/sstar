@@ -57,19 +57,6 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
 
     print(res)
 
-    #if 'genotypes' in features['features']: 
-    #    for c in chr_names:
-    #        print(tgt_data[c]['GT'][0])
-
-    #if only_sstar: 
-    #    _process_sstar(win_step, win_len, output, thread, 
-    #                   ref_data=ref_data, tgt_data=tgt_data, ref_samples=ref_samples, tgt_samples=tgt_samples, 
-    #                   match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
-    #else:
-    #    _process(win_step, win_len, output, thread, 
-    #             ref_data=ref_data, tgt_data=tgt_data, samples=tgt_samples, 
-    #             match_bonus=match_bonus, max_mismatch=max_mismatch, mismatch_penalty=mismatch_penalty)
-
 
 def preprocess_worker(in_queue, out_queue, **kwargs):
     """
@@ -85,18 +72,33 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
 
         if ('genotypes' in kwargs['features'].keys()) and (kwargs['features']['genotypes']['output'] is True):
             res += (ref_gts, tgt_gts)
-        if 'number of private mutations' in kwargs['features'].keys():
+        if ('number of private mutations' in kwargs['features'].keys()) and (kwargs['features']['number of private mutations']['output'] is True):
             pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
             res += (pvt_mut_nums,)
-        if 'haplotype allele frequency spectra' in kwargs['features'].keys():
+        if ('individual allele frequency spectra' in kwargs['features'].keys()) and (kwargs['features']['individual allele frequency spectra']['output'] is True):
             spectra = cal_n_ton(tgt_gts)
             res += (spectra,)
-        if 'pairwise distances between the reference and target populations' in kwargs['features'].keys():
-            min_ref_dists = cal_ref_dist(ref_gts, tgt_gts)
-            res += (min_ref_dists,)
-        if 'pairwise distances within the target population' in kwargs['features'].keys():
-            tgt_dists, mean_tgt_dists, var_tgt_dists, skew_tgt_dists, kurtosis_tgt_dists = cal_tgt_dist(tgt_gts)
-            res += (tgt_dists, mean_tgt_dists, var_tgt_dists, skew_tgt_dists, kurtosis_tgt_dists)
+        if 'pairwise distances' in kwargs['features'].keys():
+            if ('reference and target populations' in kwargs['features']['pairwise distances'].keys()) and (kwargs['features']['pairwise distances']['reference and target populations']['output'] is True):
+                ref_dists = cal_dist(ref_gts, tgt_gts)
+                if kwargs['features']['pairwise distances']['reference and target populations']['all'] is True: res += (ref_dists,)
+                if kwargs['features']['pairwise distances']['reference and target populations']['minimum'] is True: res += (np.min(ref_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['reference and target populations']['maximum'] is True: res += (np.max(ref_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['reference and target populations']['mean'] is True: res += (np.mean(ref_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['reference and target populations']['median'] is True: res += (np.median(ref_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['reference and target populations']['variance'] is True: res += (np.var(ref_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['reference and target populations']['skew'] is True: res += (np.skew(ref_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['reference and target populations']['kurtosis'] is True: res += (np.kurtosis(ref_dists, axis=1),)
+            if ('target population only' in kwargs['features'].keys()) and (kwargs['features']['pairwise distances']['target population only']['output'] is True):
+                tgt_dists = cal_dist(tgt_gts, tgt_gts)
+                if kwargs['features']['pairwise distances']['target population only']['all'] is True: res += (tgt_dists,)
+                if kwargs['features']['pairwise distances']['target population only']['minimum'] is True: res += (np.min(tgt_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['target population only']['maximum'] is True: res += (np.max(tgt_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['target population only']['mean'] is True: res += (np.mean(tgt_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['target population only']['median'] is True: res += (np.median(tgt_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['target population only']['variance'] is True: res += (np.var(tgt_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['target population only']['skew'] is True: res += (np.skew(tgt_dists, axis=1),)
+                if kwargs['features']['pairwise distances']['target population only']['kurtosis'] is True: res += (np.kurtosis(tgt_dists, axis=1),)
         if ('sstar' in kwargs['features'].keys()) and (kwargs['features']['sstar']['output'] is True):
             sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 
                                                                  method=kwargs['features']['sstar']['genotype distance'], 

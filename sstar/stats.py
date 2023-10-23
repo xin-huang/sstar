@@ -40,48 +40,22 @@ def cal_n_ton(tgt_gt):
     return spectra
 
 
-def cal_ref_dist(ref_gt, tgt_gt):
+def cal_dist(gt1, gt2):
     """
     Description:
-        Calculates Euclidean distances between the reference and target populations.
+        Calculates pairswise Euclidean distances between two genotype matrixes.
 
     Arguments:
-        ref_gt numpy.ndarray: Genotype matrix from the reference population.
-        tgt_gt numpy.ndarray: Genotype matrix from the target population.
+        gt1 numpy.ndarray: Genotype matrix 1.
+        gt2 numpy.ndarray: Genotype matrix 2.
 
     Returns:
-        dist_min numpy.ndarray: Minimum distances to the reference population.
+        dists numpy.ndarray: Distances estimated.
     """
-    ref_dist = distance_matrix(np.transpose(tgt_gt), np.transpose(ref_gt))
-    dist_min = np.min(ref_dist, axis=1)
+    dists = distance_matrix(np.transpose(gt2), np.transpose(gt1))
+    dists.sort()
 
-    return dist_min
-
-
-def cal_tgt_dist(tgt_gt):
-    """
-    Description:
-        Calculates Euclidean distances within the target population.
-
-    Arguments:
-        tgt_gt numpy.ndarray: Genotype matrix from the target population.
-
-    Returns:
-        tgt_dist numpy.ndarray: Pairwise distances between haplotypes from the target population.
-        dist_mean numpy.ndarray: Mean of the pairwise distances between haplotypes from the target population.
-        dist_var numpy.ndarray: Variation of the pairwise distances between haplotypes from the target population.
-        dist_skew numpy.ndarray: Skew of the pairwise distances between haplotypes from the target population.
-        dist_kurtosis numpy.ndarray: Kurtosis of the pairwise distances between haplotypes from the target population.
-    """
-    tgt_dist = distance_matrix(np.transpose(tgt_gt), np.transpose(tgt_gt))
-    # ArchIE sorts tgt_dist
-    tgt_dist.sort()
-    dist_mean = np.mean(tgt_dist, axis=1)
-    dist_var = np.var(tgt_dist, axis=1)
-    dist_skew = sps.skew(tgt_dist, axis=1)
-    dist_kurtosis = sps.kurtosis(tgt_dist, axis=1)
-
-    return tgt_dist, dist_mean, dist_var, dist_skew, dist_kurtosis
+    return dists
 
 
 def cal_pvt_mut_num(ref_gt, tgt_gt):
