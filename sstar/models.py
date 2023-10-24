@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 from abc import ABC, abstractmethod
 from sklearn.linear_model import LogisticRegression as LR
-
+from sklearn.ensemble import ExtraTreesClassifier
 
 class Model(ABC):
     """
@@ -42,7 +42,7 @@ class LogisticRegression(Model):
     def train(self, train_df, model_file):
         """
         Description:
-            Function for training of the statsmodels logistic classification.
+            Function for training of the sklearn logistic classification.
 
         Arguments:
             train_df pandas.DataFrame: Training data
@@ -74,7 +74,44 @@ class LogisticRegression(Model):
 class ExtraTrees(Model):
     """
     """
-    pass
+    
+    def train(self, train_df, model_file):
+        """
+        Description:
+            Function for training of the sklearn extraTrees classifier.
+
+        Arguments:
+            train_df pandas.DataFrame: Training data
+            model_file str: filename for output model
+        """
+        data = train_df.copy()
+        data = data.drop(columns=['label'])
+        labels = train_df['label']
+
+        model = ExtraTreesClassifier()
+        model.fit(data, labels.astype(int))
+
+        pickle.dump(model, open(model_file, "wb"))
+
+
+    def infer(self, model_file, test_df, prediction_file):
+        """
+        Description:
+            Function for predicting using the sklearn extraTrees classifier.
+
+        Arguments:
+            model_file str: filename for input model
+            test_df pandas.DataFrame: test data
+            prediction_file str: filename for output file containing predictions   
+        """
+        with open(model_file, 'rb') as f:
+            model = pickle.load(f)
+
+        data = test_df.copy()
+        labels = model.predict(data)
+        test_df['label'] = labels
+
+        test_df.to_csv(prediction_file, sep="\t", index=False)
 
 
 class Sstar(Model):
