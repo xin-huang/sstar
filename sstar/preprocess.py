@@ -22,7 +22,7 @@ from sstar.stats import *
 from sstar.utils import read_data, filter_data, create_windows, multiprocessing_manager
 
 
-def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_file, output_prefix, win_len, win_step, thread):
+def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_file, output_dir, output_prefix, win_len, win_step, thread):
     """
     Description:
         Processes genotype data.
@@ -33,7 +33,8 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
         tgt_ind_file str: Name of the file containing sample information from the target population.
         anc_allele_file str: Name of the file containing ancestral allele information.
         feature_file str: Name of the YAML file specifying what features should be used. 
-        output_prefix str: Prefix of the output file.
+        output_dir str: Directory storing the output files.
+        output_prefix str: Prefix of the output files.
         win_len int: Length of sliding windows.
         win_step int: Step size of sliding windows.
         thread int: Number of threads.
@@ -48,17 +49,16 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
     for c in tgt_data.keys():
         windows = create_windows(tgt_data[c]['POS'], c, win_step, win_len)
 
-    #res = multiprocessing_manager(worker_func=preprocess_worker, nrep=len(windows), thread=thread, windows=windows, ref_data=ref_data, tgt_data=tgt_data, features=features)
+    res = multiprocessing_manager(worker_func=preprocess_worker, nrep=len(windows), thread=thread, windows=windows, ref_data=ref_data, tgt_data=tgt_data, features=features)
 
     # x[0]: the chromosome name in number
     # x[1]: the start of the window
     # x[2]: the end of the window
-    #res.sort(key=lambda x: (x[0], x[1], x[2]))
+    res.sort(key=lambda x: (x[0], x[1], x[2]))
 
-    header = _create_header(ref_samples, tgt_samples, features, features['genotypes']['output'])
-    #_output(res, header, features, output_prefix, features['genotype']['output'])
-
-    print(header)
+    if features['genotypes']['output']:
+        header = _create_header(ref_samples, tgt_samples, features, features['genotypes']['output'])
+        _output(res, header, features, output_dir, output_prefix, features['genotypes']['output'])
 
 
 def preprocess_worker(in_queue, out_queue, **kwargs):
@@ -117,169 +117,43 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
 def _create_header(ref_samples, tgt_samples, features, output_genotypes):
     """
     """
-    header = 'chrom\tstart\tend'
-
     if output_genotypes:
         if features['genotypes']['phased'] is True:
+            haps = []
             for s in ref_samples:
-                header += '\t' + s + '_hap1'
-                header += '\t' + s + '_hap2'
+                haps.append(s+'_hap1')
+                haps.append(s+'_hap2')
             for s in tgt_samples:
-                header += '\t' + s + '_hap1'
-                header += '\t' + s + '_hap2'
-        else:
-            for s in ref_samples: header += '\t' + s
-            for s in tgt_samples: header += '\t' + s
+                haps.append(s+'_hap1')
+                haps.append(s+'_hap2')
+            header = "\t".join(haps)
+        else: header = "\t".join(ref_samples) + "\t" + "\t".join(tgt_samples)
+    else:
+        header = "chrom\tstart\tend"
 
     return header
 
 
-def _output(res, header, features, output_prefix, output_genotypes):
-    pass
-
-
-def _process(win_step, win_len, output, thread, **kwargs):
+def _output(res, header, features, output_dir, output_prefix, output_genotypes):
     """
-    Description:
-        Processes genotype data with the S* statistic and others.
-
-    Arguments:
-        win_step int: Length of sliding windows.
-        win_len int: Step size of sliding windows.
-        output str: Name of the output file.
-        thread int: Number of threads.
-
-    Keyword arguments:
-        ref_data dict: Dictionary containing data from the reference population.
-        tgt_data dict: Dictionary containing data from the target population.
-        samples list: List containing sample information from the target population.
-        match_bonus int: Bonus for matching genotypes of two different variants.
-        max_mismatch int: Maximum genotype distance allowed.
-        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
     """
-    ind_num = len(kwargs['samples'])
-    header = 'chrom\tstart\tend\tsample\thap\t'
-    header += '\t'.join([str(x)+'-ton' for x in range(ind_num*2+1)]) + '\t'
-    header += '\t'.join(['pairwised_dist'+str(x+1) for x in range(ind_num*2)])
-    header += '\tmean_pairwised_dist\tvar_pairwised_dist\tskew_pairwised_dist\tkurtosis_pairwised_dist'
-    header += '\tmin_dist_to_ref\tS*_score\tprivate_SNP_num'
-    worker_func = _worker
-    output_func = _output
-
-    for c in kwargs['tgt_data'].keys():
-        ref_gts = kwargs['ref_data'][c]['GT']
-        tgt_gts = kwargs['tgt_data'][c]['GT']
-
-        ref_mut_num, ref_ind_num, ref_ploidy = ref_gts.shape
-        tgt_mut_num, tgt_ind_num, tgt_ploidy = tgt_gts.shape
-        ref_hap_num = ref_ind_num*ref_ploidy
-        tgt_hap_num = tgt_ind_num*tgt_ploidy
-        ref_gts = np.reshape(ref_gts, (ref_mut_num, ref_hap_num))
-        tgt_gts = np.reshape(tgt_gts, (tgt_mut_num, tgt_hap_num))
-
-        kwargs['ref_data'][c]['GT'] = ref_gts
-        kwargs['tgt_data'][c]['GT'] = tgt_gts
-        windows = create_windows(kwargs['tgt_data'][c]['POS'], c, win_step, win_len)
-
-
-def _process_sstar(win_step, win_len, output, thread, **kwargs):
-    """
-    Description:
-        Processes genotype data with the S* statistic only.
-
-    Arguments:
-        win_step int: Length of sliding windows.
-        win_len int: Step size of sliding windows.
-        output str: Name of the output file.
-        thread int: Number of threads.
-
-    Keyword arguments:
-        ref_data dict: Dictionary containing data from the reference population.
-        tgt_data dict: Dictionary containing data from the target population.
-        ref_samples list: List containing sample information from the reference population.
-        tgt_samples list: List containing sample information from the target population.
-        match_bonus int: Bonus for matching genotypes of two different variants.
-        max_mismatch int: Maximum genotype distance allowed.
-        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
-    """
-    header = 'chrom\tstart\tend\tsample\tS*_score\tS*_SNP_number\tS*_SNPs'
-    worker_func = _sstar_worker
-    output_func = _sstar_output
-
-    for c in kwargs['tgt_data'].keys():
-        # Remove variants observed in the reference population
-        # Assume 1 is the derived allele
-        variants_not_in_ref = np.sum(kwargs['ref_data'][c]['GT'].is_hom_ref(), axis=1) == len(kwargs['ref_samples'])
-        kwargs['tgt_data'] = filter_data(kwargs['tgt_data'], c, variants_not_in_ref)
-        kwargs['tgt_data'][c]['GT'] = np.sum(kwargs['tgt_data'][c]['GT'], axis=2)
-        windows = create_windows(kwargs['tgt_data'][c]['POS'], c, win_step, win_len)
-
-
-def _output(output, header, samples, res):
-    """
-    Description:
-        Outputs features.
-
-    Arguments:
-        output str: Name of the output file.
-        header str: Header line for the output file.
-        samples list: List containing sample information.
-        res list: List containing results.
-    """
-    with open(output, 'w') as o:
-        o.write(header+'\n')
-        for item in res:
-            chr_name = item[0]
-            start = item[1]
-            end = item[2]
-            spectra = item[3]
-            min_ref_dists = item[4]
-            tgt_dists = item[5]
-            mean_tgt_dists = item[6]
-            var_tgt_dists = item[7]
-            skew_tgt_dists = item[8]
-            kurtosis_tgt_dists = item[9]
-            pvt_mut_nums = item[10]
-            sstar_scores = item[11]
-            for i in range(len(samples)*2):
-                ind_name = samples[int(i/2)]
-                hap_name = f'hap_{i%2}'
-                spectrum = "\t".join([str(x) for x in spectra[i]])
-                min_ref_dist = min_ref_dists[i]
-                tgt_dist = "\t".join([str(x) for x in tgt_dists[i]])
-                mean_tgt_dist = mean_tgt_dists[i]
-                var_tgt_dist = var_tgt_dists[i]
-                skew_tgt_dist = skew_tgt_dists[i]
-                kurtosis_tgt_dist = kurtosis_tgt_dists[i]
-                pvt_mut_num = pvt_mut_nums[i]
-                sstar_score = sstar_scores[i]
-                o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{hap_name}\t{spectrum}\t{tgt_dist}\t{mean_tgt_dist}\t{var_tgt_dist}\t{skew_tgt_dist}\t{kurtosis_tgt_dist}\t{min_ref_dist}\t{sstar_score}\t{pvt_mut_num}\n')
-
-
-def _sstar_output(output, header, samples, res):
-    """
-    Description:
-        Outputs results from sstar.
-
-    Arguments:
-        output str: Name of the output file.
-        header str: Header line for the output file.
-        samples list: List containing sample information.
-        res list: List containing results.
-    """
-    with open(output, 'w') as o:
-        o.write(header+'\n')
-        for item in res:
-            chr_name = item[0]
-            start = item[1]
-            end = item[2]
-            sstar_scores = item[3]
-            sstar_snp_nums = item[4]
-            haplotypes = item[5]
-            for i in range(len(samples)):
-                ind_name = samples[i]
-                o.write(f'{chr_name}\t{start}\t{end}\t{ind_name}\t{sstar_scores[i]}\t{sstar_snp_nums[i]}\t{haplotypes[i]}\n')
+    os.makedirs(output_dir, exist_ok=True)
+    if output_genotypes:
+        os.makedirs(f'{output_dir}/genotypes', exist_ok=True)
+        for r in res:
+            chrom = r[0]
+            start = r[1]
+            end = r[2]
+            items = r[3]
+            if features['genotypes']['phased'] is True: output_file = f'{output_dir}/genotypes/{output_prefix}.{chrom}.{start}-{end}.phased.genotypes'
+            else: output_file = f'{output_dir}/genotypes/{output_prefix}.{chrom}.{start}-{end}.unphased.genotypes'
+            with open(output_file, 'w') as f:
+                f.write(f'{header}\n')
+                for i in range(len(items['ref_gts'])):
+                    ref_gts = "\t".join(items['ref_gts'][i].astype(str))
+                    tgt_gts = "\t".join(items['tgt_gts'][i].astype(str))
+                    f.write(f'{ref_gts}\t{tgt_gts}\n')
 
 
 if __name__ == '__main__':
-    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_file="examples/pre-trained/test.features.yaml", output_prefix="sstar/test.preprocess.out", win_len=50000, win_step=10000, thread=1)
+    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_file="examples/pre-trained/test.features.yaml", output_dir="sstar/test", output_prefix="test", win_len=50000, win_step=10000, thread=1)
