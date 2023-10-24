@@ -129,7 +129,28 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
             header = "\t".join(haps)
         else: header = "\t".join(ref_samples) + "\t" + "\t".join(tgt_samples)
     else:
-        header = "chrom\tstart\tend"
+        header = "chrom\tstart\tend\tsample"
+        if features['genotypes']['phased'] is True: header += "\thap"
+        if features['sstar']['output'] is True: header += "\tS*_score"
+        if features['number of private mutations']['output'] is True: header += "\tprivate_SNP_num"
+        if features['pairwise distances']['reference and target populations']['output'] is True:
+            if features['pairwise distances']['reference and target populations']['minimum'] is True: header += "\tmin_ref_tgt_dist"
+            if features['pairwise distances']['reference and target populations']['maximum'] is True: header += "\tmax_ref_tgt_dist"
+            if features['pairwise distances']['reference and target populations']['mean'] is True: header += "\tmean_ref_tgt_dist"
+            if features['pairwise distances']['reference and target populations']['median'] is True: header += "\tmedian_ref_tgt_dist"
+            if features['pairwise distances']['reference and target populations']['variance'] is True: header += "\tvar_ref_tgt_dist"
+            if features['pairwise distances']['reference and target populations']['skew'] is True: header += "\tskew_ref_tgt_dist"
+            if features['pairwise distances']['reference and target populations']['kurtosis'] is True: header += "\tkurtosis_ref_tgt_dist"
+            if features['pairwise distances']['reference and target populations']['all'] is True:
+        if features['pairwise distances']['target population only']['output'] is True:
+            if features['pairwise distances']['target population only']['minimum'] is True: header += "\tmin_tgt_dist"
+            if features['pairwise distances']['target population only']['maximum'] is True: header += "\tmax_tgt_dist"
+            if features['pairwise distances']['target population only']['mean'] is True: header += "\tmean_tgt_dist"
+            if features['pairwise distances']['target population only']['median'] is True: header += "\tmedian_tgt_dist"
+            if features['pairwise distances']['target population only']['variance'] is True: header += "\tvar_tgt_dist"
+            if features['pairwise distances']['target population only']['skew'] is True: header += "\tskew_tgt_dist"
+            if features['pairwise distances']['target population only']['kurtosis'] is True: header += "\tkurtosis_tgt_dist"
+            if features['pairwise distances']['target population only']['all'] is True:
 
     return header
 
