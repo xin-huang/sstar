@@ -59,9 +59,12 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
     for r in res:
         print(r[3]['all_ref_tgt_dists'].shape)
 
-    if features['genotypes']['output']:
-        header = _create_header(ref_samples, tgt_samples, features, features['genotypes']['output'])
-        _output(res, header, features, output_dir, output_prefix, features['genotypes']['output'])
+    if 'genotypes' in features.keys():
+        if features['genotypes']['output']:
+            header = _create_header(ref_samples, tgt_samples, features, features['genotypes']['output'])
+            _output(res, header, features, output_dir, output_prefix, features['genotypes']['output'])
+        else:
+            pass
 
 
 def preprocess_worker(in_queue, out_queue, **kwargs):
@@ -134,30 +137,31 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
     else:
         header = "chrom\tstart\tend\tsample"
         if features['genotypes']['phased'] is True: header += "\thap"
-        if features['sstar']['output'] is True: header += "\tS*_score"
-        if features['number of private mutations']['output'] is True: header += "\tprivate_SNP_num"
-        if features['pairwise distances']['reference and target populations']['output'] is True:
-            if features['pairwise distances']['reference and target populations']['minimum'] is True: header += "\tmin_ref_tgt_dist"
-            if features['pairwise distances']['reference and target populations']['maximum'] is True: header += "\tmax_ref_tgt_dist"
-            if features['pairwise distances']['reference and target populations']['mean'] is True: header += "\tmean_ref_tgt_dist"
-            if features['pairwise distances']['reference and target populations']['median'] is True: header += "\tmedian_ref_tgt_dist"
-            if features['pairwise distances']['reference and target populations']['variance'] is True: header += "\tvar_ref_tgt_dist"
-            if features['pairwise distances']['reference and target populations']['skew'] is True: header += "\tskew_ref_tgt_dist"
-            if features['pairwise distances']['reference and target populations']['kurtosis'] is True: header += "\tkurtosis_ref_tgt_dist"
-            if features['pairwise distances']['reference and target populations']['all'] is True: 
-                if features['genotypes']['phased'] is True: header += "\t".join(["pairwised_ref_tgt_dist"+str(x+1) for x in range(len(ref_samples)*features['genotypes']['ploidy'])])
-                else: header += "\t".join(["pairwised_ref_tgt_dist"+str(x+1) for x in range(len(ref_samples))])
-        if features['pairwise distances']['target population only']['output'] is True:
-            if features['pairwise distances']['target population only']['minimum'] is True: header += "\tmin_tgt_dist"
-            if features['pairwise distances']['target population only']['maximum'] is True: header += "\tmax_tgt_dist"
-            if features['pairwise distances']['target population only']['mean'] is True: header += "\tmean_tgt_dist"
-            if features['pairwise distances']['target population only']['median'] is True: header += "\tmedian_tgt_dist"
-            if features['pairwise distances']['target population only']['variance'] is True: header += "\tvar_tgt_dist"
-            if features['pairwise distances']['target population only']['skew'] is True: header += "\tskew_tgt_dist"
-            if features['pairwise distances']['target population only']['kurtosis'] is True: header += "\tkurtosis_tgt_dist"
-            if features['pairwise distances']['target population only']['all'] is True: 
-                if features['genotypes']['phased'] is True: header += "\t".join(["pairwised_tgt_dist"+str(x+1) for x in range(len(tgt_samples)*features['genotypes']['ploidy'])])
-                else: header += "\t".join(["pairwised_tgt_dist"+str(x+1) for x in range(len(tgt_samples))])
+        if ('sstar' in features.keys()) and (features['sstar']['output'] is True): header += "\tS*_score"
+        if ('number of private mutations' in features.keys()) and (features['number of private mutations']['output'] is True): header += "\tprivate_SNP_num"
+        if ('pairwise distances' in features.keys()):
+            if ('reference and target populations' in features['pairwise distances'].keys()) and (features['pairwise distances']['reference and target populations']['output'] is True):
+                if ('minimum' in features['pairwise distances']['reference and target populations'].keys()) and (features['pairwise distances']['reference and target populations']['minimum'] is True): header += "\tmin_ref_tgt_dist"
+                if ('maximum' in features['pairwise distances']['reference and target populations'].keys()) and (features['pairwise distances']['reference and target populations']['maximum'] is True): header += "\tmax_ref_tgt_dist"
+                if ('mean' in features['pairwise distances']['reference and target populations'].keys()) and (features['pairwise distances']['reference and target populations']['mean'] is True): header += "\tmean_ref_tgt_dist"
+                if ('median' in features['pairwise distances']['reference and target populations'].keys()) and (features['pairwise distances']['reference and target populations']['median'] is True): header += "\tmedian_ref_tgt_dist"
+                if ('variance' in features['pairwise distances']['reference and target populations'].keys()) and (features['pairwise distances']['reference and target populations']['variance'] is True): header += "\tvar_ref_tgt_dist"
+                if ('skew' in features['pairwise distances']['reference and target populations'].keys()) and (features['pairwise distances']['reference and target populations']['skew'] is True): header += "\tskew_ref_tgt_dist"
+                if ('kurtosis' in features['pairwise distances']['reference and target populations'].keys()) and (features['pairwise distances']['reference and target populations']['kurtosis'] is True): header += "\tkurtosis_ref_tgt_dist"
+                if ('all' in features['pairwise distances']['reference and target populations'].keys()) and (features['pairwise distances']['reference and target populations']['all'] is True): 
+                    if features['genotypes']['phased'] is True: header += "\t".join(["pairwised_ref_tgt_dist"+str(x+1) for x in range(len(ref_samples)*features['genotypes']['ploidy'])])
+                    else: header += "\t".join(["pairwised_ref_tgt_dist"+str(x+1) for x in range(len(ref_samples))])
+            if ('target population only' in features['pairwise distances'].keys()) and (features['pairwise distances']['target population only']['output'] is True):
+                if ('minimum' in features['pairwise distances']['target population only'].keys()) and (features['pairwise distances']['target population only']['minimum'] is True): header += "\tmin_tgt_dist"
+                if ('maximum' in features['pairwise distances']['target population only'].keys()) and (features['pairwise distances']['target population only']['maximum'] is True): header += "\tmax_tgt_dist"
+                if ('mean' in features['pairwise distances']['target population only'].keys()) and (features['pairwise distances']['target population only']['mean'] is True): header += "\tmean_tgt_dist"
+                if ('median' in features['pairwise distances']['target population only'].keys()) and (features['pairwise distances']['target population only']['median'] is True): header += "\tmedian_tgt_dist"
+                if ('variance' in features['pairwise distances']['target population only'].keys()) and (features['pairwise distances']['target population only']['variance'] is True): header += "\tvar_tgt_dist"
+                if ('skew' in features['pairwise distances']['target population only'].keys()) and (features['pairwise distances']['target population only']['skew'] is True): header += "\tskew_tgt_dist"
+                if ('kurtosis' in features['pairwise distances']['target population only'].keys()) and (features['pairwise distances']['target population only']['kurtosis'] is True): header += "\tkurtosis_tgt_dist"
+                if ('all' in features['pairwise distances']['target population only'].keys()) and (features['pairwise distances']['target population only']['all'] is True): 
+                    if features['genotypes']['phased'] is True: header += "\t".join(["pairwised_tgt_dist"+str(x+1) for x in range(len(tgt_samples)*features['genotypes']['ploidy'])])
+                    else: header += "\t".join(["pairwised_tgt_dist"+str(x+1) for x in range(len(tgt_samples))])
 
     return header
 
