@@ -56,6 +56,9 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
     # x[2]: the end of the window
     res.sort(key=lambda x: (x[0], x[1], x[2]))
 
+    for r in res:
+        print(r[3]['all_ref_tgt_dists'].shape)
+
     if features['genotypes']['output']:
         header = _create_header(ref_samples, tgt_samples, features, features['genotypes']['output'])
         _output(res, header, features, output_dir, output_prefix, features['genotypes']['output'])
@@ -84,25 +87,25 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
             items['spectra'] = spectra
         if 'pairwise distances' in kwargs['features'].keys():
             if ('reference and target populations' in kwargs['features']['pairwise distances'].keys()) and (kwargs['features']['pairwise distances']['reference and target populations']['output'] is True):
-                ref_dists = cal_dist(ref_gts, tgt_gts)
-                if kwargs['features']['pairwise distances']['reference and target populations']['all'] is True: items['all_ref_dists'] = ref_dists
-                if kwargs['features']['pairwise distances']['reference and target populations']['minimum'] is True: items['min_ref_dists'] = np.min(ref_dists, axis=1)
-                if kwargs['features']['pairwise distances']['reference and target populations']['maximum'] is True: items['max_ref_dists'] = np.max(ref_dists, axis=1)
-                if kwargs['features']['pairwise distances']['reference and target populations']['mean'] is True: items['mean_ref_dists'] = np.mean(ref_dists, axis=1)
-                if kwargs['features']['pairwise distances']['reference and target populations']['median'] is True: items['median_ref_dists'] = np.median(ref_dists, axis=1)
-                if kwargs['features']['pairwise distances']['reference and target populations']['variance'] is True: items['var_ref_dists'] = np.var(ref_dists, axis=1)
-                if kwargs['features']['pairwise distances']['reference and target populations']['skew'] is True: items['skew_ref_dists'] = np.skew(ref_dists, axis=1)
-                if kwargs['features']['pairwise distances']['reference and target populations']['kurtosis'] is True: items['kurtosis_ref_dists'] = np.kurtosis(ref_dists, axis=1)
+                ref_tgt_dists = cal_dist(ref_gts, tgt_gts)
+                if ('all' in kwargs['features']['pairwise distances']['reference and target populations'].keys()) and (kwargs['features']['pairwise distances']['reference and target populations']['all'] is True): items['all_ref_tgt_dists'] = ref_tgt_dists
+                if ('minimum' in kwargs['features']['pairwise distances']['reference and target populations'].keys()) and (kwargs['features']['pairwise distances']['reference and target populations']['minimum'] is True): items['min_ref_tgt_dists'] = np.min(ref_tgt_dists, axis=1)
+                if ('maximum' in kwargs['features']['pairwise distances']['reference and target populations'].keys()) and (kwargs['features']['pairwise distances']['reference and target populations']['maximum'] is True): items['max_ref_tgt_dists'] = np.max(ref_tgt_dists, axis=1)
+                if ('mean' in kwargs['features']['pairwise distances']['reference and target populations'].keys()) and (kwargs['features']['pairwise distances']['reference and target populations']['mean'] is True): items['mean_ref_tgt_dists'] = np.mean(ref_tgt_dists, axis=1)
+                if ('median' in kwargs['features']['pairwise distances']['reference and target populations'].keys()) and (kwargs['features']['pairwise distances']['reference and target populations']['median'] is True): items['median_ref_tgt_dists'] = np.median(ref_tgt_dists, axis=1)
+                if ('variance' in kwargs['features']['pairwise distances']['reference and target populations'].keys()) and (kwargs['features']['pairwise distances']['reference and target populations']['variance'] is True): items['var_ref_tgt_dists'] = np.var(ref_tgt_dists, axis=1)
+                if ('skew' in kwargs['features']['pairwise distances']['reference and target populations'].keys()) and (kwargs['features']['pairwise distances']['reference and target populations']['skew'] is True): items['skew_ref_tgt_dists'] = np.skew(ref_tgt_dists, axis=1)
+                if ('kurtosis' in kwargs['features']['pairwise distances']['reference and target populations'].keys()) and (kwargs['features']['pairwise distances']['reference and target populations']['kurtosis'] is True): items['kurtosis_ref_tgt_dists'] = np.kurtosis(ref_tgt_dists, axis=1)
             if ('target population only' in kwargs['features'].keys()) and (kwargs['features']['pairwise distances']['target population only']['output'] is True):
                 tgt_dists = cal_dist(tgt_gts, tgt_gts)
-                if kwargs['features']['pairwise distances']['target population only']['all'] is True: items['all_tgt_dists'] = tgt_dists
-                if kwargs['features']['pairwise distances']['target population only']['minimum'] is True: items['min_tgt_dists'] = np.min(tgt_dists, axis=1)
-                if kwargs['features']['pairwise distances']['target population only']['maximum'] is True: items['max_tgt_dists'] = np.max(tgt_dists, axis=1)
-                if kwargs['features']['pairwise distances']['target population only']['mean'] is True: items['mean_tgt_dists'] = np.mean(tgt_dists, axis=1)
-                if kwargs['features']['pairwise distances']['target population only']['median'] is True: items['median_tgt_dists'] = np.median(tgt_dists, axis=1)
-                if kwargs['features']['pairwise distances']['target population only']['variance'] is True: items['var_tgt_dists'] = np.var(tgt_dists, axis=1)
-                if kwargs['features']['pairwise distances']['target population only']['skew'] is True: items['skew_tgt_dists'] = np.skew(tgt_dists, axis=1)
-                if kwargs['features']['pairwise distances']['target population only']['kurtosis'] is True: items['kurtosis_tgt_dists'] = np.kurtosis(tgt_dists, axis=1)
+                if ('all' in kwargs['features']['pairwise distances']['target population only'].keys()) and (kwargs['features']['pairwise distances']['target population only']['all'] is True): items['all_tgt_dists'] = tgt_dists
+                if ('minimum' in kwargs['features']['pairwise distances']['target population only'].keys()) and (kwargs['features']['pairwise distances']['target population only']['minimum'] is True): items['min_tgt_dists'] = np.min(tgt_dists, axis=1)
+                if ('maximum' in kwargs['features']['pairwise distances']['target population only'].keys()) and (kwargs['features']['pairwise distances']['target population only']['maximum'] is True): items['max_tgt_dists'] = np.max(tgt_dists, axis=1)
+                if ('mean' in kwargs['features']['pairwise distances']['target population only'].keys()) and (kwargs['features']['pairwise distances']['target population only']['mean'] is True): items['mean_tgt_dists'] = np.mean(tgt_dists, axis=1)
+                if ('median' in kwargs['features']['pairwise distances']['target population only'].keys()) and (kwargs['features']['pairwise distances']['target population only']['median'] is True): items['median_tgt_dists'] = np.median(tgt_dists, axis=1)
+                if ('variance' in kwargs['features']['pairwise distances']['target population only'].keys()) and (kwargs['features']['pairwise distances']['target population only']['variance'] is True): items['var_tgt_dists'] = np.var(tgt_dists, axis=1)
+                if ('skew' in kwargs['features']['pairwise distances']['target population only'].keys()) and (kwargs['features']['pairwise distances']['target population only']['skew'] is True): items['skew_tgt_dists'] = np.skew(tgt_dists, axis=1)
+                if ('kurtosis' in kwargs['features']['pairwise distances']['target population only'].keys()) and (kwargs['features']['pairwise distances']['target population only']['kurtosis'] is True): items['kurtosis_tgt_dists'] = np.kurtosis(tgt_dists, axis=1)
         if ('sstar' in kwargs['features'].keys()) and (kwargs['features']['sstar']['output'] is True):
             sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 
                                                                  method=kwargs['features']['sstar']['genotype distance'], 
@@ -121,11 +124,11 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
         if features['genotypes']['phased'] is True:
             haps = []
             for s in ref_samples:
-                haps.append(s+'_hap1')
-                haps.append(s+'_hap2')
+                for i in range(features['genotypes']['ploidy']):
+                    haps.append(f'{s}_hap{i+1}')
             for s in tgt_samples:
-                haps.append(s+'_hap1')
-                haps.append(s+'_hap2')
+                for i in range(features['genotypes']['ploidy']):
+                    haps.append(f'{s}_hap{i+1}')
             header = "\t".join(haps)
         else: header = "\t".join(ref_samples) + "\t" + "\t".join(tgt_samples)
     else:
@@ -141,7 +144,9 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
             if features['pairwise distances']['reference and target populations']['variance'] is True: header += "\tvar_ref_tgt_dist"
             if features['pairwise distances']['reference and target populations']['skew'] is True: header += "\tskew_ref_tgt_dist"
             if features['pairwise distances']['reference and target populations']['kurtosis'] is True: header += "\tkurtosis_ref_tgt_dist"
-            if features['pairwise distances']['reference and target populations']['all'] is True:
+            if features['pairwise distances']['reference and target populations']['all'] is True: 
+                if features['genotypes']['phased'] is True: header += "\t".join(["pairwised_ref_tgt_dist"+str(x+1) for x in range(len(ref_samples)*features['genotypes']['ploidy'])])
+                else: header += "\t".join(["pairwised_ref_tgt_dist"+str(x+1) for x in range(len(ref_samples))])
         if features['pairwise distances']['target population only']['output'] is True:
             if features['pairwise distances']['target population only']['minimum'] is True: header += "\tmin_tgt_dist"
             if features['pairwise distances']['target population only']['maximum'] is True: header += "\tmax_tgt_dist"
@@ -150,7 +155,9 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
             if features['pairwise distances']['target population only']['variance'] is True: header += "\tvar_tgt_dist"
             if features['pairwise distances']['target population only']['skew'] is True: header += "\tskew_tgt_dist"
             if features['pairwise distances']['target population only']['kurtosis'] is True: header += "\tkurtosis_tgt_dist"
-            if features['pairwise distances']['target population only']['all'] is True:
+            if features['pairwise distances']['target population only']['all'] is True: 
+                if features['genotypes']['phased'] is True: header += "\t".join(["pairwised_tgt_dist"+str(x+1) for x in range(len(tgt_samples)*features['genotypes']['ploidy'])])
+                else: header += "\t".join(["pairwised_tgt_dist"+str(x+1) for x in range(len(tgt_samples))])
 
     return header
 
@@ -166,8 +173,9 @@ def _output(res, header, features, output_dir, output_prefix, output_genotypes):
             start = r[1]
             end = r[2]
             items = r[3]
-            if features['genotypes']['phased'] is True: output_file = f'{output_dir}/genotypes/{output_prefix}.{chrom}.{start}-{end}.phased.genotypes'
-            else: output_file = f'{output_dir}/genotypes/{output_prefix}.{chrom}.{start}-{end}.unphased.genotypes'
+            os.makedirs(f'{output_dir}/genotypes/{chrom}', exist_ok=True)
+            if features['genotypes']['phased'] is True: output_file = f'{output_dir}/genotypes/{chrom}/{output_prefix}.{chrom}.{start}-{end}.phased.genotypes'
+            else: output_file = f'{output_dir}/genotypes/{chrom}/{output_prefix}.{chrom}.{start}-{end}.unphased.genotypes'
             with open(output_file, 'w') as f:
                 f.write(f'{header}\n')
                 for i in range(len(items['ref_gts'])):
