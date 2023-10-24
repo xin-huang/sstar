@@ -22,7 +22,7 @@ from sstar.stats import *
 from sstar.utils import read_data, filter_data, create_windows, multiprocessing_manager
 
 
-def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_file, output, win_len, win_step, thread):
+def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_file, output_prefix, win_len, win_step, thread):
     """
     Description:
         Processes genotype data.
@@ -33,7 +33,7 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
         tgt_ind_file str: Name of the file containing sample information from the target population.
         anc_allele_file str: Name of the file containing ancestral allele information.
         feature_file str: Name of the YAML file specifying what features should be used. 
-        output str: Name of the output file.
+        output_prefix str: Prefix of the output file.
         win_len int: Length of sliding windows.
         win_step int: Step size of sliding windows.
         thread int: Number of threads.
@@ -48,14 +48,17 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
     for c in tgt_data.keys():
         windows = create_windows(tgt_data[c]['POS'], c, win_step, win_len)
 
-    res = multiprocessing_manager(worker_func=preprocess_worker, nrep=len(windows), thread=thread, windows=windows, ref_data=ref_data, tgt_data=tgt_data, features=features)
+    #res = multiprocessing_manager(worker_func=preprocess_worker, nrep=len(windows), thread=thread, windows=windows, ref_data=ref_data, tgt_data=tgt_data, features=features)
 
     # x[0]: the chromosome name in number
     # x[1]: the start of the window
     # x[2]: the end of the window
-    res.sort(key=lambda x: (x[0], x[1], x[2]))
+    #res.sort(key=lambda x: (x[0], x[1], x[2]))
 
-    print(res)
+    header = _create_header(ref_samples, tgt_samples, features, features['genotypes']['output'])
+    #_output(res, header, features, output_prefix, features['genotype']['output'])
+
+    print(header)
 
 
 def preprocess_worker(in_queue, out_queue, **kwargs):
@@ -109,6 +112,30 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
             items['sstar'] = sstar_scores
 
         out_queue.put((chr_name, start, end, items))
+
+
+def _create_header(ref_samples, tgt_samples, features, output_genotypes):
+    """
+    """
+    header = 'chrom\tstart\tend'
+
+    if output_genotypes:
+        if features['genotypes']['phased'] is True:
+            for s in ref_samples:
+                header += '\t' + s + '_hap1'
+                header += '\t' + s + '_hap2'
+            for s in tgt_samples:
+                header += '\t' + s + '_hap1'
+                header += '\t' + s + '_hap2'
+        else:
+            for s in ref_samples: header += '\t' + s
+            for s in tgt_samples: header += '\t' + s
+
+    return header
+
+
+def _output(res, header, features, output_prefix, output_genotypes):
+    pass
 
 
 def _process(win_step, win_len, output, thread, **kwargs):
@@ -255,4 +282,4 @@ def _sstar_output(output, header, samples, res):
 
 
 if __name__ == '__main__':
-    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_file="examples/pre-trained/test.features.yaml", output="sstar/test.preprocess.out", win_len=50000, win_step=10000, thread=1)
+    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_file="examples/pre-trained/test.features.yaml", output_prefix="sstar/test.preprocess.out", win_len=50000, win_step=10000, thread=1)
