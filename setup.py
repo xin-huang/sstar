@@ -28,6 +28,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "demes",
+        "msprime",
         "numpy",
         "pandas",
         "rpy2",
