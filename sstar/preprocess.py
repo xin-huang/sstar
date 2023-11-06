@@ -56,10 +56,10 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
     # x[2]: the end of the window
     res.sort(key=lambda x: (x[0], x[1], x[2]))
 
-    for r in res:
+    #for r in res:
         #print(r)
-        print(r[3]['ref_dists'].shape)
-        print(r[3]['tgt_dists'].shape)
+        #print(r[3]['ref_dists'].shape)
+        #print(r[3]['tgt_dists'].shape)
 
     header = _create_header(ref_samples, tgt_samples, features, features['genotypes']['output'])
     _output(res, tgt_samples, header, features, output_dir, output_prefix, features['genotypes']['output'])
@@ -147,8 +147,13 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
                 if ('skew' in features['pairwise distances']['reference'].keys()) and (features['pairwise distances']['reference']['skew'] is True): header += "\tskew_ref_dist"
                 if ('kurtosis' in features['pairwise distances']['reference'].keys()) and (features['pairwise distances']['reference']['kurtosis'] is True): header += "\tkurtosis_ref_dist"
                 if ('all' in features['pairwise distances']['reference'].keys()) and (features['pairwise distances']['reference']['all'] is True): 
-                    if features['genotypes']['phased'] is True: header += "\t" + "\t".join(["pairwised_ref_dist"+str(x+1) for x in range(len(ref_samples)*features['genotypes']['ploidy'])])
-                    else: header += "\t" + "\t".join(["pairwised_ref_dist"+str(x+1) for x in range(len(ref_samples))])
+                    if features['genotypes']['phased'] is True: 
+                        for s in ref_samples:
+                            for i in range(features['genotypes']['ploidy']):
+                                header += f'\tref_dist_{s}_hap{i+1}'
+                    else:
+                        for s in ref_samples:
+                            header += f'\tref_dist_{s}'
             if ('target' in features['pairwise distances'].keys()) and (features['pairwise distances']['target']['output'] is True):
                 if ('minimum' in features['pairwise distances']['target'].keys()) and (features['pairwise distances']['target']['minimum'] is True): header += "\tmin_tgt_dist"
                 if ('maximum' in features['pairwise distances']['target'].keys()) and (features['pairwise distances']['target']['maximum'] is True): header += "\tmax_tgt_dist"
@@ -158,8 +163,13 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
                 if ('skew' in features['pairwise distances']['target'].keys()) and (features['pairwise distances']['target']['skew'] is True): header += "\tskew_tgt_dist"
                 if ('kurtosis' in features['pairwise distances']['target'].keys()) and (features['pairwise distances']['target']['kurtosis'] is True): header += "\tkurtosis_tgt_dist"
                 if ('all' in features['pairwise distances']['target'].keys()) and (features['pairwise distances']['target']['all'] is True): 
-                    if features['genotypes']['phased'] is True: header += "\t" + "\t".join(["pairwised_tgt_dist"+str(x+1) for x in range(len(tgt_samples)*features['genotypes']['ploidy'])])
-                    else: header += "\t" + "\t".join(["pairwised_tgt_dist"+str(x+1) for x in range(len(tgt_samples))])
+                    if features['genotypes']['phased'] is True: 
+                        for s in tgt_samples:
+                            for i in range(features['genotypes']['ploidy']):
+                                header += f'\ttgt_dist_{s}_hap{i+1}'
+                    else: 
+                        for s in tgt_samples:
+                            header += f'\ttgt_dist_{s}'
 
     return header
 
