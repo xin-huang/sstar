@@ -35,7 +35,7 @@ def cal_n_ton(tgt_gt):
     counts = tgt_gt*np.matmul(tgt_gt, iv)
     spectra = np.array([np.bincount(counts[:,idx].astype('int8'), minlength=hap_num+1) for idx in range(hap_num)])
     # ArchIE does not count non-segragating sites
-    spectra[:,0] = 0
+    #spectra[:,0] = 0
 
     return spectra
 

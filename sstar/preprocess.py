@@ -136,6 +136,10 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
         header = "chrom\tstart\tend\tsample"
         if ('sstar' in features.keys()) and (features['sstar']['output'] is True): header += "\tS*_score"
         if ('number of private mutations' in features.keys()) and (features['number of private mutations']['output'] is True): header += "\tprivate_SNP_num"
+        if ('individual allele frequency spectra' in features.keys()) and (features['individual allele frequency spectra']['output'] is True):
+            if features['genotypes']['phased'] is True: nsample = len(tgt_samples)*features['genotypes']['ploidy']
+            else: nsample = len(tgt_samples)
+            for i in range(nsample+1): header += f'\t{i}_ton'
         if ('pairwise distances' in features.keys()):
             if ('reference' in features['pairwise distances'].keys()) and (features['pairwise distances']['reference']['output'] is True):
                 if ('minimum' in features['pairwise distances']['reference'].keys()) and (features['pairwise distances']['reference']['minimum'] is True): header += "\tmin_ref_dist"
@@ -212,6 +216,9 @@ def _output(res, tgt_samples, header, features, output_dir, output_prefix, outpu
                     out = ''
                     if ('sstar' in features.keys()) and (features['sstar']['output'] is True): out += f'\t{items["sstar"][i]}'
                     if ('number of private mutations' in features.keys()) and (features['number of private mutations']['output'] is True): out += f'\t{items["pvt_mut_nums"][i]}'
+                    if ('individual allele frequency spectra' in features.keys()) and (features['individual allele frequency spectra']['output'] is True):
+                        spectra = "\t".join(items["spectra"][i].astype(str))
+                        out += f'\t{spectra}'
                     if ('pairwise distances' in features.keys()):
                         if ('reference' in features['pairwise distances'].keys()) and (features['pairwise distances']['reference']['output'] is True):
                             if ('minimum' in features['pairwise distances']['reference'].keys()) and (features['pairwise distances']['reference']['minimum'] is True): out += f'\t{items["min_ref_dist"]}'
