@@ -31,7 +31,6 @@ setup(
         "msprime",
         "numpy",
         "pandas",
-        "rpy2",
         "scikit-allel",
         "scikit-learn",
         "scipy",
