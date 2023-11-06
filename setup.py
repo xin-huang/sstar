@@ -16,7 +16,7 @@ setup(
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/xin-huang/sstar",
-    author="Xin Huang, Joesf Hackl",
+    author="Xin Huang, Josef Hackl",
     author_email="xinhuang.res@gmail.com",
     license="Apache-2.0",
     classifiers=[
@@ -33,6 +33,7 @@ setup(
         "pandas",
         "rpy2",
         "scikit-allel",
+        "scikit-learn",
         "scipy",
         "statsmodels",
     ],

@@ -238,6 +238,5 @@ def _output(res, tgt_samples, header, features, output_dir, output_prefix, outpu
                     f.write(f'{chrom}\t{start}\t{end}\t{sample}\t{out}\n')
 
 
-
 if __name__ == '__main__':
     process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_file="examples/pre-trained/test.features.yaml", output_dir="sstar/test", output_prefix="test", win_len=50000, win_step=10000, thread=1)
