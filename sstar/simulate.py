@@ -53,7 +53,7 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
             random_seed=kwargs['seed'],
         )
         ts = msprime.sim_mutations(ts, rate=kwargs['mut_rate'], random_seed=kwargs['seed'], model=msprime.BinaryMutationModel())
-        true_tracts = _get_true_tracts(ts, kwargs['tgt_id'], kwargs['src_id'])
+        true_tracts = _get_true_tracts(ts, kwargs['tgt_id'], kwargs['src_id'], kwargs['ploidy'])
 
         os.makedirs(os.path.join(kwargs['output_dir'], str(rep)), exist_ok=True)
         ts_file  = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.ts'
@@ -71,7 +71,7 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
         df = pd.DataFrame()
         for n in sorted(true_tracts.keys()):
             true_tracts[n].sort(key=lambda x:(x[0], x[1], x[2]))
-            df2 = pd.DataFrame(true_tracts[n], columns=['chr', 'start', 'end', 'hap', 'ind'])
+            df2 = pd.DataFrame(true_tracts[n], columns=['chr', 'start', 'end', 'sample'])
             df = pd.concat([df, df2])
 
         df.drop_duplicates(keep='first').to_csv(bed_file, sep="\t", header=False, index=False)
@@ -100,7 +100,7 @@ def _create_ref_tgt_file(nref, ntgt, ref_ind_file, tgt_ind_file, identifier="tsk
             f.write(identifier + str(i) + "\n")
 
 
-def _get_true_tracts(ts, tgt_id, src_id):
+def _get_true_tracts(ts, tgt_id, src_id, ploidy):
     """
     Description:
         Helper function to obtain ground truth introgressed tracts from tree-sequence.
@@ -109,6 +109,7 @@ def _get_true_tracts(ts, tgt_id, src_id):
         ts tskit.TreeSqueuece: Tree-sequence containing ground truth introgressed tracts.
         tgt_id str: Name of the target population. 
         src_id str: Name of the source population.
+        ploidy int: Ploidy of the genomes.
     """
     tracts = {}
     introgression = []
@@ -133,7 +134,7 @@ def _get_true_tracts(ts, tgt_id, src_id):
             for n in tracts.keys():
                 left = i.left if i.left > t.interval.left else t.interval.left
                 right = i.right if i.right < t.interval.right else t.interval.right
-                if t.is_descendant(n, i.node): tracts[n].append([1, int(left), int(right), f'hap_{int(n%2)}', f'tsk_{ts.node(n).individual}'])
+                if t.is_descendant(n, i.node): tracts[n].append([1, int(left), int(right), f'tsk_{ts.node(n).individual}_{int(n%ploidy+1)}'])
 
     return tracts
 
