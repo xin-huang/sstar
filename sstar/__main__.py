@@ -199,7 +199,6 @@ def _s_star_cli_parser():
     parser.add_argument('--win-len', type=int, default=50000, help='Length of the window to calculate statistics as input features. Default: 50000.', dest='win_len')
     parser.add_argument('--win-step', type=int, default=10000, help='Step size for moving windows along genomes when calculating statistics. Default: 10000.', dest='win_step')
     parser.add_argument('--thread', type=int, default=1, help="Number of threads for the training. Default: 1.")
-    parser.add_argument('--phased', action='store_true', help="Enable to use phased genotypes. Default: False.")
     parser.set_defaults(runner=_run_preprocess)
 
     parser = subparsers.add_parser('plot', help='Plotting precision-recall curves for performance measurement.')
