@@ -126,15 +126,14 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
             haps = []
             for s in ref_samples:
                 for i in range(features['genotypes']['ploidy']):
-                    haps.append(f'{s}_hap{i+1}')
+                    haps.append(f'{s}_{i+1}')
             for s in tgt_samples:
                 for i in range(features['genotypes']['ploidy']):
-                    haps.append(f'{s}_hap{i+1}')
+                    haps.append(f'{s}_{i+1}')
             header = "\t".join(haps)
         else: header = "\t".join(ref_samples) + "\t" + "\t".join(tgt_samples)
     else:
         header = "chrom\tstart\tend\tsample"
-        if features['genotypes']['phased'] is True: header += "\thap"
         if ('sstar' in features.keys()) and (features['sstar']['output'] is True): header += "\tS*_score"
         if ('number of private mutations' in features.keys()) and (features['number of private mutations']['output'] is True): header += "\tprivate_SNP_num"
         if ('pairwise distances' in features.keys()):
@@ -150,7 +149,7 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
                     if features['genotypes']['phased'] is True: 
                         for s in ref_samples:
                             for i in range(features['genotypes']['ploidy']):
-                                header += f'\tref_dist_{s}_hap{i+1}'
+                                header += f'\tref_dist_{s}_{i+1}'
                     else:
                         for s in ref_samples:
                             header += f'\tref_dist_{s}'
@@ -166,7 +165,7 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
                     if features['genotypes']['phased'] is True: 
                         for s in tgt_samples:
                             for i in range(features['genotypes']['ploidy']):
-                                header += f'\ttgt_dist_{s}_hap{i+1}'
+                                header += f'\ttgt_dist_{s}_{i+1}'
                     else: 
                         for s in tgt_samples:
                             header += f'\ttgt_dist_{s}'
@@ -196,8 +195,48 @@ def _output(res, tgt_samples, header, features, output_dir, output_prefix, outpu
                     f.write(f'{ref_gts}\t{tgt_gts}\n')
     else:
         output_file = f'{output_dir}/{output_prefix}.features'
+        if ('genotypes' in features.keys()) and ('phased' in features['genotypes'].keys()) and (features['genotypes']['phased'] is True):
+            ploidy = features['genotypes']['ploidy']
+        else:
+            ploidy = 1
         with open(output_file, 'w') as f:
             f.write(f'{header}\n')
+            for r in res:
+                chrom = r[0]
+                start = r[1]
+                end = r[2]
+                items = r[3]
+                for i in range(len(tgt_samples)*ploidy):
+                    if ploidy != 1: sample = f'{tgt_samples[int(i/ploidy)]}_{i%ploidy+1}'
+                    else: sample = tgt_samples[i]
+                    out = ''
+                    if ('sstar' in features.keys()) and (features['sstar']['output'] is True): out += f'\t{items["sstar"][i]}'
+                    if ('number of private mutations' in features.keys()) and (features['number of private mutations']['output'] is True): out += f'\t{items["pvt_mut_nums"][i]}'
+                    if ('pairwise distances' in features.keys()):
+                        if ('reference' in features['pairwise distances'].keys()) and (features['pairwise distances']['reference']['output'] is True):
+                            if ('minimum' in features['pairwise distances']['reference'].keys()) and (features['pairwise distances']['reference']['minimum'] is True): out += f'\t{items["min_ref_dist"]}'
+                            if ('maximum' in features['pairwise distances']['reference'].keys()) and (features['pairwise distances']['reference']['maximum'] is True): out += f'\t{items["max_ref_dist"]}'
+                            if ('mean' in features['pairwise distances']['reference'].keys()) and (features['pairwise distances']['reference']['mean'] is True): out += f'\t{items["mean_ref_dist"]}'
+                            if ('median' in features['pairwise distances']['reference'].keys()) and (features['pairwise distances']['reference']['median'] is True): out += f'\t{items["median_ref_dist"]}'
+                            if ('variance' in features['pairwise distances']['reference'].keys()) and (features['pairwise distances']['reference']['variance'] is True): out += f'\t{items["var_ref_dist"]}'
+                            if ('skew' in features['pairwise distances']['reference'].keys()) and (features['pairwise distances']['reference']['skew'] is True): out += f'\t{items["skew_ref_dist"]}'
+                            if ('kurtosis' in features['pairwise distances']['reference'].keys()) and (features['pairwise distances']['reference']['kurtosis'] is True): out += f'\t{items["kurtosis_ref_dist"]}'
+                            if ('all' in features['pairwise distances']['reference'].keys()) and (features['pairwise distances']['reference']['all'] is True): 
+                                dists = "\t".join(items["ref_dists"][i].astype(str))
+                                out += f'\t{dists}'
+                        if ('target' in features['pairwise distances'].keys()) and (features['pairwise distances']['target']['output'] is True):
+                            if ('minimum' in features['pairwise distances']['target'].keys()) and (features['pairwise distances']['target']['minimum'] is True): out += f'\t{items["min_tgt_dist"]}'
+                            if ('maximum' in features['pairwise distances']['target'].keys()) and (features['pairwise distances']['target']['maximum'] is True): out += f'\t{items["max_tgt_dist"]}'
+                            if ('mean' in features['pairwise distances']['target'].keys()) and (features['pairwise distances']['target']['mean'] is True): out += f'\t{items["mean_tgt_dist"]}'
+                            if ('median' in features['pairwise distances']['target'].keys()) and (features['pairwise distances']['target']['median'] is True): out += f'\t{items["median_tgt_dist"]}'
+                            if ('variance' in features['pairwise distances']['target'].keys()) and (features['pairwise distances']['target']['variance'] is True): out += f'\t{items["var_tgt_dist"]}'
+                            if ('skew' in features['pairwise distances']['target'].keys()) and (features['pairwise distances']['target']['skew'] is True): out += f'\t{items["skew_tgt_dist"]}'
+                            if ('kurtosis' in features['pairwise distances']['target'].keys()) and (features['pairwise distances']['target']['kurtosis'] is True): out += f'\t{items["kurtosis_tgt_dist"]}'
+                            if ('all' in features['pairwise distances']['target'].keys()) and (features['pairwise distances']['target']['all'] is True): 
+                                dists = "\t".join(items["tgt_dists"][i].astype(str))
+                                out += f'\t{dists}'
+                    f.write(f'{chrom}\t{start}\t{end}\t{sample}\t{out}\n')
+
 
 
 if __name__ == '__main__':
