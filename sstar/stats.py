@@ -19,21 +19,22 @@ import scipy.stats as sps
 from scipy.spatial import distance_matrix
 
 
-def cal_n_ton(tgt_gt):
+def cal_n_ton(tgt_gt, ploidy):
     """
     Description:
-        Calculates individual frequency spetra for haplotypes.
+        Calculates individual frequency spetra for samples.
 
     Arguments:
         tgt_gt numpy.ndarray: Genotype matrix from the target population.
+        ploidy int: Ploidy of the genomes.
 
     Returns:
         spectra numpy.ndarray: Individual frequency spectra for haplotypes.
     """
-    mut_num, hap_num = tgt_gt.shape
-    iv = np.ones((hap_num, 1))
-    counts = tgt_gt*np.matmul(tgt_gt, iv)
-    spectra = np.array([np.bincount(counts[:,idx].astype('int8'), minlength=hap_num+1) for idx in range(hap_num)])
+    mut_num, sample_num = tgt_gt.shape
+    iv = np.ones((sample_num, 1))
+    counts = (tgt_gt>0)*np.matmul(tgt_gt, iv)
+    spectra = np.array([np.bincount(counts[:,idx].astype('int8'), minlength=sample_num*ploidy+1) for idx in range(sample_num)])
     # ArchIE does not count non-segragating sites
     #spectra[:,0] = 0
 

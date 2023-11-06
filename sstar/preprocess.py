@@ -84,7 +84,9 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
             pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
             items['pvt_mut_nums'] = pvt_mut_nums
         if ('individual allele frequency spectra' in kwargs['features'].keys()) and (kwargs['features']['individual allele frequency spectra']['output'] is True):
-            spectra = cal_n_ton(tgt_gts)
+            if kwargs['features']['genotypes']['phased'] is True: ploidy = 1
+            else: ploidy = kwargs['features']['genotypes']['ploidy']
+            spectra = cal_n_ton(tgt_gts, ploidy=ploidy)
             items['spectra'] = spectra
         if 'pairwise distances' in kwargs['features'].keys():
             if ('reference' in kwargs['features']['pairwise distances'].keys()) and (kwargs['features']['pairwise distances']['reference']['output'] is True):
@@ -137,8 +139,7 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
         if ('sstar' in features.keys()) and (features['sstar']['output'] is True): header += "\tS*_score"
         if ('number of private mutations' in features.keys()) and (features['number of private mutations']['output'] is True): header += "\tprivate_SNP_num"
         if ('individual allele frequency spectra' in features.keys()) and (features['individual allele frequency spectra']['output'] is True):
-            if features['genotypes']['phased'] is True: nsample = len(tgt_samples)*features['genotypes']['ploidy']
-            else: nsample = len(tgt_samples)
+            nsample = len(tgt_samples)*features['genotypes']['ploidy']
             for i in range(nsample+1): header += f'\t{i}_ton'
         if ('pairwise distances' in features.keys()):
             if ('reference' in features['pairwise distances'].keys()) and (features['pairwise distances']['reference']['output'] is True):
