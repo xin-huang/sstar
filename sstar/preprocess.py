@@ -23,7 +23,8 @@ from sstar.stats import *
 from sstar.utils import read_data, filter_data, create_windows, multiprocessing_manager
 
 
-def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_config, output_dir, output_prefix, win_len, win_step, thread):
+def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_config, is_phased, 
+                 ploidy, output_genotypes, output_dir, output_prefix, win_len, win_step, thread):
     """
     Description:
         Processes genotype data.
@@ -34,6 +35,9 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
         tgt_ind_file str: Name of the file containing sample information from the target population.
         anc_allele_file str: Name of the file containing ancestral allele information.
         feature_config str: Name of the YAML file specifying what features should be used. 
+        is_phased bool:
+        ploidy int: 
+        output_genotypes bool:
         output_dir str: Directory storing the output files.
         output_prefix str: Prefix of the output files.
         win_len int: Length of sliding windows.
@@ -45,25 +49,25 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
 
     features = features['features']
 
-    ref_data, ref_samples, tgt_data, tgt_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, features['genotypes']['phased'])
+    ref_data, ref_samples, tgt_data, tgt_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, is_phased)
 
     for c in tgt_data.keys():
         windows = create_windows(tgt_data[c]['POS'], c, win_step, win_len)
 
-    res = multiprocessing_manager(worker_func=preprocess_worker, nrep=len(windows), thread=thread, windows=windows, ref_data=ref_data, tgt_data=tgt_data, features=features)
+    res = multiprocessing_manager(worker_func=preprocess_worker, nrep=len(windows), thread=thread, windows=windows, ref_data=ref_data, tgt_data=tgt_data, 
+                                  features=features, is_phased=is_phased, ploidy=ploidy, output_genotypes=output_genotypes)
 
     # x[0]: the chromosome name in number
     # x[1]: the start of the window
     # x[2]: the end of the window
     res.sort(key=lambda x: (x[0], x[1], x[2]))
 
-    #for r in res:
-        #print(r)
-        #print(r[3]['ref_dists'].shape)
-        #print(r[3]['tgt_dists'].shape)
+    if output_genotypes is True:
+        header = _create_header(ref_samples, tgt_samples, features, is_phased, ploidy, output_genotypes)
+        _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, output_prefix, output_genotypes)
 
-    header = _create_header(ref_samples, tgt_samples, features, features['genotypes']['output'])
-    _output(res, tgt_samples, header, features, output_dir, output_prefix, features['genotypes']['output'])
+    header = _create_header(ref_samples, tgt_samples, features, is_phased, ploidy, False)
+    _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, output_prefix, False)
 
 
 def preprocess_worker(in_queue, out_queue, **kwargs):
@@ -78,15 +82,15 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
 
         items = dict()
 
-        if ('genotypes' in kwargs['features'].keys()) and (kwargs['features']['genotypes']['output'] is True):
+        if kwargs['output_genotypes'] is True:
             items['ref_gts'] = ref_gts
             items['tgt_gts'] = tgt_gts
         if 'number of private mutations' in kwargs['features'].keys():
             pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
             items['pvt_mut_nums'] = pvt_mut_nums
         if 'individual allele frequency spectra' in kwargs['features'].keys():
-            if kwargs['features']['genotypes']['phased'] is True: ploidy = 1
-            else: ploidy = kwargs['features']['genotypes']['ploidy']
+            if kwargs['is_phased'] is True: ploidy = 1
+            else: ploidy = kwargs['ploidy']
             spectra = cal_n_ton(tgt_gts, ploidy=ploidy)
             items['spectra'] = spectra
         if 'reference distances' in kwargs['features'].keys():
@@ -97,7 +101,7 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
             if 'mean' in kwargs['features']['reference distances'].keys(): items['mean_ref_dists'] = np.mean(ref_dists, axis=1)
             if 'median' in kwargs['features']['reference distances'].keys(): items['median_ref_dists'] = np.median(ref_dists, axis=1)
             if 'variance' in kwargs['features']['reference distances'].keys(): items['var_ref_dists'] = np.var(ref_dists, axis=1)
-            if 'skew' in kwargs['features']['reference distances'].keys() = scipy.stats.skew(ref_dists, axis=1)
+            if 'skew' in kwargs['features']['reference distances'].keys(): items['skew_ref_dists'] = scipy.stats.skew(ref_dists, axis=1)
             if 'kurtosis' in kwargs['features']['reference distances'].keys(): items['kurtosis_ref_dists'] = scipy.stats.kurtosis(ref_dists, axis=1)
         if 'target distances' in kwargs['features'].keys():
             tgt_dists = cal_dist(tgt_gts, tgt_gts)
@@ -120,17 +124,17 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
         out_queue.put((chr_name, start, end, items))
 
 
-def _create_header(ref_samples, tgt_samples, features, output_genotypes):
+def _create_header(ref_samples, tgt_samples, features, is_phased, ploidy, output_genotypes):
     """
     """
-    if output_genotypes:
-        if features['genotypes']['phased'] is True:
+    if output_genotypes is True:
+        if is_phased is True:
             haps = []
             for s in ref_samples:
-                for i in range(features['genotypes']['ploidy']):
+                for i in range(ploidy):
                     haps.append(f'{s}_{i+1}')
             for s in tgt_samples:
-                for i in range(features['genotypes']['ploidy']):
+                for i in range(ploidy):
                     haps.append(f'{s}_{i+1}')
             header = "\t".join(haps)
         else: header = "\t".join(ref_samples) + "\t" + "\t".join(tgt_samples)
@@ -139,7 +143,7 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
         if 'sstar' in features.keys(): header += "\tS*_score"
         if 'number of private mutations' in features.keys(): header += "\tprivate_SNP_num"
         if 'individual allele frequency spectra' in features.keys():
-            nsample = len(tgt_samples)*features['genotypes']['ploidy']
+            nsample = len(tgt_samples)*ploidy
             for i in range(nsample+1): header += f'\t{i}_ton'
         if 'reference distances' in features.keys():
             if 'minimum' in features['reference distances'].keys(): header += "\tmin_ref_dist"
@@ -150,9 +154,9 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
             if 'skew' in features['reference distances'].keys(): header += "\tskew_ref_dist"
             if 'kurtosis' in features['reference distances'].keys(): header += "\tkurtosis_ref_dist"
             if 'all' in features['reference distances'].keys(): 
-                if features['genotypes']['phased'] is True: 
+                if is_phased is True: 
                     for s in ref_samples:
-                        for i in range(features['genotypes']['ploidy']):
+                        for i in range(ploidy):
                             header += f'\tref_dist_{s}_{i+1}'
                 else:
                     for s in ref_samples:
@@ -166,9 +170,9 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
             if 'skew' in features['target distances'].keys(): header += "\tskew_tgt_dist"
             if 'kurtosis' in features['target distances'].keys(): header += "\tkurtosis_tgt_dist"
             if 'all' in features['target distances'].keys(): 
-                if features['genotypes']['phased'] is True: 
+                if is_phased is True: 
                     for s in tgt_samples:
-                        for i in range(features['genotypes']['ploidy']):
+                        for i in range(ploidy):
                             header += f'\ttgt_dist_{s}_{i+1}'
                 else: 
                     for s in tgt_samples:
@@ -177,7 +181,7 @@ def _create_header(ref_samples, tgt_samples, features, output_genotypes):
     return header
 
 
-def _output(res, tgt_samples, header, features, output_dir, output_prefix, output_genotypes):
+def _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, output_prefix, output_genotypes):
     """
     """
     os.makedirs(output_dir, exist_ok=True)
@@ -189,7 +193,7 @@ def _output(res, tgt_samples, header, features, output_dir, output_prefix, outpu
             end = r[2]
             items = r[3]
             os.makedirs(f'{output_dir}/genotypes/{chrom}', exist_ok=True)
-            if features['genotypes']['phased'] is True: output_file = f'{output_dir}/genotypes/{chrom}/{output_prefix}.{chrom}.{start}-{end}.phased.genotypes'
+            if is_phased is True: output_file = f'{output_dir}/genotypes/{chrom}/{output_prefix}.{chrom}.{start}-{end}.phased.genotypes'
             else: output_file = f'{output_dir}/genotypes/{chrom}/{output_prefix}.{chrom}.{start}-{end}.unphased.genotypes'
             with open(output_file, 'w') as f:
                 f.write(f'{header}\n')
@@ -199,10 +203,7 @@ def _output(res, tgt_samples, header, features, output_dir, output_prefix, outpu
                     f.write(f'{ref_gts}\t{tgt_gts}\n')
     else:
         output_file = f'{output_dir}/{output_prefix}.features'
-        if ('genotypes' in features.keys()) and ('phased' in features['genotypes'].keys()) and (features['genotypes']['phased'] is True):
-            ploidy = features['genotypes']['ploidy']
-        else:
-            ploidy = 1
+        if is_phased is not True: ploidy = 1
         with open(output_file, 'w') as f:
             f.write(f'{header}\n')
             for r in res:
@@ -245,4 +246,4 @@ def _output(res, tgt_samples, header, features, output_dir, output_prefix, outpu
 
 
 if __name__ == '__main__':
-    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/pre-trained/test.features.yaml", output_dir="sstar/test", output_prefix="test", win_len=50000, win_step=10000, thread=1)
+    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/pre-trained/test.features.yaml", is_phased=True, ploidy=2, output_genotypes=True, output_dir="sstar/test", output_prefix="test", win_len=50000, win_step=10000, thread=1)
