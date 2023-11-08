@@ -22,12 +22,13 @@ from sstar.utils import multiprocessing_manager
 
 
 def train(nrep, seq_len, thread, training_data_prefix, training_data_dir, model_file,
-          feature_config, archaic_prop, not_archaic_prop, algorithm=None):
+          feature_config, is_phased, ploidy, output_genotypes, archaic_prop, not_archaic_prop, algorithm=None):
     """
     """
     multiprocessing_manager(worker_func=_preprocess_worker, nrep=nrep, thread=thread,
                             training_data_prefix=training_data_prefix, training_data_dir=training_data_dir,
                             win_len=seq_len, win_step=seq_len, feature_config=feature_config,
+                            is_phased=is_phased, ploidy=ploidy, output_genotypes=output_genotypes,
                             seq_len=seq_len, archaic_prop=archaic_prop, not_archaic_prop=not_archaic_prop)
 
     feature_df = pd.DataFrame()
@@ -68,6 +69,7 @@ def _preprocess_worker(in_queue, out_queue, **kwargs):
 
         process_data(vcf_file=vcf_file, ref_ind_file=ref_ind_file, tgt_ind_file=tgt_ind_file,
                      anc_allele_file=None, feature_config=kwargs['feature_config'], thread=1,
+                     is_phased=kwargs['is_phased'], ploidy=kwargs['ploidy'], output_genotypes=kwargs['output_genotypes'],
                      output_dir=kwargs['training_data_dir']+'/'+str(rep), output_prefix=kwargs['training_data_prefix']+f'.{rep}',
                      win_len=kwargs['win_len'], win_step=kwargs['win_step'])
 
@@ -103,4 +105,5 @@ def _add_label(row, archaic_prop, not_archaic_prop):
 if __name__ == '__main__':
     train(nrep=1000, thread=2, training_data_prefix='test', training_data_dir='./sstar/test', 
           seq_len=50000, feature_config='examples/pre-trained/test.features.yaml', model_file="./sstar/test/test.lr.model",
+          is_phased=True, ploidy=2, output_genotypes=False,
           archaic_prop=0.7, not_archaic_prop=0.3, algorithm='logistic_regression')

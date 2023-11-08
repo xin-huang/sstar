@@ -62,12 +62,8 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
     # x[2]: the end of the window
     res.sort(key=lambda x: (x[0], x[1], x[2]))
 
-    if output_genotypes is True:
-        header = _create_header(ref_samples, tgt_samples, features, is_phased, ploidy, output_genotypes)
-        _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, output_prefix, output_genotypes)
-
-    header = _create_header(ref_samples, tgt_samples, features, is_phased, ploidy, False)
-    _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, output_prefix, False)
+    header = _create_header(ref_samples, tgt_samples, features, is_phased, ploidy, output_genotypes)
+    _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, output_prefix, output_genotypes)
 
 
 def preprocess_worker(in_queue, out_queue, **kwargs):
