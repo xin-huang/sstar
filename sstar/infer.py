@@ -23,7 +23,7 @@ def infer(feature_file, model_file, prediction_dir, prediction_prefix, algorithm
     """
     """
     feature_df = pd.read_csv(feature_file, sep="\t")
-    feature_df = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'hap'])
+    feature_df = feature_df.drop(columns=['chrom', 'start', 'end', 'sample'])
 
     if algorithm == 'logistic_regression':
         prediction_file = prediction_dir + '/' + prediction_prefix + '.logistic.regression.predicted.bed'
@@ -41,8 +41,5 @@ def infer(feature_file, model_file, prediction_dir, prediction_prefix, algorithm
 
 
 if __name__ == '__main__':
-    infer(vcf_file="./sstar/test/0/test.0.vcf", 
-          ref_ind_file="./sstar/test/0/test.0.ref.ind.list", tgt_ind_file="sstar/test/0/test.0.tgt.ind.list", 
-          anc_allele_file=None, win_len=50000, win_step=50000, thread=8, 
-          match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000, model_file="./sstar/test/test.logistic.regression.model", 
+    infer(feature_file="./sstar/test/test.features", model_file="./sstar/test/test.lr.model", 
           prediction_dir="./sstar/test", prediction_prefix="test", algorithm="logistic_regression")

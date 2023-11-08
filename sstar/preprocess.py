@@ -242,4 +242,5 @@ def _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, o
 
 
 if __name__ == '__main__':
-    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/pre-trained/test.features.yaml", is_phased=True, ploidy=2, output_genotypes=True, output_dir="sstar/test", output_prefix="test", win_len=50000, win_step=10000, thread=1)
+    #process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/pre-trained/test.features.yaml", is_phased=True, ploidy=2, output_genotypes=False, output_dir="sstar/test", output_prefix="test", win_len=50000, win_step=10000, thread=1)
+    process_data(vcf_file="./sstar/test/0/test.0.vcf", ref_ind_file="./sstar/test/0/test.0.ref.ind.list", tgt_ind_file="./sstar/test/0/test.0.tgt.ind.list", anc_allele_file=None, feature_config="examples/pre-trained/test.features.yaml", is_phased=True, ploidy=2, output_genotypes=False, output_dir="sstar/test", output_prefix="test", win_len=50000, win_step=10000, thread=1)
