@@ -71,9 +71,10 @@ def _run_inference(args):
 
 def _run_preprocess(args):
     from sstar.preprocess import process_data
-    process_data(vcf_file=args.vcf_file, ref_ind_file=args.ref_ind_file, tgt_ind_file=args.tgt_ind_file,
-                 anc_allele_file=args.anc_allele_file, output=args.output, thread=thread,
-                 win_len=args.win_len, win_step=args.win_step, feature_file=args.features)
+    process_data(vcf_file=args.vcf, ref_ind_file=args.ref, tgt_ind_file=args.tgt,
+                 anc_allele_file=args.anc_allele, thread=args.thread, feature_config=args.features, 
+                 ploidy=args.ploidy, is_phased=args.phased, win_len=args.win_len, win_step=args.win_step, 
+                 output_dir=args.output_dir, output_prefix=args.output_prefix)
 
 
 def _run_plot(args):
@@ -191,11 +192,14 @@ def _s_star_cli_parser():
 
     parser = subparsers.add_parser('preprocess', help='Preprocessing real data for inference.')
     parser.add_argument('--vcf', type=str, required=True, help='Name of the VCF file containing genotypes from samples.')
-    parser.add_argument('--ref', type=str, required=True, help='Name of the file containing population information for samples without introgression.', dest='ref_ind')
-    parser.add_argument('--tgt', type=str, required=True, help='Name of the file containing population information for samples for detecting ghost introgressed fragments.', dest='tgt_ind')
+    parser.add_argument('--ref', type=str, required=True, help='Name of the file containing population information for samples without introgression.')
+    parser.add_argument('--tgt', type=str, required=True, help='Name of the file containing population information for samples for detecting ghost introgressed fragments.')
     parser.add_argument('--anc-allele', type=str, default=None, help='Name of the BED format file containing ancestral allele information, otherwise assuming the REF allele is the ancestral allele and the ALT allele is the derived allele. Default: None.', dest='anc_allele')
-    parser.add_argument('--features', type=str, required=True, help='Name of the YAML file specifying what features should be used.')
-    parser.add_argument('--output', type=str, required=True, help='Name of the output file.')
+    parser.add_argument('--features', type=str, default=None, help='Name of the YAML file specifying what features should be used. Default: None.')
+    parser.add_argument('--phased', action='store_true', help="Enable to use phased genotypes. Default: False.")
+    parser.add_argument('--ploidy', type=int, default=2, help='Ploidy of genomes. Default: 2.')
+    parser.add_argument('--output-prefix', type=str, required=True, help='Prefix of the output files.', dest='output_prefix')
+    parser.add_argument('--output-dir', type=str, required=True, help='Directory storing the output files.', dest='output_dir')
     parser.add_argument('--win-len', type=int, default=50000, help='Length of the window to calculate statistics as input features. Default: 50000.', dest='win_len')
     parser.add_argument('--win-step', type=int, default=10000, help='Step size for moving windows along genomes when calculating statistics. Default: 10000.', dest='win_step')
     parser.add_argument('--thread', type=int, default=1, help="Number of threads for the training. Default: 1.")

@@ -24,7 +24,7 @@ from sstar.utils import read_data, filter_data, create_windows, multiprocessing_
 
 
 def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_config, is_phased, 
-                 ploidy, output_genotypes, output_dir, output_prefix, win_len, win_step, thread):
+                 ploidy, output_dir, output_prefix, win_len, win_step, thread):
     """
     Description:
         Processes genotype data.
@@ -35,19 +35,23 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
         tgt_ind_file str: Name of the file containing sample information from the target population.
         anc_allele_file str: Name of the file containing ancestral allele information.
         feature_config str: Name of the YAML file specifying what features should be used. 
-        is_phased bool:
-        ploidy int: 
-        output_genotypes bool:
+        is_phased bool: True, genomes are phased; False, genomes are unphased.
+        ploidy int: Ploidy of genomes.
         output_dir str: Directory storing the output files.
         output_prefix str: Prefix of the output files.
         win_len int: Length of sliding windows.
         win_step int: Step size of sliding windows.
         thread int: Number of threads.
     """
-    with open(feature_config, 'r') as f:
-        features = yaml.safe_load(f)
+    if feature_config is None:
+        features = None
+        output_genotypes = True
+    else:
+        with open(feature_config, 'r') as f:
+            features = yaml.safe_load(f)
 
-    features = features['features']
+        features = features['features']
+        output_genotypes = False
 
     ref_data, ref_samples, tgt_data, tgt_samples = read_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, is_phased)
 
@@ -81,41 +85,42 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
         if kwargs['output_genotypes'] is True:
             items['ref_gts'] = ref_gts
             items['tgt_gts'] = tgt_gts
-        if 'number of private mutations' in kwargs['features'].keys():
-            pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
-            items['pvt_mut_nums'] = pvt_mut_nums
-        if 'individual allele frequency spectra' in kwargs['features'].keys():
-            if kwargs['is_phased'] is True: ploidy = 1
-            else: ploidy = kwargs['ploidy']
-            spectra = cal_n_ton(tgt_gts, ploidy=ploidy)
-            items['spectra'] = spectra
-        if 'reference distances' in kwargs['features'].keys():
-            ref_dists = cal_dist(ref_gts, tgt_gts)
-            if 'all' in kwargs['features']['reference distances'].keys(): items['ref_dists'] = ref_dists
-            if 'minimum' in kwargs['features']['reference distances'].keys(): items['min_ref_dists'] = np.min(ref_dists, axis=1)
-            if 'maximum' in kwargs['features']['reference distances'].keys(): items['max_ref_dists'] = np.max(ref_dists, axis=1)
-            if 'mean' in kwargs['features']['reference distances'].keys(): items['mean_ref_dists'] = np.mean(ref_dists, axis=1)
-            if 'median' in kwargs['features']['reference distances'].keys(): items['median_ref_dists'] = np.median(ref_dists, axis=1)
-            if 'variance' in kwargs['features']['reference distances'].keys(): items['var_ref_dists'] = np.var(ref_dists, axis=1)
-            if 'skew' in kwargs['features']['reference distances'].keys(): items['skew_ref_dists'] = scipy.stats.skew(ref_dists, axis=1)
-            if 'kurtosis' in kwargs['features']['reference distances'].keys(): items['kurtosis_ref_dists'] = scipy.stats.kurtosis(ref_dists, axis=1)
-        if 'target distances' in kwargs['features'].keys():
-            tgt_dists = cal_dist(tgt_gts, tgt_gts)
-            if 'all' in kwargs['features']['target distances'].keys(): items['tgt_dists'] = tgt_dists
-            if 'minimum' in kwargs['features']['target distances'].keys(): items['min_tgt_dists'] = np.min(tgt_dists, axis=1)
-            if 'maximum' in kwargs['features']['target distances'].keys(): items['max_tgt_dists'] = np.max(tgt_dists, axis=1)
-            if 'mean' in kwargs['features']['target distances'].keys(): items['mean_tgt_dists'] = np.mean(tgt_dists, axis=1)
-            if 'median' in kwargs['features']['target distances'].keys(): items['median_tgt_dists'] = np.median(tgt_dists, axis=1)
-            if 'variance' in kwargs['features']['target distances'].keys(): items['var_tgt_dists'] = np.var(tgt_dists, axis=1)
-            if 'skew' in kwargs['features']['target distances'].keys(): items['skew_tgt_dists'] = scipy.stats.skew(tgt_dists, axis=1)
-            if 'kurtosis' in kwargs['features']['target distances'].keys(): items['kurtosis_tgt_dists'] = scipy.stats.kurtosis(tgt_dists, axis=1)
-        if 'sstar' in kwargs['features'].keys():
-            sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 
-                                                                 method=kwargs['features']['sstar']['genotype distance'], 
-                                                                 match_bonus=kwargs['features']['sstar']['match bonus'],
-                                                                 max_mismatch=kwargs['features']['sstar']['max mismatch'],
-                                                                 mismatch_penalty=kwargs['features']['sstar']['mismatch penalty'])
-            items['sstar'] = sstar_scores
+        else:
+            if 'number of private mutations' in kwargs['features'].keys():
+                pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
+                items['pvt_mut_nums'] = pvt_mut_nums
+            if 'individual allele frequency spectra' in kwargs['features'].keys():
+                if kwargs['is_phased'] is True: ploidy = 1
+                else: ploidy = kwargs['ploidy']
+                spectra = cal_n_ton(tgt_gts, ploidy=ploidy)
+                items['spectra'] = spectra
+            if 'reference distances' in kwargs['features'].keys():
+                ref_dists = cal_dist(ref_gts, tgt_gts)
+                if 'all' in kwargs['features']['reference distances'].keys(): items['ref_dists'] = ref_dists
+                if 'minimum' in kwargs['features']['reference distances'].keys(): items['min_ref_dists'] = np.min(ref_dists, axis=1)
+                if 'maximum' in kwargs['features']['reference distances'].keys(): items['max_ref_dists'] = np.max(ref_dists, axis=1)
+                if 'mean' in kwargs['features']['reference distances'].keys(): items['mean_ref_dists'] = np.mean(ref_dists, axis=1)
+                if 'median' in kwargs['features']['reference distances'].keys(): items['median_ref_dists'] = np.median(ref_dists, axis=1)
+                if 'variance' in kwargs['features']['reference distances'].keys(): items['var_ref_dists'] = np.var(ref_dists, axis=1)
+                if 'skew' in kwargs['features']['reference distances'].keys(): items['skew_ref_dists'] = scipy.stats.skew(ref_dists, axis=1)
+                if 'kurtosis' in kwargs['features']['reference distances'].keys(): items['kurtosis_ref_dists'] = scipy.stats.kurtosis(ref_dists, axis=1)
+            if 'target distances' in kwargs['features'].keys():
+                tgt_dists = cal_dist(tgt_gts, tgt_gts)
+                if 'all' in kwargs['features']['target distances'].keys(): items['tgt_dists'] = tgt_dists
+                if 'minimum' in kwargs['features']['target distances'].keys(): items['min_tgt_dists'] = np.min(tgt_dists, axis=1)
+                if 'maximum' in kwargs['features']['target distances'].keys(): items['max_tgt_dists'] = np.max(tgt_dists, axis=1)
+                if 'mean' in kwargs['features']['target distances'].keys(): items['mean_tgt_dists'] = np.mean(tgt_dists, axis=1)
+                if 'median' in kwargs['features']['target distances'].keys(): items['median_tgt_dists'] = np.median(tgt_dists, axis=1)
+                if 'variance' in kwargs['features']['target distances'].keys(): items['var_tgt_dists'] = np.var(tgt_dists, axis=1)
+                if 'skew' in kwargs['features']['target distances'].keys(): items['skew_tgt_dists'] = scipy.stats.skew(tgt_dists, axis=1)
+                if 'kurtosis' in kwargs['features']['target distances'].keys(): items['kurtosis_tgt_dists'] = scipy.stats.kurtosis(tgt_dists, axis=1)
+            if 'sstar' in kwargs['features'].keys():
+                sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 
+                                                                     method=kwargs['features']['sstar']['genotype distance'], 
+                                                                     match_bonus=kwargs['features']['sstar']['match bonus'],
+                                                                     max_mismatch=kwargs['features']['sstar']['max mismatch'],
+                                                                     mismatch_penalty=kwargs['features']['sstar']['mismatch penalty'])
+                items['sstar'] = sstar_scores
 
         out_queue.put((chr_name, start, end, items))
 
@@ -181,7 +186,7 @@ def _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, o
     """
     """
     os.makedirs(output_dir, exist_ok=True)
-    if output_genotypes:
+    if output_genotypes is True:
         os.makedirs(f'{output_dir}/genotypes', exist_ok=True)
         for r in res:
             chrom = r[0]
@@ -242,5 +247,5 @@ def _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, o
 
 
 if __name__ == '__main__':
-    #process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/pre-trained/test.features.yaml", is_phased=True, ploidy=2, output_genotypes=False, output_dir="sstar/test", output_prefix="test", win_len=50000, win_step=10000, thread=1)
-    process_data(vcf_file="./sstar/test/0/test.0.vcf", ref_ind_file="./sstar/test/0/test.0.ref.ind.list", tgt_ind_file="./sstar/test/0/test.0.tgt.ind.list", anc_allele_file=None, feature_config="examples/pre-trained/test.features.yaml", is_phased=True, ploidy=2, output_genotypes=False, output_dir="sstar/test", output_prefix="test", win_len=50000, win_step=10000, thread=1)
+    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/pre-trained/test.features.yaml", is_phased=True, ploidy=2, output_dir="sstar/test", output_prefix="test", win_len=50000, win_step=10000, thread=1)
+    #process_data(vcf_file="./sstar/test/0/test.0.vcf", ref_ind_file="./sstar/test/0/test.0.ref.ind.list", tgt_ind_file="./sstar/test/0/test.0.tgt.ind.list", anc_allele_file=None, feature_config="examples/pre-trained/test.features.yaml", is_phased=True, ploidy=2, output_genotypes=False, output_dir="sstar/test", output_prefix="test", win_len=50000, win_step=10000, thread=1)
