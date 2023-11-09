@@ -15,6 +15,7 @@
 
 
 import os
+import pickle
 import pandas as pd
 from sstar.models import LogisticRegression, ExtraTrees, Sstar
 
@@ -22,8 +23,10 @@ from sstar.models import LogisticRegression, ExtraTrees, Sstar
 def infer(feature_file, model_file, prediction_dir, prediction_prefix, algorithm=None):
     """
     """
+    with open(model_file, 'rb') as f:
+        trained_model = pickle.load(f)
+
     feature_df = pd.read_csv(feature_file, sep="\t")
-    feature_df = feature_df.drop(columns=['chrom', 'start', 'end', 'sample'])
 
     if algorithm == 'logistic_regression':
         prediction_file = prediction_dir + '/' + prediction_prefix + '.logistic.regression.predicted.bed'
@@ -37,7 +40,9 @@ def infer(feature_file, model_file, prediction_dir, prediction_prefix, algorithm
     else:
         raise Exception(f'The {algorithm} algorithm is NOT available!')
 
-    model.infer(model_file, feature_df, prediction_file)
+    feature_df['label'] = model.infer(trained_model, feature_df)
+    
+    feature_df.to_csv(prediction_file, sep="\t", index=False)
 
 
 if __name__ == '__main__':

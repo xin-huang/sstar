@@ -14,6 +14,7 @@
 # limitations under the License.
 
 
+import pickle
 import pandas as pd
 from multiprocessing import Process, Queue
 from sstar.preprocess import process_data
@@ -40,7 +41,8 @@ def train(nrep, seq_len, thread, training_data_prefix, training_data_dir, model_
     all_feature_file = training_data_dir + '/' + training_data_prefix + '.training.all.features'
 
     feature_df.to_csv(all_feature_file, sep="\t", index=False)
-    feature_df = feature_df.drop(columns=['chrom', 'start', 'end', 'sample'])
+    labels = feature_df['label']
+    data = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'label']).values
 
     if algorithm == 'logistic_regression':
         model = LogisticRegression()
@@ -51,7 +53,9 @@ def train(nrep, seq_len, thread, training_data_prefix, training_data_dir, model_
     else:
         raise Exception(f'The {algorithm} algorithm is NOT available!')
 
-    model.train(feature_df, model_file)
+    trained_model = model.train(data, labels)
+
+    pickle.dump(trained_model, open(model_file, "wb"))
 
 
 def _preprocess_worker(in_queue, out_queue, **kwargs):
