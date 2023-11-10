@@ -31,6 +31,7 @@ setup(
         "msprime",
         "numpy",
         "pandas",
+        "pybedtools",
         "scikit-allel",
         "scikit-learn",
         "scipy",

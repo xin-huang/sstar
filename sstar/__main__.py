@@ -1,5 +1,5 @@
 # Apache License Version 2.0
-# Copyright 2022 Xin Huang
+# Copyright 2023 Xin Huang
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 
 import argparse, os, sys, signal
 
@@ -78,7 +79,8 @@ def _run_preprocess(args):
 
 
 def _run_evaluate(args):
-    pass
+    from sstar.evaluate import evaluate
+    evaluate(truth_tract_file=args.truth_tracts, inferred_tract_file=args.inferred_tracts, output=args.output)
 
 
 def _add_common_args(parser):
@@ -206,7 +208,7 @@ def _s_star_cli_parser():
     parser.set_defaults(runner=_run_preprocess)
 
     parser = subparsers.add_parser('evaluate', help='Evaluating the performance of a model.')
-    parser.add_argument('--true-tracts', type=str, required=True, help='Name of the BED file containing the true introgressed fragments.', dest='true_tracts')
+    parser.add_argument('--truth-tracts', type=str, required=True, help='Name of the BED file containing the truth introgressed fragments.', dest='truth_tracts')
     parser.add_argument('--inferred-tracts', type=str, required=True, help='Name of the BED file containing the inferred introgressed fragments.', dest='inferred_tracts')
     parser.add_argument('--output', type=str, required=True, help='Name of the file storing the performance measures.')
     parser.set_defaults(runner=_run_evaluate)

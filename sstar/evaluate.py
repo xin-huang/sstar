@@ -16,14 +16,47 @@
 
 import pybedtools
 import pandas as pd
+import numpy as np
 from sstar.stats import cal_pr
 
 
-def evaluate(true_tract_file, inferred_tract_file, output):
+def evaluate(truth_tract_file, inferred_tract_file, output):
     """
     """
-    true_tracts = pd.read_csv(true_tract_file, sep="\t", header=None)
+    truth_tracts = pd.read_csv(truth_tract_file, sep="\t", header=None)
     inferred_tracts = pd.read_csv(inferred_tract_file, sep="\t", header=None)
 
-    true_tracts.columns = ['chrom', 'start', 'end', 'sample']
+    truth_tracts.columns = ['chrom', 'start', 'end', 'sample']
     inferred_tracts.columns = ['chrom', 'start', 'end', 'sample']
+
+    truth_tracts_samples = truth_tracts['sample'].unique()
+    inferred_tracts_samples = inferred_tracts['sample'].unique()
+
+    res = pd.DataFrame(columns=['sample', 'precision', 'recall'])
+
+    for s in np.intersect1d(truth_tracts_samples, inferred_tracts_samples):
+        ind_truth_tracts = truth_tracts[truth_tracts['sample'] == s][['chrom', 'start', 'end']]
+        ind_inferred_tracts = inferred_tracts[inferred_tracts['sample'] == s][['chrom', 'start', 'end']]
+
+        ind_truth_tracts = pybedtools.BedTool.from_dataframe(ind_truth_tracts).sort().merge()
+        ind_inferred_tracts = pybedtools.BedTool.from_dataframe(inferred_tracts).sort().merge()
+
+        ntruth_tracts = sum([x.stop - x.start for x in (ind_truth_tracts)])
+        ninferred_tracts = sum([x.stop - x.start for x in (ind_inferred_tracts)])
+        ntrue_positives = sum([x.stop - x.start for x in ind_inferred_tracts.intersect(ind_truth_tracts)])
+
+        precision, recall = cal_pr(ntruth_tracts, ninferred_tracts, ntrue_positives)
+
+        res.loc[len(res.index)] = [s, precision, recall]
+
+    for s in np.setdiff1d(truth_tracts_samples, inferred_tracts_samples):
+        res.loc[len(res.index)] = [s, np.nan, 0]
+
+    for s in np.setdiff1d(inferred_tracts_samples, truth_tracts_samples):
+        res.loc[len(res.index)] = [s, 0, np.nan]
+
+    res.sort_values(by=['sample']).to_csv(output, sep="\t", index=False)
+
+
+if __name__ == '__main__':
+    evaluate(truth_tract_file="../sstar2-analysis-dev/results/simulated_data/ArchIE_3D19/nref_50/ntgt_50/1018775942/0/sim.0.true.tracts.bed", inferred_tract_file="test_data/test.logistic.regression.predicted.bed", output="./test_data/test.performance")

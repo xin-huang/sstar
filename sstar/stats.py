@@ -182,10 +182,10 @@ def cal_sstar(tgt_gt, pos, method, match_bonus=5000, max_mismatch=5, mismatch_pe
     return sstar_scores, sstar_snp_nums, haplotypes
 
 
-def cal_pr(true_tracts, inferred_tracts, true_positives):
+def cal_pr(ntruth_tracts, ninferred_tracts, ntrue_positives):
     """
     """
-    precision = np.nan if float(inferred_tracts) == 0 else true_positives / float(inferred_tracts) * 100
-    recall = np.nan if float(true_tracts) == 0 else true_positives / float(true_tracts) * 100
+    precision = np.nan if float(ninferred_tracts) == 0 else ntrue_positives / float(ninferred_tracts) * 100
+    recall = np.nan if float(ntruth_tracts) == 0 else ntrue_positives / float(ntruth_tracts) * 100
 
     return precision, recall
