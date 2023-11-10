@@ -50,9 +50,11 @@ def evaluate(truth_tract_file, inferred_tract_file, output):
         res.loc[len(res.index)] = [s, precision, recall]
 
     for s in np.setdiff1d(truth_tracts_samples, inferred_tracts_samples):
+        # ninferred_tracts = 0
         res.loc[len(res.index)] = [s, np.nan, 0]
 
     for s in np.setdiff1d(inferred_tracts_samples, truth_tracts_samples):
+        # ntruth_tracts = 0
         res.loc[len(res.index)] = [s, 0, np.nan]
 
     res.sort_values(by=['sample']).to_csv(output, sep="\t", index=False)
