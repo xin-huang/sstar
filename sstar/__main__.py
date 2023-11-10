@@ -77,7 +77,7 @@ def _run_preprocess(args):
                  output_dir=args.output_dir, output_prefix=args.output_prefix)
 
 
-def _run_plot(args):
+def _run_evaluate(args):
     pass
 
 
@@ -205,8 +205,11 @@ def _s_star_cli_parser():
     parser.add_argument('--thread', type=int, default=1, help="Number of threads for the training. Default: 1.")
     parser.set_defaults(runner=_run_preprocess)
 
-    parser = subparsers.add_parser('plot', help='Plotting precision-recall curves for performance measurement.')
-    parser.set_defaults(runner=_run_plot)
+    parser = subparsers.add_parser('evaluate', help='Evaluating the performance of a model.')
+    parser.add_argument('--true-tracts', type=str, required=True, help='Name of the BED file containing the true introgressed fragments.', dest='true_tracts')
+    parser.add_argument('--inferred-tracts', type=str, required=True, help='Name of the BED file containing the inferred introgressed fragments.', dest='inferred_tracts')
+    parser.add_argument('--output', type=str, required=True, help='Name of the file storing the performance measures.')
+    parser.set_defaults(runner=_run_evaluate)
 
     # Arguments for the simulate subcommand
     parser = subparsers.add_parser('simulate', help='Simulating data for training.')

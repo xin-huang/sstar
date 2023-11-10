@@ -180,3 +180,9 @@ def cal_sstar(tgt_gt, pos, method, match_bonus=5000, max_mismatch=5, mismatch_pe
         haplotypes.append(haplotype)
 
     return sstar_scores, sstar_snp_nums, haplotypes
+
+
+def cal_pr(true_tracts, inferred_tracts):
+    """
+    """
+    pass

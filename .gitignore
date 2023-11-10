@@ -14,3 +14,5 @@ tests/results/simulation
 tests/results/test.archie.out
 tests/results/test.sstar.out
 tests/results/test.tract.with.src.match.rate.bed
+sstar/test
+test_data

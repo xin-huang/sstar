@@ -1,0 +1,24 @@
+doi:
+    - https://doi.org/10.1371/journal.pgen.1008175
+time_units: generations
+demes:
+    - name: Anc
+      epochs:
+          - {end_time: 2500, start_size: 10000}
+    - name: Ghost
+      ancestors: [Anc]
+      start_time: 12000
+      epochs: # https://github.com/sriramlab/ArchIE/blob/master/simulations/ms.sh#L7C48-L7C179
+          - {end_time: 6120, start_size: 10000}
+          - {end_time: 6000, start_size: 100}
+          - {end_time: 0, start_size: 10000}
+    - name: Ref
+      ancestors: [Anc]
+      epochs:
+          - {end_time: 0, start_size: 10000}
+    - name: Tgt
+      ancestors: [Anc]
+      epochs:
+          - {end_time: 0, start_size: 10000}
+pulses:
+    - {sources: [Ghost], dest: Tgt, time: 2000, proportions: [0.02]}
