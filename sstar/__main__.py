@@ -83,6 +83,12 @@ def _run_evaluate(args):
     evaluate(truth_tract_file=args.truth_tracts, inferred_tract_file=args.inferred_tracts, output=args.output)
 
 
+def _run_label(args):
+    from sstar.label import label
+    label(feature_file=args.features, truth_tract_file=args.truth_tracts, output=args.output,
+          archaic_prop=args.intro_prop, not_archaic_prop=args.not_intro_prop, seq_len=seq_len)
+
+
 def _add_common_args(parser):
     parser.add_argument('--anc-allele', type=str, dest='anc_allele', default=None, help='name of the BED format file containing ancestral allele information, otherwise assuming the REF allele is the ancestral allele and the ALT allele is the derived allele; default: None')
     parser.add_argument('--output', type=str, required=True, help='name of the output file')
@@ -192,29 +198,8 @@ def _s_star_cli_parser():
     #parser.add_argument('--diff', type=float, default=0, help='difference between src1 match rates (src1_match_rate) and src2 match rates (src2_match_rate); if src1_match_rate - src2_match_rate > diff, then this fragment is assigned to src1, if src1_match_rate - src2_match_rate < diff, then this fragment is assigned to src2; default: 0')
     #parser.set_defaults(runner=_run_tract)
 
-    parser = subparsers.add_parser('preprocess', help='Preprocessing real data for inference.')
-    parser.add_argument('--vcf', type=str, required=True, help='Name of the VCF file containing genotypes from samples.')
-    parser.add_argument('--ref', type=str, required=True, help='Name of the file containing population information for samples without introgression.')
-    parser.add_argument('--tgt', type=str, required=True, help='Name of the file containing population information for samples for detecting ghost introgressed fragments.')
-    parser.add_argument('--anc-allele', type=str, default=None, help='Name of the BED format file containing ancestral allele information, otherwise assuming the REF allele is the ancestral allele and the ALT allele is the derived allele. Default: None.', dest='anc_allele')
-    parser.add_argument('--features', type=str, default=None, help='Name of the YAML file specifying what features should be used. Default: None.')
-    parser.add_argument('--phased', action='store_true', help="Enable to use phased genotypes. Default: False.")
-    parser.add_argument('--ploidy', type=int, default=2, help='Ploidy of genomes. Default: 2.')
-    parser.add_argument('--output-prefix', type=str, required=True, help='Prefix of the output files.', dest='output_prefix')
-    parser.add_argument('--output-dir', type=str, required=True, help='Directory storing the output files.', dest='output_dir')
-    parser.add_argument('--win-len', type=int, default=50000, help='Length of the window to calculate statistics as input features. Default: 50000.', dest='win_len')
-    parser.add_argument('--win-step', type=int, default=10000, help='Step size for moving windows along genomes when calculating statistics. Default: 10000.', dest='win_step')
-    parser.add_argument('--thread', type=int, default=1, help="Number of threads for the training. Default: 1.")
-    parser.set_defaults(runner=_run_preprocess)
-
-    parser = subparsers.add_parser('evaluate', help='Evaluating the performance of a model.')
-    parser.add_argument('--truth-tracts', type=str, required=True, help='Name of the BED file containing the truth introgressed fragments.', dest='truth_tracts')
-    parser.add_argument('--inferred-tracts', type=str, required=True, help='Name of the BED file containing the inferred introgressed fragments.', dest='inferred_tracts')
-    parser.add_argument('--output', type=str, required=True, help='Name of the file storing the performance measures.')
-    parser.set_defaults(runner=_run_evaluate)
-
     # Arguments for the simulate subcommand
-    parser = subparsers.add_parser('simulate', help='Simulating data for training.')
+    parser = subparsers.add_parser('simulate', help='Simulating data.')
     parser.add_argument('--demes', type=str, required=True, help="Demographic model in the DEMES format.")
     parser.add_argument('--nref', type=int, required=True, help="Number of samples in the reference population.")
     parser.add_argument('--ntgt', type=int, required=True, help="Number of samples in the target population.")
@@ -232,18 +217,38 @@ def _s_star_cli_parser():
     parser.add_argument('--seed', type=int, default=None, help="Random seed for the simulation. Default: None.")
     parser.set_defaults(runner=_run_simulation)
 
+    parser = subparsers.add_parser('preprocess', help='Preprocessing data for training and inference.')
+    parser.add_argument('--vcf', type=str, required=True, help='Name of the VCF file containing genotypes from samples.')
+    parser.add_argument('--ref', type=str, required=True, help='Name of the file containing population information for samples without introgression.')
+    parser.add_argument('--tgt', type=str, required=True, help='Name of the file containing population information for samples for detecting ghost introgressed fragments.')
+    parser.add_argument('--anc-allele', type=str, default=None, help='Name of the BED format file containing ancestral allele information, otherwise assuming the REF allele is the ancestral allele and the ALT allele is the derived allele. Default: None.', dest='anc_allele')
+    parser.add_argument('--features', type=str, default=None, help='Name of the YAML file specifying what features should be used. Default: None.')
+    parser.add_argument('--phased', action='store_true', help="Enable to use phased genotypes. Default: False.")
+    parser.add_argument('--ploidy', type=int, default=2, help='Ploidy of genomes. Default: 2.')
+    parser.add_argument('--output-prefix', type=str, required=True, help='Prefix of the output files.', dest='output_prefix')
+    parser.add_argument('--output-dir', type=str, required=True, help='Directory storing the output files.', dest='output_dir')
+    parser.add_argument('--win-len', type=int, default=50000, help='Length of the window to calculate statistics as input features. Default: 50000.', dest='win_len')
+    parser.add_argument('--win-step', type=int, default=10000, help='Step size for moving windows along genomes when calculating statistics. Default: 10000.', dest='win_step')
+    parser.add_argument('--thread', type=int, default=1, help="Number of threads for the training. Default: 1.")
+    parser.set_defaults(runner=_run_preprocess)
+
+    parser = subparsers.add_parser('label', help='Labeling simulated data for training.')
+    parser.add_argument('--seq-len', type=int, required=True, help="Length of the simulated genomes.", dest='seq_len')
+    parser.add_argument('--features', type=str, required=True, help='Name of the file containing features for training. Default: None.')
+    parser.add_argument('--truth-tracts', type=str, required=True, help='Name of the BED file containing the truth introgressed fragments.', dest='truth_tracts')
+    parser.add_argument('--introgressed-prop', type=float, default=0.7, help="Proportion that determines a fragment as introgressed. Default: 0.7.", dest="intro_prop")
+    parser.add_argument('--not-introgressed-prop', type=float, default=0.3, help="Proportion that determinse a fragment as non-introgressed. Default: 0.3.", dest="not_intro_prop")
+    parser.add_argument('--output', type=str, required=True, help='Name of the output files.')
+    parser.set_defaults(runner=_run_label)
+
     # Arguments for the train subcommand
     parser = subparsers.add_parser('train', help='Training a statistical/machine learning model.')
-    parser.add_argument('--seq-len', type=int, required=True, help="Length of the simulated genomes.", dest='seq_len')
     parser.add_argument('--training-data-prefix', type=str, required=True, help="Prefix of the training data file name.", dest='training_data_prefix')
     parser.add_argument('--training-data-dir', type=str, required=True, help="Directory of the training data.", dest='training_data_dir')
     parser.add_argument('--model-file', type=str, required=True, help="The file storing the trained model.", dest='model_file')
     parser.add_argument('--model', type=str, default=None, help="Statistical/machine learning model for the training. Implemented models: extra_trees, logistic_regression, sstar.")
-    parser.add_argument('--features', type=str, default=None, help='Name of the YAML file specifying what features should be used. Default: None.')
     parser.add_argument('--phased', action='store_true', help="Enable to use phased genotypes. Default: False.")
     parser.add_argument('--ploidy', type=int, default=2, help='Ploidy of genomes. Default: 2.')
-    parser.add_argument('--introgressed-prop', type=float, default=0.7, help="Proportion that determines a fragment as introgressed. Default: 0.7.", dest="intro_prop")
-    parser.add_argument('--not-introgressed-prop', type=float, default=0.3, help="Proportion that determinse a fragment as non-introgressed. Default: 0.3.", dest="not_intro_prop")
     parser.add_argument('--replicate', type=int, required=True, help="Number of replications in the training data.")
     parser.add_argument('--thread', type=int, default=1, help="Number of threads for the training. Default: 1.")
     parser.set_defaults(runner=_run_training)
@@ -256,6 +261,12 @@ def _s_star_cli_parser():
     parser.add_argument('--prediction-prefix', type=str, required=True, help="Prefix of the prediction file name.", dest='prediction_prefix')
     parser.add_argument('--prediction-dir', type=str, required=True, help="Directory of the prediction files.", dest='prediction_dir')
     parser.set_defaults(runner=_run_inference)
+
+    parser = subparsers.add_parser('evaluate', help='Evaluating the performance of a statistical/machine learning model.')
+    parser.add_argument('--truth-tracts', type=str, required=True, help='Name of the BED file containing the truth introgressed fragments.', dest='truth_tracts')
+    parser.add_argument('--inferred-tracts', type=str, required=True, help='Name of the BED file containing the inferred introgressed fragments.', dest='inferred_tracts')
+    parser.add_argument('--output', type=str, required=True, help='Name of the file storing the performance measures.')
+    parser.set_defaults(runner=_run_evaluate)
 
     return top_parser
 
