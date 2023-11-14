@@ -86,7 +86,7 @@ def _run_evaluate(args):
 def _run_label(args):
     from sstar.label import label
     label(feature_file=args.features, truth_tract_file=args.truth_tracts, output=args.output,
-          archaic_prop=args.intro_prop, not_archaic_prop=args.not_intro_prop, seq_len=seq_len)
+          archaic_prop=args.intro_prop, not_archaic_prop=args.not_intro_prop, seq_len=args.seq_len)
 
 
 def _add_common_args(parser):
