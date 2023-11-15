@@ -22,21 +22,14 @@ from sstar.models import LogisticRegression, ExtraTrees, Sstar
 from sstar.utils import multiprocessing_manager
 
 
-def train(nrep, seq_len, thread, training_data_prefix, training_data_dir, model_file,
-          feature_config, is_phased, ploidy, archaic_prop, not_archaic_prop, algorithm=None):
+def train(training_data, model_file, algorithm=None):
     """
     """
-    multiprocessing_manager(worker_func=_preprocess_worker, nrep=nrep, thread=thread,
-                            training_data_prefix=training_data_prefix, training_data_dir=training_data_dir,
-                            win_len=seq_len, win_step=seq_len, feature_config=feature_config,
-                            is_phased=is_phased, ploidy=ploidy, 
-                            seq_len=seq_len, archaic_prop=archaic_prop, not_archaic_prop=not_archaic_prop)
-
     feature_df = pd.DataFrame()
-    for i in range(nrep):
-        feature_file = training_data_dir + '/' + str(i) + '/' + training_data_prefix + f'.{i}.features'
-        df = pd.read_csv(feature_file, sep="\t")
-        feature_df = pd.concat([feature_df, df])
+    with open(training_data, 'r') as f:
+        for feature_file in f:
+            df = pd.read_csv(feature_file.rstrip(), sep="\t")
+            feature_df = pd.concat([feature_df, df])
 
     all_feature_file = training_data_dir + '/' + training_data_prefix + '.training.all.features'
 
@@ -56,54 +49,6 @@ def train(nrep, seq_len, thread, training_data_prefix, training_data_dir, model_
     trained_model = model.train(data, labels)
 
     pickle.dump(trained_model, open(model_file, "wb"))
-
-
-def _preprocess_worker(in_queue, out_queue, **kwargs):
-    """
-    """
-    while True:
-        rep = in_queue.get()
-
-        vcf_file = kwargs['training_data_dir'] + '/' + str(rep) + '/' + kwargs['training_data_prefix'] + f'.{rep}.vcf'
-        bed_file = kwargs['training_data_dir'] + '/' + str(rep) + '/' + kwargs['training_data_prefix'] + f'.{rep}.true.tracts.bed'
-        ref_ind_file = kwargs['training_data_dir'] + '/' + str(rep) + '/' + kwargs['training_data_prefix'] + f'.{rep}.ref.ind.list'
-        tgt_ind_file = kwargs['training_data_dir'] + '/' + str(rep) + '/' + kwargs['training_data_prefix'] + f'.{rep}.tgt.ind.list'
-        feature_file = kwargs['training_data_dir'] + '/' + str(rep) + '/' + kwargs['training_data_prefix'] + f'.{rep}.features'
-        label_file = kwargs['training_data_dir'] + '/' + str(rep) + '/' + kwargs['training_data_prefix'] + f'.{rep}.true.tracts.label'
-
-        process_data(vcf_file=vcf_file, ref_ind_file=ref_ind_file, tgt_ind_file=tgt_ind_file,
-                     anc_allele_file=None, feature_config=kwargs['feature_config'], thread=1,
-                     is_phased=kwargs['is_phased'], ploidy=kwargs['ploidy'], 
-                     output_dir=kwargs['training_data_dir']+'/'+str(rep), output_prefix=kwargs['training_data_prefix']+f'.{rep}',
-                     win_len=kwargs['win_len'], win_step=kwargs['win_step'])
-
-        feature_df = pd.read_csv(feature_file, sep="\t")
-
-        try: 
-            true_tract_df = pd.read_csv(bed_file, sep="\t", header=None)
-        except pd.errors.EmptyDataError:
-            feature_df['label'] = 0.0
-        else:
-            true_tract_df.columns = ['chrom', 'start', 'end', 'sample']
-            true_tract_df['len'] = true_tract_df['end'] - true_tract_df['start']
-            true_tract_df = true_tract_df.groupby(by=['sample'])['len'].sum().reset_index()
-            true_tract_df['prop'] = true_tract_df['len'] / kwargs['seq_len']
-            true_tract_df['label'] = true_tract_df.apply(lambda row: _add_label(row, kwargs['archaic_prop'], kwargs['not_archaic_prop']), axis=1)
-            true_tract_df.to_csv(label_file, sep="\t", index=False)
-            feature_df = feature_df.merge(true_tract_df.drop(columns=['len', 'prop']), 
-                                          left_on=['sample'], right_on=['sample'], how='left').fillna(0)
-        finally:
-            feature_df.to_csv(feature_file, sep="\t", index=False)
-
-        out_queue.put(rep)
-
-
-def _add_label(row, archaic_prop, not_archaic_prop):
-    """
-    """
-    if row['prop'] > archaic_prop: return 1.0
-    elif row['prop'] < not_archaic_prop: return 0.0
-    else: return -1.0
 
 
 if __name__ == '__main__':
