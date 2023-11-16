@@ -52,7 +52,7 @@ class LogisticRegression(Model):
         Returns:
             model 
         """
-        model = LR(solver="newton-cg", penalty=None, max_iter=1000)
+        model = LR(solver="newton-cg", penalty=None, max_iter=10000)
         model.fit(data, labels.astype(int))
 
         return model

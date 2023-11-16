@@ -308,7 +308,7 @@ def create_windows(pos, chr_name, win_step, win_len):
     return windows
 
 
-def multiprocessing_manager(worker_func, nrep, thread, windows=None, ref_data=None, tgt_data=None, **kwargs):
+def multiprocessing_manager(worker_func, nrep, thread, windows=None, ref_data=None, tgt_data=None, seed=None, **kwargs):
     """
     Description:
 
@@ -328,7 +328,11 @@ def multiprocessing_manager(worker_func, nrep, thread, windows=None, ref_data=No
     workers = [Process(target=worker_func, args=(in_queue, out_queue), kwargs=kwargs) for i in range(thread)]
 
     if windows is None:
-        for i in range(nrep): in_queue.put(i)
+        if seed is None: 
+            for i in range(nrep): in_queue.put(i)
+        else:
+            seed_list = np.random.random_integers(1,2**31,nrep)
+            for i in range(nrep): in_queue.put((i, seed_list[i]))
     else:
         for i in range(nrep):
             chr_name, start, end = windows[i]

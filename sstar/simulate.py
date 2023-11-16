@@ -35,7 +35,7 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
     """
     """
     while True:
-        rep = in_queue.get()
+        rep, seed = in_queue.get()
 
         demo_graph = demes.load(kwargs['demo_model_file'])
         demography = msprime.Demography.from_demes(demo_graph)
@@ -50,9 +50,9 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
             samples=samples,
             demography=demography,
             record_migrations=True,
-            random_seed=kwargs['seed'],
+            random_seed=seed,
         )
-        ts = msprime.sim_mutations(ts, rate=kwargs['mut_rate'], random_seed=kwargs['seed'], model=msprime.BinaryMutationModel())
+        ts = msprime.sim_mutations(ts, rate=kwargs['mut_rate'], random_seed=seed, model=msprime.BinaryMutationModel())
         true_tracts = _get_true_tracts(ts, kwargs['tgt_id'], kwargs['src_id'], kwargs['ploidy'])
 
         os.makedirs(os.path.join(kwargs['output_dir'], str(rep)), exist_ok=True)
