@@ -36,7 +36,7 @@ def cal_n_ton(tgt_gt, ploidy):
     counts = (tgt_gt>0)*np.matmul(tgt_gt, iv)
     spectra = np.array([np.bincount(counts[:,idx].astype('int8'), minlength=sample_num*ploidy+1) for idx in range(sample_num)])
     # ArchIE does not count non-segragating sites
-    #spectra[:,0] = 0
+    spectra[:,0] = 0
 
     return spectra
 
@@ -59,24 +59,26 @@ def cal_dist(gt1, gt2):
     return dists
 
 
-def cal_pvt_mut_num(ref_gt, tgt_gt):
+def cal_mut_num(ref_gt, tgt_gt, mut_type):
     """
     Description:
-        Calculates private mutations in a haplotype.
+        Calculates number of private or total mutations in a sample.
 
     Arguments:
         ref_gt numpy.ndarray: Genotype matrix from the reference population.
         tgt_gt numpy.ndarray: Genotype matrix from the target population.
+        mut_type str: Type of mutations. Private or total.
         
     Returns:
-        pvt_mut_num numpy.ndarray: Numbers of private mutations.
+        mut_num numpy.ndarray: Numbers of mutations.
     """
-    ref_mut_num, ref_hap_num = ref_gt.shape
-    iv = np.ones((ref_hap_num, 1))
-    counts = np.matmul(ref_gt, iv)
-    pvt_mut_num = np.sum(tgt_gt*(counts==0), axis=0)
+    counts = np.sum(ref_gt, axis=1)
+    counts = np.reshape(counts, (counts.shape[0],1))
 
-    return pvt_mut_num
+    if mut_type == 'private': mut_num = np.sum((tgt_gt>0)*(counts==0), axis=0)
+    if mut_type == 'total': mut_num = np.sum((tgt_gt>0), axis=0) + np.sum((tgt_gt==0)*(counts>0), axis=0)
+
+    return mut_num
 
 
 def cal_sstar(tgt_gt, pos, method, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000):

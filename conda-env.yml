@@ -1,4 +1,4 @@
-name: sstar
+name: sstar-dev
 channels:
         - conda-forge
         - bioconda
@@ -9,13 +9,12 @@ dependencies:
         - pandas
         - pip
         - python=3.8
+        - pybedtools
         - scikit-allel
+        - scikit-learn
         - scipy
         - snakemake
         - statsmodels
-        - r-base=4.1.2
-        - r-essentials=4.1
-        - rpy2
         - pyyaml
         - pip:
-                - sstar
+                - .

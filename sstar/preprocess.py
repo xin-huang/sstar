@@ -65,6 +65,9 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
     # x[1]: the start of the window
     # x[2]: the end of the window
     res.sort(key=lambda x: (x[0], x[1], x[2]))
+    #for r in res:
+    #    item = r[3]
+    #    print(item['ttl_mut_nums'])
 
     header = _create_header(ref_samples, tgt_samples, features, is_phased, ploidy, output_genotypes)
     _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, output_prefix, output_genotypes)
@@ -86,9 +89,10 @@ def preprocess_worker(in_queue, out_queue, **kwargs):
             items['ref_gts'] = ref_gts
             items['tgt_gts'] = tgt_gts
         else:
+            if 'number of total mutations' in kwargs['features'].keys():
+                items['ttl_mut_nums'] = cal_mut_num(ref_gts, tgt_gts, mut_type='total')
             if 'number of private mutations' in kwargs['features'].keys():
-                pvt_mut_nums = cal_pvt_mut_num(sub_ref_gts, sub_tgt_gts)
-                items['pvt_mut_nums'] = pvt_mut_nums
+                items['pvt_mut_nums'] = cal_mut_num(sub_ref_gts, sub_tgt_gts, mut_type='private')
             if 'individual allele frequency spectra' in kwargs['features'].keys():
                 if kwargs['is_phased'] is True: ploidy = 1
                 else: ploidy = kwargs['ploidy']
@@ -142,6 +146,7 @@ def _create_header(ref_samples, tgt_samples, features, is_phased, ploidy, output
     else:
         header = "chrom\tstart\tend\tsample"
         if 'sstar' in features.keys(): header += "\tS*_score"
+        if 'number of total mutations' in features.keys(): header += "\ttotal_SNP_num"
         if 'number of private mutations' in features.keys(): header += "\tprivate_SNP_num"
         if 'individual allele frequency spectra' in features.keys():
             nsample = len(tgt_samples)*ploidy
@@ -217,6 +222,7 @@ def _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, o
                     else: sample = tgt_samples[i]
                     out = ''
                     if 'sstar' in features.keys(): out += f'{items["sstar"][i]}'
+                    if 'number of total mutations' in features.keys(): out += f'\t{items["ttl_mut_nums"][i]}'
                     if 'number of private mutations' in features.keys(): out += f'\t{items["pvt_mut_nums"][i]}'
                     if 'individual allele frequency spectra' in features.keys():
                         spectra = "\t".join(items["spectra"][i].astype(str))
@@ -247,5 +253,4 @@ def _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, o
 
 
 if __name__ == '__main__':
-    #process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/pre-trained/test.features.yaml", is_phased=True, ploidy=2, output_dir="sstar/test", output_prefix="test", win_len=50000, win_step=10000, thread=1)
-    process_data(vcf_file="./sstar/test/0/test.0.vcf", ref_ind_file="./sstar/test/0/test.0.ref.ind.list", tgt_ind_file="./sstar/test/0/test.0.tgt.ind.list", anc_allele_file=None, feature_config="examples/pre-trained/test.features.yaml", is_phased=True, ploidy=2, output_dir="sstar/test", output_prefix="test", win_len=50000, win_step=10000, thread=1)
+    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/features/sstar.features.yaml", is_phased=False, ploidy=2, output_dir="./test_data", output_prefix="test.sstar", win_len=50000, win_step=10000, thread=1)

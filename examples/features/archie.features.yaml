@@ -1,0 +1,16 @@
+features: 
+    reference distances:
+        minimum:
+    target distances:
+        all:
+        mean:
+        variance:
+        skew:
+        kurtosis:
+    individual allele frequency spectra:
+    number of private mutations:
+    sstar:
+        genotype distance: 'archie'
+        match bonus: 5000
+        max mismatch: 5
+        mismatch penalty: -10000

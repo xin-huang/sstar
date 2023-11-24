@@ -1,0 +1,8 @@
+features:
+    number of total mutations:
+    number of private mutations:
+    sstar:
+        genotype distance: 'vernot2016'
+        match bonus: 5000
+        max mismatch: 5
+        mismatch penalty: -10000
