@@ -23,7 +23,7 @@ from sstar.stats import *
 from sstar.utils import read_data, filter_data, create_windows, multiprocessing_manager
 
 
-def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_config, is_phased, 
+def preprocess(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_config, is_phased, 
                  ploidy, output_dir, output_prefix, win_len, win_step, thread):
     """
     Description:
@@ -65,12 +65,13 @@ def process_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_
     # x[1]: the start of the window
     # x[2]: the end of the window
     res.sort(key=lambda x: (x[0], x[1], x[2]))
-    #for r in res:
-    #    item = r[3]
-    #    print(item['ttl_mut_nums'])
 
     header = _create_header(ref_samples, tgt_samples, features, is_phased, ploidy, output_genotypes)
     _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, output_prefix, output_genotypes)
+
+
+def batch_preprocess():
+    pass
 
 
 def preprocess_worker(in_queue, out_queue, **kwargs):
@@ -253,4 +254,4 @@ def _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, o
 
 
 if __name__ == '__main__':
-    process_data(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/features/sstar.features.yaml", is_phased=False, ploidy=2, output_dir="./test_data", output_prefix="test.sstar", win_len=50000, win_step=10000, thread=1)
+    preprocess(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/features/sstar.features.yaml", is_phased=False, ploidy=2, output_dir="./test_data", output_prefix="test.sstar", win_len=50000, win_step=10000, thread=1)

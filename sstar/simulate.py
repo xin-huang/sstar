@@ -30,6 +30,9 @@ def simulate(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, ploidy, 
                             seq_len=seq_len, mut_rate=mut_rate, rec_rate=rec_rate, 
                             output_prefix=output_prefix, output_dir=output_dir, seed=seed)
 
+def batch_simulate():
+    pass
+
 
 def _simulation_worker(in_queue, out_queue, **kwargs):
     """

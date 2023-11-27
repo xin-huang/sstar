@@ -69,11 +69,19 @@ def _run_inference(args):
 
 
 def _run_preprocess(args):
-    from sstar.preprocess import process_data
-    process_data(vcf_file=args.vcf, ref_ind_file=args.ref, tgt_ind_file=args.tgt,
-                 anc_allele_file=args.anc_allele, thread=args.thread, feature_config=args.features, 
-                 ploidy=args.ploidy, is_phased=args.phased, win_len=args.win_len, win_step=args.win_step, 
-                 output_dir=args.output_dir, output_prefix=args.output_prefix)
+    from sstar.preprocess import preprocess
+    preprocess(vcf_file=args.vcf, ref_ind_file=args.ref, tgt_ind_file=args.tgt,
+               anc_allele_file=args.anc_allele, thread=args.thread, feature_config=args.features, 
+               ploidy=args.ploidy, is_phased=args.phased, win_len=args.win_len, win_step=args.win_step, 
+               output_dir=args.output_dir, output_prefix=args.output_prefix)
+
+
+def _run_batch_preprocess(args):
+    from sstar.preprocess import batch_preprocess
+    batch_preprocess(input_prefix=args.input_prefix, input_dir=args.input_dir, replicate=args.replicate,
+                     anc_allele_file=args.anc_allele, thread=args.thread, feature_config=args.features,
+                     ploidy=args.ploidy, is_phased=args.phased, win_len=args.win_len, win_step=args.win_step,
+                     output_dir=args.output_dir, output_prefix=args.output_prefix)
 
 
 def _run_evaluate(args):
@@ -238,6 +246,21 @@ def _s_star_cli_parser():
     parser.add_argument('--not-introgressed-prop', type=float, default=0.3, help="Proportion that determinse a fragment as non-introgressed. Default: 0.3.", dest="not_intro_prop")
     parser.add_argument('--output', type=str, required=True, help='Name of the output files.')
     parser.set_defaults(runner=_run_label)
+
+    parser = subparsers.add_parser('batch-preprocess', help='Preprocessing data for training and inference with batches.')
+    parser.add_argument('--input-prefix', type=str, required=True, help='Prefix of the input files.', dest='input_prefix')
+    parser.add_argument('--input-dir', type=str, required=True, help='Directory storing the input files.', dest='output_dir')
+    parser.add_argument('--anc-allele', type=str, default=None, help='Name of the BED format file containing ancestral allele information, otherwise assuming the REF allele is the ancestral allele and the ALT allele is the derived allele. Default: None.', dest='anc_allele')
+    parser.add_argument('--features', type=str, default=None, help='Name of the YAML file specifying what features should be used. Default: None.')
+    parser.add_argument('--phased', action='store_true', help="Enable to use phased genotypes. Default: False.")
+    parser.add_argument('--ploidy', type=int, default=2, help='Ploidy of genomes. Default: 2.')
+    parser.add_argument('--replicate', type=int, default=1, help="Number of replicates for the input data. Default: 1.")
+    parser.add_argument('--output-prefix', type=str, required=True, help='Prefix of the output files.', dest='output_prefix')
+    parser.add_argument('--output-dir', type=str, required=True, help='Directory storing the output files.', dest='output_dir')
+    parser.add_argument('--win-len', type=int, default=50000, help='Length of the window to calculate statistics as input features. Default: 50000.', dest='win_len')
+    parser.add_argument('--win-step', type=int, default=10000, help='Step size for moving windows along genomes when calculating statistics. Default: 10000.', dest='win_step')
+    parser.add_argument('--thread', type=int, default=1, help="Number of threads for the training. Default: 1.")
+    parser.set_defaults(runner=_run_batch_preprocess)
 
     # Arguments for the train subcommand
     parser = subparsers.add_parser('train', help='Training a statistical/machine learning model.')
