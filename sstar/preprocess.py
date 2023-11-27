@@ -16,6 +16,7 @@
 
 import os
 import numpy as np
+import pandas as pd
 import scipy
 import yaml
 from multiprocessing import Process, Queue
@@ -24,7 +25,7 @@ from sstar.utils import read_data, filter_data, create_windows, multiprocessing_
 
 
 def preprocess(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_config, is_phased, 
-                 ploidy, output_dir, output_prefix, win_len, win_step, thread):
+               ploidy, output_dir, output_prefix, win_len, win_step, thread):
     """
     Description:
         Processes genotype data.
@@ -58,7 +59,7 @@ def preprocess(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_co
     for c in tgt_data.keys():
         windows = create_windows(tgt_data[c]['POS'], c, win_step, win_len)
 
-    res = multiprocessing_manager(worker_func=preprocess_worker, nrep=len(windows), thread=thread, windows=windows, ref_data=ref_data, tgt_data=tgt_data, 
+    res = multiprocessing_manager(worker_func=_preprocess_worker, nrep=len(windows), thread=thread, windows=windows, ref_data=ref_data, tgt_data=tgt_data, 
                                   features=features, is_phased=is_phased, ploidy=ploidy, output_genotypes=output_genotypes)
 
     # x[0]: the chromosome name in number
@@ -70,11 +71,7 @@ def preprocess(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_co
     _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, output_prefix, output_genotypes)
 
 
-def batch_preprocess():
-    pass
-
-
-def preprocess_worker(in_queue, out_queue, **kwargs):
+def _preprocess_worker(in_queue, out_queue, **kwargs):
     """
     """
     while True:
@@ -251,6 +248,27 @@ def _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, o
                             dists = "\t".join(items["tgt_dists"][i].astype(str))
                             out += f'\t{dists}'
                     f.write(f'{chrom}\t{start}\t{end}\t{sample}\t{out}\n')
+
+
+def batch_preprocess(input_dir, input_prefix, replicate, anc_allele_file, feature_config, is_phased,
+                     ploidy, output_dir, output_prefix, win_len, win_step, thread):
+    """
+    """
+    for i in range(replicate):
+        vcf = f'{input_dir}/{i}/{input_prefix}.{i}.vcf'
+        ref = f'{input_dir}/{i}/{input_prefix}.{i}.ref.ind.list'
+        tgt = f'{input_dir}/{i}/{input_prefix}.{i}.tgt.ind.list'
+        preprocess(vcf_file=vcf, ref_ind_file=ref, tgt_ind_file=tgt, anc_allele_file=anc_allele_file, 
+                   feature_config=feature_config, is_phased=is_phased, ploidy=ploidy, output_dir=f'{output_dir}/{i}', 
+                   output_prefix=f'{output_prefix}.{i}', win_len=win_len, win_step=win_step, thread=thread)
+
+    if feature_config is not None:
+        feature_df = pd.DataFrame()
+        for i in range(replicate):
+            df = pd.read_csv(f'{output_dir}/{i}/{output_prefix}.{i}.features', sep="\t")
+            feature_df = pd.concat([feature_df, df])
+
+        feature_df.to_csv(f'{output_dir}/{output_prefix}.all.features', sep="\t", index=False)
 
 
 if __name__ == '__main__':
