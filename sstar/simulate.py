@@ -38,7 +38,13 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
     """
     """
     while True:
-        rep, seed = in_queue.get()
+        
+        in_list = [in_queue.get()]
+        rep = in_list[0]
+        if len(in_list) == 2:
+            seed = in_list[1]
+        else:
+            seed = None
 
         demo_graph = demes.load(kwargs['demo_model_file'])
         demography = msprime.Demography.from_demes(demo_graph)
