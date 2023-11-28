@@ -11,6 +11,7 @@ with open(os.path.join(HERE, "README.md")) as fid:
 # This call to setup() does all the work
 setup(
     name="sstar",
+    python_requires='>=3.9',
     version="1.1.4",
     description="A Python package for detecting archaic introgression from population genetic data with S*",
     long_description=README,
