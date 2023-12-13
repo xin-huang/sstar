@@ -17,7 +17,7 @@
 import pickle
 import pandas as pd
 from multiprocessing import Process, Queue
-from sstar.preprocess import process_data
+from sstar.preprocess import preprocess
 from sstar.models import LogisticRegression, ExtraTrees, Sstar
 from sstar.utils import multiprocessing_manager
 

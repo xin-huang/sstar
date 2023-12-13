@@ -72,7 +72,7 @@ class LogisticRegression(Model):
             labels
         """
         data = df.drop(columns=['chrom', 'start', 'end', 'sample']).values
-        labels = model.predict(data)
+        labels = model.predict_proba(data)
 
         return labels
 
