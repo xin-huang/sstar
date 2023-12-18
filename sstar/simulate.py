@@ -56,7 +56,7 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
             random_seed=seed,
         )
         ts = msprime.sim_mutations(ts, rate=kwargs['mut_rate'], random_seed=seed, model=msprime.BinaryMutationModel())
-        true_tracts = _get_true_tracts(ts, kwargs['tgt_id'], kwargs['src_id'], kwargs['ploidy'])
+        truth_tracts = _get_truth_tracts(ts, kwargs['tgt_id'], kwargs['src_id'], kwargs['ploidy'])
 
         os.makedirs(os.path.join(kwargs['output_dir'], str(rep)), exist_ok=True)
         ts_file  = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.ts'
@@ -72,9 +72,9 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
             ts.write_vcf(o)
        
         df = pd.DataFrame()
-        for n in sorted(true_tracts.keys()):
-            true_tracts[n].sort(key=lambda x:(x[0], x[1], x[2]))
-            df2 = pd.DataFrame(true_tracts[n], columns=['chr', 'start', 'end', 'sample'])
+        for n in sorted(truth_tracts.keys()):
+            truth_tracts[n].sort(key=lambda x:(x[0], x[1], x[2]))
+            df2 = pd.DataFrame(truth_tracts[n], columns=['chr', 'start', 'end', 'sample'])
             df = pd.concat([df, df2])
 
         df.drop_duplicates(keep='first').to_csv(bed_file, sep="\t", header=False, index=False)
@@ -103,10 +103,10 @@ def _create_ref_tgt_file(nref, ntgt, ref_ind_file, tgt_ind_file, identifier="tsk
             f.write(identifier + str(i) + "\n")
 
 
-def _get_true_tracts(ts, tgt_id, src_id, ploidy):
+def _get_truth_tracts(ts, tgt_id, src_id, ploidy):
     """
     Description:
-        Helper function to obtain ground truth introgressed tracts from tree-sequence.
+        Helper function to obtain ground truth introgressed tracts at the haploid level from tree-sequence.
 
     Arguments:
         ts tskit.TreeSqueuece: Tree-sequence containing ground truth introgressed tracts.
