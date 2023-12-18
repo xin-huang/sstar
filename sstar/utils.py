@@ -329,7 +329,7 @@ def multiprocessing_manager(worker_func, nrep, thread, windows=None, ref_data=No
 
     if windows is None:
         if seed is None: 
-            for i in range(nrep): in_queue.put(i)
+            for i in range(nrep): in_queue.put((i, None))
         else:
             seed_list = np.random.random_integers(1,2**31,nrep)
             for i in range(nrep): in_queue.put((i, seed_list[i]))

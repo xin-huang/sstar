@@ -38,13 +38,7 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
     """
     """
     while True:
-        
-        in_list = [in_queue.get()]
-        rep = in_list[0]
-        if len(in_list) == 2:
-            seed = in_list[1]
-        else:
-            seed = None
+        rep, seed = in_queue.get()
 
         demo_graph = demes.load(kwargs['demo_model_file'])
         demography = msprime.Demography.from_demes(demo_graph)
@@ -123,27 +117,26 @@ def _get_true_tracts(ts, tgt_id, src_id, ploidy):
     tracts = {}
     introgression = []
 
-    for p in ts.populations():
-        source_id = [p.id for p in ts.populations() if p.metadata['name']==src_id][0]
-        target_id = [p.id for p in ts.populations() if p.metadata['name']==tgt_id][0]
+    src_id = [p.id for p in ts.populations() if p.metadata['name']==src_id][0]
+    tgt_id = [p.id for p in ts.populations() if p.metadata['name']==tgt_id][0]
 
-    for i in range(ts.num_samples):
-        node = ts.node(i)
-        if node.population == target_id: tracts[node.id] = []
+    for i in ts.samples(tgt_id): tracts[i] = []
 
     for m in ts.migrations():
-        if m.dest == source_id: introgression.append(m)
-
-    for i in introgression:
-        for t in ts.trees():
-            # Tree-sequences are sorted by the left ends of the intervals
-            # Can skip those tree-sequences are not overlapped with the interval of i.
-            if i.left >= t.interval.right: continue
-            if i.right <= t.interval.left: break # [l, r)
-            for n in tracts.keys():
-                left = i.left if i.left > t.interval.left else t.interval.left
-                right = i.right if i.right < t.interval.right else t.interval.right
-                if t.is_descendant(n, i.node): tracts[n].append([1, int(left), int(right), f'tsk_{ts.node(n).individual}_{int(n%ploidy+1)}'])
+        if (m.dest==src_id) and (m.source==tgt_id):
+            # For simulations with a long sequence, large sample size, and/or deep generation time
+            # This function may become slow
+            # May parallelize this function when necessary
+            for t in ts.trees():
+                # Tree-sequences are sorted by the left ends of the intervals
+                # Can skip those tree-sequences are not overlapped with the interval of i.
+                if m.left >= t.interval.right: continue
+                if m.right <= t.interval.left: break # [l, r)
+                for n in tracts.keys():
+                    if t.is_descendant(n, m.node):
+                        left = m.left if m.left > t.interval.left else t.interval.left
+                        right = m.right if m.right < t.interval.right else t.interval.right
+                        tracts[n].append([1, int(left), int(right), f'tsk_{ts.node(n).individual}_{int(n%ploidy+1)}'])
 
     return tracts
 

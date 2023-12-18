@@ -8,7 +8,7 @@ dependencies:
         - mkdocs-material
         - pandas
         - pip
-        - python=3.8
+        - python=3.9
         - python-markdown-math
         - r-base
         - rpy2
