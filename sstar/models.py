@@ -74,7 +74,7 @@ class LogisticRegression(Model):
         data = df.drop(columns=['chrom', 'start', 'end', 'sample']).values
         labels = model.predict_proba(data)
 
-        return labels
+        return labels[:,-1]
 
 
 class ExtraTrees(Model):

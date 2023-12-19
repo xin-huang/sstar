@@ -20,7 +20,7 @@ import pandas as pd
 from sstar.models import LogisticRegression, ExtraTrees, Sstar
 
 
-def infer(feature_file, model_file, prediction_dir, prediction_prefix, algorithm=None):
+def infer(feature_file, model_file, prediction_dir, prediction_prefix, cutoff, algorithm=None):
     """
     """
     with open(model_file, 'rb') as f:
@@ -41,11 +41,11 @@ def infer(feature_file, model_file, prediction_dir, prediction_prefix, algorithm
         raise Exception(f'The {algorithm} algorithm is NOT available!')
 
     feature_df['label'] = model.infer(trained_model, feature_df)
-    feature_df = feature_df[feature_df['label']==1][['chrom', 'start', 'end', 'sample']].sort_values(by=['sample', 'chrom', 'start', 'end'])
+    feature_df = feature_df[feature_df['label']>cutoff][['chrom', 'start', 'end', 'sample']].sort_values(by=['sample', 'chrom', 'start', 'end'])
     
     feature_df.to_csv(prediction_file, sep="\t", index=False, header=None)
 
 
 if __name__ == '__main__':
     infer(feature_file="./sstar/test/test.features", model_file="./sstar/test/test.lr.model", 
-          prediction_dir="./sstar/test", prediction_prefix="test", algorithm="logistic_regression")
+          prediction_dir="./sstar/test", prediction_prefix="test", cutoff=0.5, algorithm="logistic_regression")

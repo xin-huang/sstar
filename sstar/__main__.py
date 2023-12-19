@@ -64,7 +64,7 @@ def _run_training(args):
 
 def _run_inference(args):
     from sstar.infer import infer
-    infer(feature_file=args.features, model_file=args.model_file,
+    infer(feature_file=args.features, model_file=args.model_file, cutoff=args.cutoff,
           prediction_dir=args.prediction_dir, prediction_prefix=args.prediction_prefix, algorithm=args.model)
 
 
@@ -274,6 +274,7 @@ def _s_star_cli_parser():
     parser.add_argument('--features', type=str, required=True, help="Name of the file storing input features.")
     parser.add_argument('--model-file', type=str, required=True, help="Name of the file storing the trained model.", dest='model_file')
     parser.add_argument('--model', type=str, default=None, help="Name of the statistical/machine learning model for the training. Implemented models: extra_trees, logistic_regression, sstar.")
+    parser.add_argument('--cutoff', type=float, default=0.5, help="Probability cutoff for classifying a fragment as introgressed. Fragments with probabilities above this threshold will be considered introgressed. Default: 0.5.")
     parser.add_argument('--prediction-prefix', type=str, required=True, help="Prefix of the prediction file name.", dest='prediction_prefix')
     parser.add_argument('--prediction-dir', type=str, required=True, help="Directory of the prediction files.", dest='prediction_dir')
     parser.set_defaults(runner=_run_inference)
