@@ -251,12 +251,12 @@ def _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, o
 
 
 def training_preprocess(input_dir, input_prefix, nrep, feature_config, is_phased,
-                        ploidy, output_dir, output_prefix, seq_len, thread, archaic_prop, not_archaic_prop):
+                        ploidy, output_dir, output_prefix, seq_len, thread, intro_prop, not_intro_prop):
     """
     """
     res = multiprocessing_manager(worker_func=_training_preprocess_worker, nrep=nrep, thread=thread,
                                   feature_config=feature_config, is_phased=is_phased, ploidy=ploidy,
-                                  seq_len=seq_len, archaic_prop=archaic_prop, not_archaic_prop=not_archaic_prop,
+                                  seq_len=seq_len, intro_prop=intro_prop, not_intro_prop=not_intro_prop,
                                   input_dir=input_dir, input_prefix=input_prefix, output_dir=output_dir, output_prefix=output_prefix)
 
     if feature_config is not None:
@@ -289,12 +289,12 @@ def _training_preprocess_worker(in_queue, out_queue, **kwargs):
         output = f'{output_dir}/{output_prefix}.labeled.features'
 
         _label(feature_file=feature_file, truth_tract_file=truth_tract_file, output=output,
-               seq_len=kwargs["seq_len"], archaic_prop=kwargs["archaic_prop"], not_archaic_prop=kwargs["not_archaic_prop"])
+               seq_len=kwargs["seq_len"], intro_prop=kwargs["intro_prop"], not_intro_prop=kwargs["not_intro_prop"])
 
         out_queue.put(rep)
 
 
-def _label(feature_file, truth_tract_file, seq_len, archaic_prop, not_archaic_prop, output):
+def _label(feature_file, truth_tract_file, seq_len, intro_prop, not_intro_prop, output):
     """
     """
     feature_df = pd.read_csv(feature_file, sep="\t")
@@ -308,18 +308,18 @@ def _label(feature_file, truth_tract_file, seq_len, archaic_prop, not_archaic_pr
         truth_tract_df['len'] = truth_tract_df['end'] - truth_tract_df['start']
         truth_tract_df = truth_tract_df.groupby(by=['sample'])['len'].sum().reset_index()
         truth_tract_df['prop'] = truth_tract_df['len'] / seq_len
-        truth_tract_df['label'] = truth_tract_df.apply(lambda row: _add_label(row, archaic_prop, not_archaic_prop), axis=1)
+        truth_tract_df['label'] = truth_tract_df.apply(lambda row: _add_label(row, intro_prop, not_intro_prop), axis=1)
         feature_df = feature_df.merge(truth_tract_df.drop(columns=['len', 'prop']),
                                       left_on=['sample'], right_on=['sample'], how='left').fillna(0)
     finally:
         feature_df.to_csv(output, sep="\t", index=False)
 
 
-def _add_label(row, archaic_prop, not_archaic_prop):
+def _add_label(row, intro_prop, not_intro_prop):
     """
     """
-    if row['prop'] > archaic_prop: return 1.0
-    elif row['prop'] < not_archaic_prop: return 0.0
+    if row['prop'] > intro_prop: return 1.0
+    elif row['prop'] < not_intro_prop: return 0.0
     else: return -1.0
 
 
