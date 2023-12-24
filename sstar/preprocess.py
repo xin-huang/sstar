@@ -275,6 +275,7 @@ def training_preprocess(input_dir, input_prefix, nrep, feature_config, is_phased
         feature_df = pd.DataFrame()
         for i in range(nrep):
             df = pd.read_csv(f'{output_dir}/{i}/{output_prefix}.{i}.labeled.features', sep="\t")
+            df.insert(0, 'replicate', i)
             feature_df = pd.concat([feature_df, df])
 
         feature_df.to_csv(f'{output_dir}/{output_prefix}.all.labeled.features', sep="\t", index=False)
