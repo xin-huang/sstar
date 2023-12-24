@@ -19,10 +19,10 @@ import pandas as pd
 from sstar.models import LogisticRegression, ExtraTrees, Sstar
 
 
-def train(feature_file, model_file, algorithm=None):
+def train(training_data, model_file, algorithm=None):
     """
     """
-    feature_df = pd.read_csv(feature_file, sep="\t")
+    feature_df = pd.read_csv(training_data, sep="\t")
     feature_df = feature_df[feature_df['label'] != -1.0]
 
     labels = feature_df['label']
@@ -43,4 +43,4 @@ def train(feature_file, model_file, algorithm=None):
 
 
 if __name__ == '__main__':
-    train(feature_file="./sstar/test/test.all.labeled.features", model_file="./sstar/test/test.lr.model", algorithm='logistic_regression')
+    train(training_data="./sstar/test/test.all.labeled.features", model_file="./sstar/test/test.lr.model", algorithm='logistic_regression')
