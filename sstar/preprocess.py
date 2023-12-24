@@ -67,9 +67,9 @@ def preprocess(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_co
     # x[2]: the end of the window
     res.sort(key=lambda x: (x[0], x[1], x[2]))
 
-    for r in res:
-        print(r[3]['skew_tgt_dists'])
-        print(r[3]['kurtosis_tgt_dists'])
+    #for r in res:
+    #    print(r[3]['skew_tgt_dists'])
+    #    print(r[3]['kurtosis_tgt_dists'])
 
     header = _create_header(ref_samples, tgt_samples, features, is_phased, ploidy, output_genotypes)
     _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, output_prefix, output_genotypes)
