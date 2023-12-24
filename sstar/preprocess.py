@@ -67,6 +67,10 @@ def preprocess(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_co
     # x[2]: the end of the window
     res.sort(key=lambda x: (x[0], x[1], x[2]))
 
+    for r in res:
+        print(r[3]['skew_tgt_dists'])
+        print(r[3]['kurtosis_tgt_dists'])
+
     header = _create_header(ref_samples, tgt_samples, features, is_phased, ploidy, output_genotypes)
     _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, output_prefix, output_genotypes)
 
@@ -104,8 +108,12 @@ def _preprocess_worker(in_queue, out_queue, **kwargs):
                 if 'mean' in kwargs['features']['reference distances'].keys(): items['mean_ref_dists'] = np.mean(ref_dists, axis=1)
                 if 'median' in kwargs['features']['reference distances'].keys(): items['median_ref_dists'] = np.median(ref_dists, axis=1)
                 if 'variance' in kwargs['features']['reference distances'].keys(): items['var_ref_dists'] = np.var(ref_dists, axis=1)
-                if 'skew' in kwargs['features']['reference distances'].keys(): items['skew_ref_dists'] = scipy.stats.skew(ref_dists, axis=1)
-                if 'kurtosis' in kwargs['features']['reference distances'].keys(): items['kurtosis_ref_dists'] = scipy.stats.kurtosis(ref_dists, axis=1)
+                if 'skew' in kwargs['features']['reference distances'].keys(): 
+                    items['skew_ref_dists'] = scipy.stats.skew(ref_dists, axis=1)
+                    items['skew_ref_dists'][np.isnan(items['skew_ref_dists'])] = 0
+                if 'kurtosis' in kwargs['features']['reference distances'].keys(): 
+                    items['kurtosis_ref_dists'] = scipy.stats.kurtosis(ref_dists, axis=1)
+                    items['kurtosis_ref_dists'][np.isnan(items['kurtosis_ref_dists'])] = 0
             if 'target distances' in kwargs['features'].keys():
                 tgt_dists = cal_dist(tgt_gts, tgt_gts)
                 if 'all' in kwargs['features']['target distances'].keys(): items['tgt_dists'] = tgt_dists
@@ -114,8 +122,12 @@ def _preprocess_worker(in_queue, out_queue, **kwargs):
                 if 'mean' in kwargs['features']['target distances'].keys(): items['mean_tgt_dists'] = np.mean(tgt_dists, axis=1)
                 if 'median' in kwargs['features']['target distances'].keys(): items['median_tgt_dists'] = np.median(tgt_dists, axis=1)
                 if 'variance' in kwargs['features']['target distances'].keys(): items['var_tgt_dists'] = np.var(tgt_dists, axis=1)
-                if 'skew' in kwargs['features']['target distances'].keys(): items['skew_tgt_dists'] = scipy.stats.skew(tgt_dists, axis=1)
-                if 'kurtosis' in kwargs['features']['target distances'].keys(): items['kurtosis_tgt_dists'] = scipy.stats.kurtosis(tgt_dists, axis=1)
+                if 'skew' in kwargs['features']['target distances'].keys(): 
+                    items['skew_tgt_dists'] = scipy.stats.skew(tgt_dists, axis=1)
+                    items['skew_tgt_dists'][np.isnan(items['skew_tgt_dists'])] = 0
+                if 'kurtosis' in kwargs['features']['target distances'].keys(): 
+                    items['kurtosis_tgt_dists'] = scipy.stats.kurtosis(tgt_dists, axis=1)
+                    items['kurtosis_tgt_dists'][np.isnan(items['kurtosis_tgt_dists'])] = 0
             if 'sstar' in kwargs['features'].keys():
                 sstar_scores, sstar_snp_nums, haplotypes = cal_sstar(sub_tgt_gts, sub_pos, 
                                                                      method=kwargs['features']['sstar']['genotype distance'], 
@@ -276,6 +288,7 @@ def _training_preprocess_worker(in_queue, out_queue, **kwargs):
         vcf = f'{kwargs["input_dir"]}/{rep}/{kwargs["input_prefix"]}.{rep}.vcf'
         ref = f'{kwargs["input_dir"]}/{rep}/{kwargs["input_prefix"]}.{rep}.ref.ind.list'
         tgt = f'{kwargs["input_dir"]}/{rep}/{kwargs["input_prefix"]}.{rep}.tgt.ind.list'
+        truth_tract_file = f'{kwargs["input_dir"]}/{rep}/{kwargs["input_prefix"]}.{rep}.truth.tracts.bed'
         output_dir = f'{kwargs["output_dir"]}/{rep}'
         output_prefix = f'{kwargs["output_prefix"]}.{rep}'
 
@@ -285,7 +298,6 @@ def _training_preprocess_worker(in_queue, out_queue, **kwargs):
                    output_prefix=output_prefix, win_len=kwargs["seq_len"], win_step=kwargs["seq_len"], thread=1)
 
         feature_file = f'{output_dir}/{output_prefix}.features'
-        truth_tract_file = f'{output_dir}/{output_prefix}.truth.tracts.bed'
         output = f'{output_dir}/{output_prefix}.labeled.features'
 
         _label(feature_file=feature_file, truth_tract_file=truth_tract_file, output=output,
@@ -326,4 +338,4 @@ def _add_label(row, intro_prop, not_intro_prop):
 if __name__ == '__main__':
     #preprocess(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/features/sstar.features.yaml", is_phased=False, ploidy=2, output_dir="./test_data", output_prefix="test.sstar", win_len=50000, win_step=10000, thread=1)
     training_preprocess(input_dir="./sstar/test", input_prefix="test", nrep=1000, feature_config="./examples/features/archie.features.yaml", is_phased=True,
-                        ploidy=2, output_dir="./sstar/test", output_prefix="test", seq_len=50000, thread=2, archaic_prop=0.7, not_archaic_prop=0.3)
+                        ploidy=2, output_dir="./sstar/test", output_prefix="test", seq_len=50000, thread=2, intro_prop=0.7, not_intro_prop=0.3)
