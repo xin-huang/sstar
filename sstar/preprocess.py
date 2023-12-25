@@ -68,6 +68,7 @@ def preprocess(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_co
     res.sort(key=lambda x: (x[0], x[1], x[2]))
 
     #for r in res:
+    #    print(r[3]['ttl_mut_nums'])
     #    print(r[3]['skew_tgt_dists'])
     #    print(r[3]['kurtosis_tgt_dists'])
 
@@ -230,35 +231,36 @@ def _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, o
                 for i in range(len(tgt_samples)*ploidy):
                     if ploidy != 1: sample = f'{tgt_samples[int(i/ploidy)]}_{i%ploidy+1}'
                     else: sample = tgt_samples[i]
-                    out = ''
-                    if 'sstar' in features.keys(): out += f'{items["sstar"][i]}'
-                    if 'number of total mutations' in features.keys(): out += f'\t{items["ttl_mut_nums"][i]}'
-                    if 'number of private mutations' in features.keys(): out += f'\t{items["pvt_mut_nums"][i]}'
+                    out = []
+                    if 'sstar' in features.keys(): out.append(f'{items["sstar"][i]}')
+                    if 'number of total mutations' in features.keys(): out.append(f'{items["ttl_mut_nums"][i]}')
+                    if 'number of private mutations' in features.keys(): out.append(f'{items["pvt_mut_nums"][i]}')
                     if 'individual allele frequency spectra' in features.keys():
                         spectra = "\t".join(items["spectra"][i].astype(str))
-                        out += f'\t{spectra}'
+                        out.append(f'{spectra}')
                     if 'reference distances' in features.keys():
-                        if 'minimum' in features['reference distances'].keys(): out += f'\t{items["min_ref_dists"][i]}'
-                        if 'maximum' in features['reference distances'].keys(): out += f'\t{items["max_ref_dists"][i]}'
-                        if 'mean' in features['reference distances'].keys(): out += f'\t{items["mean_ref_dists"][i]}'
-                        if 'median' in features['reference distances'].keys(): out += f'\t{items["median_ref_dists"][i]}'
-                        if 'variance' in features['reference distances'].keys(): out += f'\t{items["var_ref_dists"][i]}'
-                        if 'skew' in features['reference distances'].keys(): out += f'\t{items["skew_ref_dists"][i]}'
-                        if 'kurtosis' in features['reference distances'].keys(): out += f'\t{items["kurtosis_ref_dists"][i]}'
+                        if 'minimum' in features['reference distances'].keys(): out.append(f'{items["min_ref_dists"][i]}')
+                        if 'maximum' in features['reference distances'].keys(): out.append(f'{items["max_ref_dists"][i]}')
+                        if 'mean' in features['reference distances'].keys(): out.append(f'{items["mean_ref_dists"][i]}')
+                        if 'median' in features['reference distances'].keys(): out.append(f'{items["median_ref_dists"][i]}')
+                        if 'variance' in features['reference distances'].keys(): out.append(f'{items["var_ref_dists"][i]}')
+                        if 'skew' in features['reference distances'].keys(): out.append(f'{items["skew_ref_dists"][i]}')
+                        if 'kurtosis' in features['reference distances'].keys(): out.append(f'{items["kurtosis_ref_dists"][i]}')
                         if 'all' in features['reference distances'].keys(): 
                             dists = "\t".join(items["ref_dists"][i].astype(str))
-                            out += f'\t{dists}'
+                            out.append(f'{dists}')
                     if 'target distances' in features.keys():
-                        if 'minimum' in features['target distances'].keys(): out += f'\t{items["min_tgt_dists"][i]}'
-                        if 'maximum' in features['target distances'].keys(): out += f'\t{items["max_tgt_dists"][i]}'
-                        if 'mean' in features['target distances'].keys(): out += f'\t{items["mean_tgt_dists"][i]}'
-                        if 'median' in features['target distances'].keys(): out += f'\t{items["median_tgt_dists"][i]}'
-                        if 'variance' in features['target distances'].keys(): out += f'\t{items["var_tgt_dists"][i]}'
-                        if 'skew' in features['target distances'].keys(): out += f'\t{items["skew_tgt_dists"][i]}'
-                        if 'kurtosis' in features['target distances'].keys(): out += f'\t{items["kurtosis_tgt_dists"][i]}'
+                        if 'minimum' in features['target distances'].keys(): out.append(f'{items["min_tgt_dists"][i]}')
+                        if 'maximum' in features['target distances'].keys(): out.append(f'{items["max_tgt_dists"][i]}')
+                        if 'mean' in features['target distances'].keys(): out.append(f'{items["mean_tgt_dists"][i]}')
+                        if 'median' in features['target distances'].keys(): out.append(f'{items["median_tgt_dists"][i]}')
+                        if 'variance' in features['target distances'].keys(): out.append(f'{items["var_tgt_dists"][i]}')
+                        if 'skew' in features['target distances'].keys(): out.append(f'{items["skew_tgt_dists"][i]}')
+                        if 'kurtosis' in features['target distances'].keys(): out.append(f'{items["kurtosis_tgt_dists"][i]}')
                         if 'all' in features['target distances'].keys(): 
                             dists = "\t".join(items["tgt_dists"][i].astype(str))
-                            out += f'\t{dists}'
+                            out.append(f'{dists}')
+                    out = "\t".join(out)
                     f.write(f'{chrom}\t{start}\t{end}\t{sample}\t{out}\n')
 
 
@@ -338,5 +340,5 @@ def _add_label(row, intro_prop, not_intro_prop):
 
 if __name__ == '__main__':
     #preprocess(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/features/sstar.features.yaml", is_phased=False, ploidy=2, output_dir="./test_data", output_prefix="test.sstar", win_len=50000, win_step=10000, thread=1)
-    training_preprocess(input_dir="./sstar/test", input_prefix="test", nrep=1000, feature_config="./examples/features/archie.features.yaml", is_phased=True,
-                        ploidy=2, output_dir="./sstar/test", output_prefix="test", seq_len=50000, thread=2, intro_prop=0.7, not_intro_prop=0.3)
+    training_preprocess(input_dir="./sstar/test", input_prefix="test", nrep=1000, feature_config="./examples/features/lr.features.yaml", is_phased=True,
+                        ploidy=2, output_dir="./sstar/test", output_prefix="test", seq_len=50000, thread=1, intro_prop=0.7, not_intro_prop=0.3)
