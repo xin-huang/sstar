@@ -47,8 +47,9 @@ def simulate(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, ploidy,
             df = pd.read_csv(f'{output_dir}/{i}/{output_prefix}.{i}.features', sep="\t")
             feature_df = pd.concat([feature_df, df])
         feature_df.to_csv(f'{output_dir}/{output_prefix}.all.features', sep="\t", index=False)
-        feature_df = feature_df.merge(label_df,
-                                      left_on=['sample', 'msprime_seed'], right_on=['sample', 'msprime_seed'], how='left')
+        feature_df = feature_df.merge(label_df, suffixes=('', '_dup'),
+                                      left_on=['sample', 'rep'], right_on=['sample', 'rep'], how='left')
+        feature_df.drop([i for i in feature_df.columns if 'dup' in i], axis=1, inplace=True)
         feature_df.to_csv(f'{output_dir}/{output_prefix}.all.labeled.features', sep="\t", index=False)
 
     if rm_sim_data is True:
@@ -101,7 +102,7 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
 
         df.drop_duplicates(keep='first').to_csv(bed_file, sep="\t", header=False, index=False)
         _label(ind_file=tgt_ind_file, truth_tract_file=bed_file, output=label_file,
-               is_phased=kwargs["is_phased"], ploidy=kwargs["ploidy"], seed=seed,
+               is_phased=kwargs["is_phased"], ploidy=kwargs["ploidy"], rep=rep,
                seq_len=kwargs["seq_len"], intro_prop=kwargs["intro_prop"], not_intro_prop=kwargs["not_intro_prop"])
 
         if kwargs['feature_config'] is not None:
@@ -112,7 +113,7 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
 
             feature_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.features'
             feature_df = pd.read_csv(feature_file, sep="\t")
-            feature_df['msprime_seed'] = seed
+            feature_df['rep'] = rep
             feature_df.to_csv(feature_file, sep="\t", index=False)
 
         out_queue.put(rep)
@@ -177,7 +178,7 @@ def _get_truth_tracts(ts, tgt_id, src_id, ploidy):
     return tracts
 
 
-def _label(ind_file, is_phased, ploidy, truth_tract_file, seq_len, intro_prop, not_intro_prop, seed, output):
+def _label(ind_file, is_phased, ploidy, truth_tract_file, seq_len, intro_prop, not_intro_prop, rep, output):
     """
     """
     label_df = pd.DataFrame(columns=['chrom', 'start', 'end', 'sample'])
@@ -205,7 +206,7 @@ def _label(ind_file, is_phased, ploidy, truth_tract_file, seq_len, intro_prop, n
         label_df = label_df.merge(truth_tract_df.drop(columns=['len', 'prop']),
                                   left_on=['sample'], right_on=['sample'], how='left').fillna(0)
     finally:
-        label_df['msprime_seed'] = seed
+        label_df['rep'] = rep
         label_df['label'] = label_df['label'].astype('int8')
         label_df.to_csv(output, sep="\t", index=False)
 
@@ -221,5 +222,5 @@ def _add_label(row, intro_prop, not_intro_prop):
 if __name__ == '__main__':
     simulate(demo_model_file="./examples/models/ArchIE_3D19.yaml", nrep=1000, nref=50, ntgt=50, 
              ref_id='Ref', tgt_id='Tgt', src_id='Ghost', ploidy=2, seq_len=50000, mut_rate=1.25e-8, rec_rate=1e-8, thread=2,
-             feature_config="./examples/features/archie.features.yaml", is_phased=True, intro_prop=0.7, not_intro_prop=0.3, rm_sim_data=False,
+             feature_config="./examples/features/archie.features.yaml", is_phased=True, intro_prop=0.7, not_intro_prop=0.3, rm_sim_data=True,
              output_prefix='test', output_dir='./sstar/test', seed=913)
