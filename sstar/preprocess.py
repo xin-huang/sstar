@@ -16,7 +16,6 @@
 
 import os
 import numpy as np
-import pandas as pd
 import scipy
 import yaml
 from multiprocessing import Process, Queue
@@ -66,11 +65,6 @@ def preprocess(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, feature_co
     # x[1]: the start of the window
     # x[2]: the end of the window
     res.sort(key=lambda x: (x[0], x[1], x[2]))
-
-    #for r in res:
-    #    print(r[3]['ttl_mut_nums'])
-    #    print(r[3]['skew_tgt_dists'])
-    #    print(r[3]['kurtosis_tgt_dists'])
 
     header = _create_header(ref_samples, tgt_samples, features, is_phased, ploidy, output_genotypes)
     _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, output_prefix, output_genotypes)
@@ -264,81 +258,5 @@ def _output(res, tgt_samples, header, features, is_phased, ploidy, output_dir, o
                     f.write(f'{chrom}\t{start}\t{end}\t{sample}\t{out}\n')
 
 
-def training_preprocess(input_dir, input_prefix, nrep, feature_config, is_phased,
-                        ploidy, output_dir, output_prefix, seq_len, thread, intro_prop, not_intro_prop):
-    """
-    """
-    res = multiprocessing_manager(worker_func=_training_preprocess_worker, nrep=nrep, thread=thread,
-                                  feature_config=feature_config, is_phased=is_phased, ploidy=ploidy,
-                                  seq_len=seq_len, intro_prop=intro_prop, not_intro_prop=not_intro_prop,
-                                  input_dir=input_dir, input_prefix=input_prefix, output_dir=output_dir, output_prefix=output_prefix)
-
-    if feature_config is not None:
-        feature_df = pd.DataFrame()
-        for i in range(nrep):
-            df = pd.read_csv(f'{output_dir}/{i}/{output_prefix}.{i}.labeled.features', sep="\t")
-            df.insert(0, 'replicate', i)
-            feature_df = pd.concat([feature_df, df])
-
-        feature_df.to_csv(f'{output_dir}/{output_prefix}.all.labeled.features', sep="\t", index=False)
-
-
-def _training_preprocess_worker(in_queue, out_queue, **kwargs):
-    """
-    """
-    while True:
-        rep, seed = in_queue.get()
-        vcf = f'{kwargs["input_dir"]}/{rep}/{kwargs["input_prefix"]}.{rep}.vcf'
-        ref = f'{kwargs["input_dir"]}/{rep}/{kwargs["input_prefix"]}.{rep}.ref.ind.list'
-        tgt = f'{kwargs["input_dir"]}/{rep}/{kwargs["input_prefix"]}.{rep}.tgt.ind.list'
-        truth_tract_file = f'{kwargs["input_dir"]}/{rep}/{kwargs["input_prefix"]}.{rep}.truth.tracts.bed'
-        output_dir = f'{kwargs["output_dir"]}/{rep}'
-        output_prefix = f'{kwargs["output_prefix"]}.{rep}'
-
-        preprocess(vcf_file=vcf, ref_ind_file=ref, tgt_ind_file=tgt, anc_allele_file=None,
-                   feature_config=kwargs["feature_config"], is_phased=kwargs["is_phased"], 
-                   ploidy=kwargs["ploidy"], output_dir=output_dir,
-                   output_prefix=output_prefix, win_len=kwargs["seq_len"], win_step=kwargs["seq_len"], thread=1)
-
-        feature_file = f'{output_dir}/{output_prefix}.features'
-        output = f'{output_dir}/{output_prefix}.labeled.features'
-
-        _label(feature_file=feature_file, truth_tract_file=truth_tract_file, output=output,
-               seq_len=kwargs["seq_len"], intro_prop=kwargs["intro_prop"], not_intro_prop=kwargs["not_intro_prop"])
-
-        out_queue.put(rep)
-
-
-def _label(feature_file, truth_tract_file, seq_len, intro_prop, not_intro_prop, output):
-    """
-    """
-    feature_df = pd.read_csv(feature_file, sep="\t")
-
-    try:
-        truth_tract_df = pd.read_csv(truth_tract_file, sep="\t", header=None)
-    except pd.errors.EmptyDataError:
-        feature_df['label'] = 0.0
-    else:
-        truth_tract_df.columns = ['chrom', 'start', 'end', 'sample']
-        truth_tract_df['len'] = truth_tract_df['end'] - truth_tract_df['start']
-        truth_tract_df = truth_tract_df.groupby(by=['sample'])['len'].sum().reset_index()
-        truth_tract_df['prop'] = truth_tract_df['len'] / seq_len
-        truth_tract_df['label'] = truth_tract_df.apply(lambda row: _add_label(row, intro_prop, not_intro_prop), axis=1)
-        feature_df = feature_df.merge(truth_tract_df.drop(columns=['len', 'prop']),
-                                      left_on=['sample'], right_on=['sample'], how='left').fillna(0)
-    finally:
-        feature_df.to_csv(output, sep="\t", index=False)
-
-
-def _add_label(row, intro_prop, not_intro_prop):
-    """
-    """
-    if row['prop'] > intro_prop: return 1.0
-    elif row['prop'] < not_intro_prop: return 0.0
-    else: return -1.0
-
-
 if __name__ == '__main__':
-    #preprocess(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/features/sstar.features.yaml", is_phased=False, ploidy=2, output_dir="./test_data", output_prefix="test.sstar", win_len=50000, win_step=10000, thread=1)
-    training_preprocess(input_dir="./sstar/test", input_prefix="test", nrep=1000, feature_config="./examples/features/lr.features.yaml", is_phased=True,
-                        ploidy=2, output_dir="./sstar/test", output_prefix="test", seq_len=50000, thread=1, intro_prop=0.7, not_intro_prop=0.3)
+    preprocess(vcf_file="examples/data/real_data/sstar.example.biallelic.snps.vcf.gz", ref_ind_file="examples/data/ind_list/ref.ind.list", tgt_ind_file="examples/data/ind_list/tgt.ind.list", anc_allele_file=None, feature_config="examples/features/sstar.features.yaml", is_phased=False, ploidy=2, output_dir="./test_data", output_prefix="test.sstar", win_len=50000, win_step=10000, thread=1)

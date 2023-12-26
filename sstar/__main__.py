@@ -81,7 +81,8 @@ def _run_training_preprocess(args):
     training_preprocess(input_dir=args.input_dir, input_prefix=args.input_prefix, nrep=args.replicate, 
                         feature_config=args.features, is_phased=args.phased, ploidy=args.ploidy,
                         output_dir=args.output_dir, output_prefix=args.output_prefix, seq_len=args.seq_len, 
-                        thread=args.thread, intro_prop=args.intro_prop, not_intro_prop=args.not_intro_prop)
+                        thread=args.thread, intro_prop=args.intro_prop, not_intro_prop=args.not_intro_prop,
+                        rm_sim_data=args.delete)
 
 
 def _run_evaluate(args):
@@ -240,7 +241,7 @@ def _s_star_cli_parser():
     parser.set_defaults(runner=_run_infer_preprocess)
 
     # Arguments for the training-preprocess subcommand
-    parser = subparsers.add_parser('training-prep', help='Preprocessing data for training.')
+    parser = subparsers.add_parser('training-prep', help='Preprocessing simulated data for training.')
     parser.add_argument('--input-prefix', type=str, required=True, help='Prefix of the input files.', dest='input_prefix')
     parser.add_argument('--input-dir', type=str, required=True, help='Directory storing the input files.', dest='input_dir')
     parser.add_argument('--features', type=str, default=None, help='Name of the YAML file specifying what features should be used. Default: None.')
@@ -252,6 +253,7 @@ def _s_star_cli_parser():
     parser.add_argument('--seq-len', type=int, required=True, help="Length of the simulated genomes.", dest='seq_len')
     parser.add_argument('--introgressed-prop', type=float, default=0.7, help="Proportion that determines a fragment as introgressed. Default: 0.7.", dest="intro_prop")
     parser.add_argument('--not-introgressed-prop', type=float, default=0.3, help="Proportion that determinse a fragment as non-introgressed. Default: 0.3.", dest="not_intro_prop")
+    parser.add_argument('--delete-simulated-data', action='store_true', help="Enable to delete simulated data. Default: False.", dest="delete")
     parser.add_argument('--thread', type=int, default=1, help="Number of threads for the training. Default: 1.")
     parser.set_defaults(runner=_run_training_preprocess)
 

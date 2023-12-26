@@ -14,24 +14,39 @@
 # limitations under the License.
 
 
-import os
+import os, shutil
 import demes, msprime
 import pandas as pd
 from multiprocessing import Process, Queue
 from sstar.utils import multiprocessing_manager
+from sstar.preprocess import preprocess
 
 
-def simulate(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, ploidy, seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed):
+def simulate(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, ploidy,
+             feature_config, is_phased, intro_prop, not_intro_prop, rm_sim_data,
+             seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed):
     """
     """
     multiprocessing_manager(worker_func=_simulation_worker, nrep=nrep, thread=thread,
                             demo_model_file=demo_model_file, nref=nref, ntgt=ntgt, 
                             ref_id=ref_id, tgt_id=tgt_id, src_id=src_id, ploidy=ploidy,
                             seq_len=seq_len, mut_rate=mut_rate, rec_rate=rec_rate, 
+                            feature_config=feature_config, is_phased=is_phased, 
+                            intro_prop=intro_prop, not_intro_prop=not_intro_prop,
                             output_prefix=output_prefix, output_dir=output_dir, seed=seed)
 
-def batch_simulate():
-    pass
+    if feature_config is not None:
+        feature_df = pd.DataFrame()
+        for i in range(nrep):
+            df = pd.read_csv(f'{output_dir}/{i}/{output_prefix}.{i}.labeled.features', sep="\t")
+            df.insert(0, 'replicate', i)
+            feature_df = pd.concat([feature_df, df])
+
+        feature_df.to_csv(f'{output_dir}/{output_prefix}.all.labeled.features', sep="\t", index=False)
+
+    if rm_sim_data is True:
+        for i in range(nrep):
+            shutil.rmtree(f'{output_dir}/{i}', ignore_errors=True)
 
 
 def _simulation_worker(in_queue, out_queue, **kwargs):
@@ -58,18 +73,17 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
         ts = msprime.sim_mutations(ts, rate=kwargs['mut_rate'], random_seed=seed, model=msprime.BinaryMutationModel())
         truth_tracts = _get_truth_tracts(ts, kwargs['tgt_id'], kwargs['src_id'], kwargs['ploidy'])
 
-        os.makedirs(os.path.join(kwargs['output_dir'], str(rep)), exist_ok=True)
-        ts_file  = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.ts'
-        vcf_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.vcf'
-        bed_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.truth.tracts.bed'
-        ref_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.ref.ind.list'
-        tgt_ind_file = kwargs['output_dir'] + '/' + str(rep) + '/' + kwargs['output_prefix'] + f'.{rep}.tgt.ind.list'
+        os.makedirs(f'{kwargs["output_dir"]}/{rep}', exist_ok=True)
+        ts_file  = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.ts'
+        vcf_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.vcf'
+        bed_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.truth.tracts.bed'
+        ref_ind_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.ref.ind.list'
+        tgt_ind_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.tgt.ind.list'
 
         _create_ref_tgt_file(kwargs['nref'], kwargs['ntgt'], ref_ind_file, tgt_ind_file)
 
         ts.dump(ts_file)
-        with open(vcf_file, 'w') as o:
-            ts.write_vcf(o)
+        with open(vcf_file, 'w') as o: ts.write_vcf(o)
        
         df = pd.DataFrame()
         for n in sorted(truth_tracts.keys()):
@@ -78,6 +92,18 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
             df = pd.concat([df, df2])
 
         df.drop_duplicates(keep='first').to_csv(bed_file, sep="\t", header=False, index=False)
+
+        if kwargs['feature_config'] is not None:
+            preprocess(vcf_file=vcf_file, ref_ind_file=ref_ind_file, tgt_ind_file=tgt_ind_file, anc_allele_file=None,
+                       feature_config=kwargs["feature_config"], is_phased=kwargs["is_phased"],
+                       ploidy=kwargs["ploidy"], output_dir=f'{kwargs["output_dir"]}/{rep}',
+                       output_prefix=f'{kwargs["output_prefix"]}.{rep}', win_len=kwargs["seq_len"], win_step=kwargs["seq_len"], thread=1)
+
+            feature_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.features'
+            output = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.labeled.features'
+
+            _label(feature_file=feature_file, truth_tract_file=bed_file, output=output,
+                   seq_len=kwargs["seq_len"], intro_prop=kwargs["intro_prop"], not_intro_prop=kwargs["not_intro_prop"])
 
         out_queue.put(rep)
 
@@ -141,7 +167,37 @@ def _get_truth_tracts(ts, tgt_id, src_id, ploidy):
     return tracts
 
 
+def _label(feature_file, truth_tract_file, seq_len, intro_prop, not_intro_prop, output):
+    """
+    """
+    feature_df = pd.read_csv(feature_file, sep="\t")
+
+    try:
+        truth_tract_df = pd.read_csv(truth_tract_file, sep="\t", header=None)
+    except pd.errors.EmptyDataError:
+        feature_df['label'] = 0.0
+    else:
+        truth_tract_df.columns = ['chrom', 'start', 'end', 'sample']
+        truth_tract_df['len'] = truth_tract_df['end'] - truth_tract_df['start']
+        truth_tract_df = truth_tract_df.groupby(by=['sample'])['len'].sum().reset_index()
+        truth_tract_df['prop'] = truth_tract_df['len'] / seq_len
+        truth_tract_df['label'] = truth_tract_df.apply(lambda row: _add_label(row, intro_prop, not_intro_prop), axis=1)
+        feature_df = feature_df.merge(truth_tract_df.drop(columns=['len', 'prop']),
+                                      left_on=['sample'], right_on=['sample'], how='left').fillna(0)
+    finally:
+        feature_df.to_csv(output, sep="\t", index=False)
+
+
+def _add_label(row, intro_prop, not_intro_prop):
+    """
+    """
+    if row['prop'] > intro_prop: return 1.0
+    elif row['prop'] < not_intro_prop: return 0.0
+    else: return -1.0
+
+
 if __name__ == '__main__':
     simulate(demo_model_file="./examples/models/ArchIE_3D19.yaml", nrep=1000, nref=50, ntgt=50, 
-             ref_id='Ref', tgt_id='Tgt', src_id='Ghost', ploidy=2, seq_len=50000, mut_rate=1.25e-8, rec_rate=1e-8, thread=2, 
+             ref_id='Ref', tgt_id='Tgt', src_id='Ghost', ploidy=2, seq_len=50000, mut_rate=1.25e-8, rec_rate=1e-8, thread=2,
+             feature_config='./examples/features/archie.features.yaml', is_phased=True, intro_prop=0.7, not_intro_prop=0.3, rm_sim_data=True,
              output_prefix='test', output_dir='./sstar/test', seed=913)
