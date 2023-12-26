@@ -35,13 +35,20 @@ def simulate(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, ploidy,
                             intro_prop=intro_prop, not_intro_prop=not_intro_prop,
                             output_prefix=output_prefix, output_dir=output_dir, seed=seed)
 
+    label_df = pd.DataFrame()
+    for i in range(nrep):
+        df = pd.read_csv(f'{output_dir}/{i}/{output_prefix}.{i}.labels', sep="\t")
+        label_df = pd.concat([label_df, df])
+    label_df.to_csv(f'{output_dir}/{output_prefix}.all.labels', sep="\t", index=False)
+
     if feature_config is not None:
         feature_df = pd.DataFrame()
         for i in range(nrep):
-            df = pd.read_csv(f'{output_dir}/{i}/{output_prefix}.{i}.labeled.features', sep="\t")
-            df.insert(0, 'replicate', i)
+            df = pd.read_csv(f'{output_dir}/{i}/{output_prefix}.{i}.features', sep="\t")
             feature_df = pd.concat([feature_df, df])
-
+        feature_df.to_csv(f'{output_dir}/{output_prefix}.all.features', sep="\t", index=False)
+        feature_df = feature_df.merge(label_df,
+                                      left_on=['sample', 'msprime_seed'], right_on=['sample', 'msprime_seed'], how='left')
         feature_df.to_csv(f'{output_dir}/{output_prefix}.all.labeled.features', sep="\t", index=False)
 
     if rm_sim_data is True:
@@ -79,6 +86,7 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
         bed_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.truth.tracts.bed'
         ref_ind_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.ref.ind.list'
         tgt_ind_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.tgt.ind.list'
+        label_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.labels'
 
         _create_ref_tgt_file(kwargs['nref'], kwargs['ntgt'], ref_ind_file, tgt_ind_file)
 
@@ -92,6 +100,9 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
             df = pd.concat([df, df2])
 
         df.drop_duplicates(keep='first').to_csv(bed_file, sep="\t", header=False, index=False)
+        _label(ind_file=tgt_ind_file, truth_tract_file=bed_file, output=label_file,
+               is_phased=kwargs["is_phased"], ploidy=kwargs["ploidy"], seed=seed,
+               seq_len=kwargs["seq_len"], intro_prop=kwargs["intro_prop"], not_intro_prop=kwargs["not_intro_prop"])
 
         if kwargs['feature_config'] is not None:
             preprocess(vcf_file=vcf_file, ref_ind_file=ref_ind_file, tgt_ind_file=tgt_ind_file, anc_allele_file=None,
@@ -100,10 +111,9 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
                        output_prefix=f'{kwargs["output_prefix"]}.{rep}', win_len=kwargs["seq_len"], win_step=kwargs["seq_len"], thread=1)
 
             feature_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.features'
-            output = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.labeled.features'
-
-            _label(feature_file=feature_file, truth_tract_file=bed_file, output=output,
-                   seq_len=kwargs["seq_len"], intro_prop=kwargs["intro_prop"], not_intro_prop=kwargs["not_intro_prop"])
+            feature_df = pd.read_csv(feature_file, sep="\t")
+            feature_df['msprime_seed'] = seed
+            feature_df.to_csv(feature_file, sep="\t", index=False)
 
         out_queue.put(rep)
 
@@ -167,25 +177,37 @@ def _get_truth_tracts(ts, tgt_id, src_id, ploidy):
     return tracts
 
 
-def _label(feature_file, truth_tract_file, seq_len, intro_prop, not_intro_prop, output):
+def _label(ind_file, is_phased, ploidy, truth_tract_file, seq_len, intro_prop, not_intro_prop, seed, output):
     """
     """
-    feature_df = pd.read_csv(feature_file, sep="\t")
+    label_df = pd.DataFrame(columns=['chrom', 'start', 'end', 'sample'])
+    with open(ind_file, 'r') as f:
+        if is_phased is True:
+            for line in f:
+                sample = line.rstrip()
+                for p in range(ploidy):
+                    label_df.loc[len(label_df.index)] = [1, 0, seq_len, f'{sample}_{p+1}']
+        else:
+            for line in f:
+                sample = line.rstrip()
+                label_df.loc[len(label_df.index)] = [1, 0, seq_len, sample]
 
     try:
         truth_tract_df = pd.read_csv(truth_tract_file, sep="\t", header=None)
     except pd.errors.EmptyDataError:
-        feature_df['label'] = 0.0
+        label_df['label'] = 0.0
     else:
         truth_tract_df.columns = ['chrom', 'start', 'end', 'sample']
         truth_tract_df['len'] = truth_tract_df['end'] - truth_tract_df['start']
         truth_tract_df = truth_tract_df.groupby(by=['sample'])['len'].sum().reset_index()
         truth_tract_df['prop'] = truth_tract_df['len'] / seq_len
         truth_tract_df['label'] = truth_tract_df.apply(lambda row: _add_label(row, intro_prop, not_intro_prop), axis=1)
-        feature_df = feature_df.merge(truth_tract_df.drop(columns=['len', 'prop']),
-                                      left_on=['sample'], right_on=['sample'], how='left').fillna(0)
+        label_df = label_df.merge(truth_tract_df.drop(columns=['len', 'prop']),
+                                  left_on=['sample'], right_on=['sample'], how='left').fillna(0)
     finally:
-        feature_df.to_csv(output, sep="\t", index=False)
+        label_df['msprime_seed'] = seed
+        label_df['label'] = label_df['label'].astype('int8')
+        label_df.to_csv(output, sep="\t", index=False)
 
 
 def _add_label(row, intro_prop, not_intro_prop):
@@ -199,5 +221,5 @@ def _add_label(row, intro_prop, not_intro_prop):
 if __name__ == '__main__':
     simulate(demo_model_file="./examples/models/ArchIE_3D19.yaml", nrep=1000, nref=50, ntgt=50, 
              ref_id='Ref', tgt_id='Tgt', src_id='Ghost', ploidy=2, seq_len=50000, mut_rate=1.25e-8, rec_rate=1e-8, thread=2,
-             feature_config='./examples/features/archie.features.yaml', is_phased=True, intro_prop=0.7, not_intro_prop=0.3, rm_sim_data=True,
+             feature_config="./examples/features/archie.features.yaml", is_phased=True, intro_prop=0.7, not_intro_prop=0.3, rm_sim_data=False,
              output_prefix='test', output_dir='./sstar/test', seed=913)
