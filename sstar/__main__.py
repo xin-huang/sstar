@@ -53,7 +53,7 @@ def _run_tract(args):
 def _run_simulation(args):
     from sstar.simulate import simulate
     simulate(demo_model_file=args.demes, nrep=args.replicate, nref=args.nref, ntgt=args.ntgt, ref_id=args.ref_id, tgt_id=args.tgt_id, src_id=args.src_id, ploidy=args.ploidy,
-             feature_config=args.features, intro_prop=args.intro_prop, not_intro_prop=args.not_intro_prop, rm_sim_data=args.delete, is_phased=args.phased,
+             feature_config=args.features, intro_prop=args.intro_prop, not_intro_prop=args.not_intro_prop, keep_sim_data=args.keep, is_phased=args.phased,
              seq_len=args.seq_len, mut_rate=args.mut_rate, rec_rate=args.rec_rate, thread=args.thread, output_prefix=args.output_prefix, output_dir=args.output_dir, seed=args.seed)
 
 
@@ -216,7 +216,7 @@ def _s_star_cli_parser():
     parser.add_argument('--features', type=str, default=None, help='Name of the YAML file specifying what features should be used. Default: None.')
     parser.add_argument('--introgressed-prop', type=float, default=0.7, help="Proportion that determines a fragment as introgressed. Default: 0.7.", dest="intro_prop")
     parser.add_argument('--not-introgressed-prop', type=float, default=0.3, help="Proportion that determinse a fragment as non-introgressed. Default: 0.3.", dest="not_intro_prop")
-    parser.add_argument('--delete-simulated-data', action='store_true', help="Enable to delete simulated data. Default: False.", dest="delete")
+    parser.add_argument('--keep-simulated-data', action='store_true', help="Enable to keep simulated data. Default: False.", dest="keep")
     parser.add_argument('--thread', type=int, default=1, help="Number of threads for the simulation. Default: 1.")
     parser.add_argument('--seed', type=int, default=None, help="Random seed for the simulation. Default: None.")
     parser.set_defaults(runner=_run_simulation)

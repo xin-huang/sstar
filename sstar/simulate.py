@@ -23,7 +23,7 @@ from sstar.preprocess import preprocess
 
 
 def simulate(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, ploidy,
-             feature_config, is_phased, intro_prop, not_intro_prop, rm_sim_data,
+             feature_config, is_phased, intro_prop, not_intro_prop, keep_sim_data,
              seq_len, mut_rate, rec_rate, thread, output_prefix, output_dir, seed):
     """
     """
@@ -52,7 +52,7 @@ def simulate(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, ploidy,
         feature_df.drop([i for i in feature_df.columns if 'dup' in i], axis=1, inplace=True)
         feature_df.to_csv(f'{output_dir}/{output_prefix}.all.labeled.features', sep="\t", index=False)
 
-    if rm_sim_data is True:
+    if keep_sim_data is not True:
         for i in range(nrep):
             shutil.rmtree(f'{output_dir}/{i}', ignore_errors=True)
 

@@ -40,12 +40,15 @@ def infer(feature_file, model_file, prediction_dir, prediction_prefix, cutoff, a
     else:
         raise Exception(f'The {algorithm} algorithm is NOT available!')
 
-    feature_df['label'] = model.infer(trained_model, feature_df)
-    feature_df = feature_df[feature_df['label']>cutoff][['chrom', 'start', 'end', 'sample']].sort_values(by=['sample', 'chrom', 'start', 'end'])
+    print(trained_model.classes_)
+    labels = model.infer(trained_model, feature_df)
+    feature_df['label_0_prob'] = labels[:,0]
+    feature_df['label_1_prob'] = labels[:,1]
+    #feature_df['label'] = model.infer(trained_model, feature_df)
+    #feature_df = feature_df[feature_df['label']>cutoff][['chrom', 'start', 'end', 'sample']].sort_values(by=['sample', 'chrom', 'start', 'end'])
     
     feature_df.to_csv(prediction_file, sep="\t", index=False, header=None)
 
 
 if __name__ == '__main__':
-    infer(feature_file="./sstar/test/test.features", model_file="./sstar/test/test.lr.model", 
-          prediction_dir="./sstar/test", prediction_prefix="test", cutoff=0.5, algorithm="logistic_regression")
+    infer(feature_file="/scratch/admixlab/xinhuang/projects/sstar2-analysis-dev/results/test_data/ArchIE_3D19/nref_50/ntgt_50/956714/0/sim.test.0.archie.features", model_file="/scratch/admixlab/xinhuang/projects/sstar2-analysis-dev/results/training_data/ArchIE_3D19/nref_50/ntgt_50/archie.logistic_regression.model", prediction_dir="./sstar/test", prediction_prefix="test", cutoff=0.5, algorithm="logistic_regression")

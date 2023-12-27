@@ -26,7 +26,7 @@ def train(training_data, model_file, algorithm=None):
     feature_df = feature_df[feature_df['label'] != -1.0]
 
     labels = feature_df['label']
-    data = feature_df.drop(columns=['replicate', 'chrom', 'start', 'end', 'sample', 'label']).values
+    data = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'rep', 'label']).values
 
     if algorithm == 'logistic_regression':
         model = LogisticRegression()
