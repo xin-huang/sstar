@@ -20,6 +20,8 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sstar.models import LogisticRegression, ExtraTrees, Sstar
 
+pd.options.mode.chained_assignment = None
+
 
 def infer(feature_file, model_file, prediction_dir, prediction_prefix, cutoff, algorithm=None):
     """
@@ -30,26 +32,26 @@ def infer(feature_file, model_file, prediction_dir, prediction_prefix, cutoff, a
     feature_df = pd.read_csv(feature_file, sep="\t")
 
     if algorithm == 'logistic_regression':
-        prediction_file = prediction_dir + '/' + prediction_prefix + '.logistic.regression.predicted.bed'
+        prediction_file = prediction_dir + '/' + prediction_prefix + '.logistic.regression.predictions'
         model = LogisticRegression()
     elif algorithm == 'extra_trees':
-        prediction_file = prediction_dir + '/' + prediction_prefix + '.extra.trees.predicted.bed'
+        prediction_file = prediction_dir + '/' + prediction_prefix + '.extra.trees.predictions'
         model = ExtraTrees()
     elif (algorithm == 'sstar') or (algorithm is None):
-        prediction_file = prediction_dir + '/' + prediction_prefix + '.sstar.predicted.bed'
+        prediction_file = prediction_dir + '/' + prediction_prefix + '.sstar.predictions'
         model = Sstar()
     else:
         raise Exception(f'The {algorithm} algorithm is NOT available!')
 
-    print(trained_model.classes_)
-    labels = model.infer(trained_model, feature_df)
-    feature_df['label_0_prob'] = labels[:,0]
-    feature_df['label_1_prob'] = labels[:,1]
-    #feature_df['label'] = model.infer(trained_model, feature_df)
-    #feature_df = feature_df[feature_df['label']>cutoff][['chrom', 'start', 'end', 'sample']].sort_values(by=['sample', 'chrom', 'start', 'end'])
+    classes = trained_model.classes_
+    predictions = model.infer(trained_model, feature_df)
+    prediction_df = feature_df[['chrom', 'start', 'end', 'sample']]
+
+    for i in range(len(classes)):
+        prediction_df[f'class_{classes[i]}_prob'] = predictions[:,i]
     
-    feature_df.to_csv(prediction_file, sep="\t", index=False, header=None)
+    prediction_df.sort_values(by=['sample', 'chrom', 'start', 'end']).to_csv(prediction_file, sep="\t", index=False)
 
 
 if __name__ == '__main__':
-    infer(feature_file="/scratch/admixlab/xinhuang/projects/sstar2-analysis-dev/results/test_data/ArchIE_3D19/nref_50/ntgt_50/956714/0/sim.test.0.archie.features", model_file="./sstar/test/test.archie.imbalanced.scaled.model", prediction_dir="./sstar/test", prediction_prefix="test.imbalanced.scaled", cutoff=0.5, algorithm="logistic_regression")
+    infer(feature_file="/scratch/admixlab/xinhuang/projects/sstar2-analysis-dev/results/test_data/ArchIE_3D19/nref_50/ntgt_50/956714/0/sim.test.0.archie.features", model_file="/scratch/admixlab/xinhuang/projects/sstar2-analysis-dev/tmp/archie.imbalanced.logistic_regression.model", prediction_dir="./sstar/test", prediction_prefix="test.imbalanced.test", cutoff=0.5, algorithm="logistic_regression")

@@ -81,10 +81,9 @@ class LogisticRegression(Model):
 
         #scaler = StandardScaler()
         #data = scaler.fit_transform(data)
-        labels = model.predict_proba(data)
+        predictions = model.predict_proba(data)
 
-        return labels[:,-1]
-        #return labels
+        return predictions
 
 
 class ExtraTrees(Model):

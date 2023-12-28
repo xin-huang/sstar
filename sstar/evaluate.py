@@ -32,9 +32,6 @@ def evaluate(truth_tract_file, inferred_tract_file, output):
     truth_tracts_samples = truth_tracts['sample'].unique()
     inferred_tracts_samples = inferred_tracts['sample'].unique()
 
-    print(truth_tracts_samples)
-    print(inferred_tracts_samples)
-
     res = pd.DataFrame(columns=['sample', 'precision', 'recall'])
 
     for s in np.intersect1d(truth_tracts_samples, inferred_tracts_samples):
@@ -43,10 +40,6 @@ def evaluate(truth_tract_file, inferred_tract_file, output):
 
         ind_truth_tracts = pybedtools.BedTool.from_dataframe(ind_truth_tracts).sort().merge()
         ind_inferred_tracts = pybedtools.BedTool.from_dataframe(ind_inferred_tracts).sort().merge()
-        if s == 'tsk_50_1': 
-            print(s)
-            print(ind_truth_tracts)
-            print(ind_inferred_tracts)
 
         ntruth_tracts = sum([x.stop - x.start for x in (ind_truth_tracts)])
         ninferred_tracts = sum([x.stop - x.start for x in (ind_inferred_tracts)])
