@@ -25,9 +25,6 @@ def train(training_data, model_file, algorithm=None):
     feature_df = pd.read_csv(training_data, sep="\t")
     feature_df = feature_df[feature_df['label'] != -1.0]
 
-    labels = feature_df['label']
-    data = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'rep', 'label']).values
-
     if algorithm == 'logistic_regression':
         model = LogisticRegression()
     elif algorithm == 'extra_trees':
@@ -37,10 +34,11 @@ def train(training_data, model_file, algorithm=None):
     else:
         raise Exception(f'The {algorithm} algorithm is NOT available!')
 
-    trained_model = model.train(data, labels)
+    trained_model = model.train(feature_df)
 
     pickle.dump(trained_model, open(model_file, "wb"))
 
 
 if __name__ == '__main__':
-    train(training_data="./sstar/test/test.all.labeled.features", model_file="./sstar/test/test.lr.model", algorithm='logistic_regression')
+    train(training_data="/scratch/admixlab/xinhuang/projects/sstar2-analysis-dev/tmp/sim.training.archie.balanced.all.labeled.features", 
+          model_file="./sstar/test/test.archie.balanced.scaled.model", algorithm='logistic_regression')

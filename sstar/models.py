@@ -19,6 +19,7 @@ import statsmodels.formula.api as smf
 import numpy as np
 import pandas as pd
 from abc import ABC, abstractmethod
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression as LR
 from sklearn.ensemble import ExtraTreesClassifier
 
@@ -39,7 +40,7 @@ class Model(ABC):
 class LogisticRegression(Model):
     """
     """
-    def train(self, data, labels):
+    def train(self, feature_df):
         """
         Description:
             Function for training of the sklearn logistic classification.
@@ -53,12 +54,16 @@ class LogisticRegression(Model):
             model 
         """
         model = LR(solver="newton-cg", penalty=None, max_iter=10000)
-        model.fit(data, labels.astype(int))
+        scaler = StandardScaler()
+        labels = feature_df['label']
+        data = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'rep', 'label']).values
+        scaled_data = scaler.fit_transform(data)
+        model.fit(scaled_data, labels.astype(int))
 
         return model
 
 
-    def infer(self, model, df):
+    def infer(self, model, feature_df):
         """
         Description:
             Function for inference using the sklearn logistic classifciation.
@@ -71,8 +76,10 @@ class LogisticRegression(Model):
         Returns:
             labels
         """
-        data = df.drop(columns=['chrom', 'start', 'end', 'sample']).values
-        labels = model.predict_proba(data)
+        scaler = StandardScaler()
+        data = feature_df.drop(columns=['chrom', 'start', 'end', 'sample']).values
+        scaled_data = scaler.transform(data)
+        labels = model.predict_proba(scaled_data)
 
         #return labels[:,-1]
         return labels

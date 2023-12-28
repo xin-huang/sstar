@@ -16,3 +16,4 @@ tests/results/test.sstar.out
 tests/results/test.tract.with.src.match.rate.bed
 sstar/test
 test_data
+*.out
