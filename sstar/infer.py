@@ -52,4 +52,4 @@ def infer(feature_file, model_file, prediction_dir, prediction_prefix, cutoff, a
 
 
 if __name__ == '__main__':
-    infer(feature_file="/scratch/admixlab/xinhuang/projects/sstar2-analysis-dev/results/test_data/ArchIE_3D19/nref_50/ntgt_50/956714/0/sim.test.0.archie.features", model_file="/scratch/admixlab/xinhuang/projects/sstar2-analysis-dev/tmp/archie.imbalanced.logistic_regression.model", prediction_dir="./sstar/test", prediction_prefix="test.imbalance", cutoff=0.5, algorithm="logistic_regression")
+    infer(feature_file="/scratch/admixlab/xinhuang/projects/sstar2-analysis-dev/results/test_data/ArchIE_3D19/nref_50/ntgt_50/956714/0/sim.test.0.archie.features", model_file="./sstar/test/test.archie.imbalanced.scaled.model", prediction_dir="./sstar/test", prediction_prefix="test.imbalanced.scaled", cutoff=0.5, algorithm="logistic_regression")

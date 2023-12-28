@@ -32,6 +32,9 @@ def evaluate(truth_tract_file, inferred_tract_file, output):
     truth_tracts_samples = truth_tracts['sample'].unique()
     inferred_tracts_samples = inferred_tracts['sample'].unique()
 
+    print(truth_tracts_samples)
+    print(inferred_tracts_samples)
+
     res = pd.DataFrame(columns=['sample', 'precision', 'recall'])
 
     for s in np.intersect1d(truth_tracts_samples, inferred_tracts_samples):
@@ -39,7 +42,11 @@ def evaluate(truth_tract_file, inferred_tract_file, output):
         ind_inferred_tracts = inferred_tracts[inferred_tracts['sample'] == s][['chrom', 'start', 'end']]
 
         ind_truth_tracts = pybedtools.BedTool.from_dataframe(ind_truth_tracts).sort().merge()
-        ind_inferred_tracts = pybedtools.BedTool.from_dataframe(inferred_tracts).sort().merge()
+        ind_inferred_tracts = pybedtools.BedTool.from_dataframe(ind_inferred_tracts).sort().merge()
+        if s == 'tsk_50_1': 
+            print(s)
+            print(ind_truth_tracts)
+            print(ind_inferred_tracts)
 
         ntruth_tracts = sum([x.stop - x.start for x in (ind_truth_tracts)])
         ninferred_tracts = sum([x.stop - x.start for x in (ind_inferred_tracts)])
@@ -61,4 +68,4 @@ def evaluate(truth_tract_file, inferred_tract_file, output):
 
 
 if __name__ == '__main__':
-    evaluate(truth_tract_file="../sstar2-analysis-dev/results/simulated_data/ArchIE_3D19/nref_50/ntgt_50/1018775942/0/sim.0.true.tracts.bed", inferred_tract_file="test_data/test.logistic.regression.predicted.bed", output="./test_data/test.performance")
+    evaluate(truth_tract_file="sim.test.0.truth.tracts.bed", inferred_tract_file="tsk.cutoff.0.5.predicted.bed", output="./sstar/test/test.performance")

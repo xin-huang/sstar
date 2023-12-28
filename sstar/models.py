@@ -54,11 +54,12 @@ class LogisticRegression(Model):
             model 
         """
         model = LR(solver="newton-cg", penalty=None, max_iter=10000)
-        scaler = StandardScaler()
         labels = feature_df['label']
         data = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'rep', 'label']).values
-        scaled_data = scaler.fit_transform(data)
-        model.fit(scaled_data, labels.astype(int))
+
+        #scaler = StandardScaler()
+        #data = scaler.fit_transform(data)
+        model.fit(data, labels.astype(int))
 
         return model
 
@@ -76,13 +77,14 @@ class LogisticRegression(Model):
         Returns:
             labels
         """
-        scaler = StandardScaler()
         data = feature_df.drop(columns=['chrom', 'start', 'end', 'sample']).values
-        scaled_data = scaler.transform(data)
-        labels = model.predict_proba(scaled_data)
 
-        #return labels[:,-1]
-        return labels
+        #scaler = StandardScaler()
+        #data = scaler.fit_transform(data)
+        labels = model.predict_proba(data)
+
+        return labels[:,-1]
+        #return labels
 
 
 class ExtraTrees(Model):

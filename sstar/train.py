@@ -40,5 +40,5 @@ def train(training_data, model_file, algorithm=None):
 
 
 if __name__ == '__main__':
-    train(training_data="/scratch/admixlab/xinhuang/projects/sstar2-analysis-dev/tmp/sim.training.archie.balanced.all.labeled.features", 
-          model_file="./sstar/test/test.archie.balanced.scaled.model", algorithm='logistic_regression')
+    train(training_data="/scratch/admixlab/xinhuang/projects/sstar2-analysis-dev/tmp/sim.training.archie.imbalanced.all.labeled.features", 
+          model_file="./sstar/test/test.archie.imbalanced.scaled.model", algorithm='logistic_regression')
