@@ -47,6 +47,9 @@ def infer(feature_file, model_file, prediction_dir, prediction_prefix, cutoff, a
     predictions = model.infer(trained_model, feature_df)
     prediction_df = feature_df[['chrom', 'start', 'end', 'sample']]
 
+    # Rename class 0 as non-introgressed?
+    # Rename class 1 as introgressed?
+
     for i in range(len(classes)):
         prediction_df[f'class_{classes[i]}_prob'] = predictions[:,i]
     

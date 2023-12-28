@@ -23,7 +23,6 @@ def train(training_data, model_file, algorithm=None):
     """
     """
     feature_df = pd.read_csv(training_data, sep="\t")
-    feature_df = feature_df[feature_df['label'] != -1.0]
 
     if algorithm == 'logistic_regression':
         model = LogisticRegression()
@@ -41,4 +40,4 @@ def train(training_data, model_file, algorithm=None):
 
 if __name__ == '__main__':
     train(training_data="/scratch/admixlab/xinhuang/projects/sstar2-analysis-dev/tmp/sim.training.archie.imbalanced.all.labeled.features", 
-          model_file="./sstar/test/test.archie.imbalanced.scaled.model", algorithm='logistic_regression')
+          model_file="./sstar/test/test.archie.imbalanced.model", algorithm='logistic_regression')

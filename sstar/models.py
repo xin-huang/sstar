@@ -54,6 +54,7 @@ class LogisticRegression(Model):
             model 
         """
         model = LR(solver="newton-cg", penalty=None, max_iter=10000)
+        feature_df = feature_df[feature_df['label'] != -1]
         labels = feature_df['label']
         data = feature_df.drop(columns=['chrom', 'start', 'end', 'sample', 'rep', 'label']).values
 
