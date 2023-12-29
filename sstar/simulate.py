@@ -91,11 +91,14 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
         ref_ind_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.ref.ind.list'
         tgt_ind_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.tgt.ind.list'
         label_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.labels'
+        seed_file = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.seedmsprime'
 
         _create_ref_tgt_file(kwargs['nref'], kwargs['ntgt'], ref_ind_file, tgt_ind_file)
 
         ts.dump(ts_file)
         with open(vcf_file, 'w') as o: ts.write_vcf(o)
+
+        with open(seed_file, 'w') as o: o.write(f'{seed}\n')
 
         open(bed_file, 'w').close()
         for s in truth_tracts['sample'].unique():
