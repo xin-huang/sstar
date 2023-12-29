@@ -13,7 +13,7 @@ setup(
     name="sstar",
     python_requires='>=3.9',
     version="1.1.4",
-    description="A Python package for detecting archaic introgression from population genetic data with S*",
+    description="A Python package for ghost introgressed tracts analysis from population genomic data with statistical/machine learning approaches",
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/xin-huang/sstar",

@@ -1,5 +1,5 @@
 # Apache License Version 2.0
-# Copyright 2023 Xin Huang
+# Copyright 2024 Xin Huang
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import os, shutil
 import demes, msprime
+import pybedtools
 import pandas as pd
 from multiprocessing import Process, Queue
 from sstar.utils import multiprocessing_manager
@@ -80,6 +81,8 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
         )
         ts = msprime.sim_mutations(ts, rate=kwargs['mut_rate'], random_seed=seed, model=msprime.BinaryMutationModel())
         truth_tracts = _get_truth_tracts(ts, kwargs['tgt_id'], kwargs['src_id'], kwargs['ploidy'])
+        if (kwargs["is_phased"] is not True) and (truth_tracts.empty is not True): 
+            truth_tracts['sample'] = truth_tracts.apply(lambda row: "_".join(row['sample'].split("_")[0:2]), axis=1)
 
         os.makedirs(f'{kwargs["output_dir"]}/{rep}', exist_ok=True)
         ts_file  = f'{kwargs["output_dir"]}/{rep}/{kwargs["output_prefix"]}.{rep}.ts'
@@ -93,14 +96,14 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
 
         ts.dump(ts_file)
         with open(vcf_file, 'w') as o: ts.write_vcf(o)
-       
-        df = pd.DataFrame()
-        for n in sorted(truth_tracts.keys()):
-            truth_tracts[n].sort(key=lambda x:(x[0], x[1], x[2]))
-            df2 = pd.DataFrame(truth_tracts[n], columns=['chr', 'start', 'end', 'sample'])
-            df = pd.concat([df, df2])
 
-        df.drop_duplicates(keep='first').to_csv(bed_file, sep="\t", header=False, index=False)
+        open(bed_file, 'w').close()
+        for s in truth_tracts['sample'].unique():
+            sample_tracts = truth_tracts[truth_tracts['sample'] == s]
+            sample_tracts = pybedtools.BedTool.from_dataframe(sample_tracts).sort().merge().to_dataframe()
+            sample_tracts['sample'] = s
+            sample_tracts.to_csv(bed_file, sep="\t", mode='a', header=False, index=False)
+
         _label(ind_file=tgt_ind_file, truth_tract_file=bed_file, output=label_file,
                is_phased=kwargs["is_phased"], ploidy=kwargs["ploidy"], rep=rep,
                seq_len=kwargs["seq_len"], intro_prop=kwargs["intro_prop"], not_intro_prop=kwargs["not_intro_prop"])
@@ -150,14 +153,14 @@ def _get_truth_tracts(ts, tgt_id, src_id, ploidy):
         tgt_id str: Name of the target population. 
         src_id str: Name of the source population.
         ploidy int: Ploidy of the genomes.
+
+    Returns:
+        tracts pandas.DataFrame: Ground truth introgressed fragments from a given source population to a given target populations.
     """
-    tracts = {}
-    introgression = []
+    tracts = pd.DataFrame(columns=['chrom', 'start', 'end', 'sample'])
 
     src_id = [p.id for p in ts.populations() if p.metadata['name']==src_id][0]
     tgt_id = [p.id for p in ts.populations() if p.metadata['name']==tgt_id][0]
-
-    for i in ts.samples(tgt_id): tracts[i] = []
 
     for m in ts.migrations():
         if (m.dest==src_id) and (m.source==tgt_id):
@@ -169,11 +172,13 @@ def _get_truth_tracts(ts, tgt_id, src_id, ploidy):
                 # Can skip those tree-sequences are not overlapped with the interval of i.
                 if m.left >= t.interval.right: continue
                 if m.right <= t.interval.left: break # [l, r)
-                for n in tracts.keys():
+                for n in ts.samples(tgt_id):
                     if t.is_descendant(n, m.node):
                         left = m.left if m.left > t.interval.left else t.interval.left
                         right = m.right if m.right < t.interval.right else t.interval.right
-                        tracts[n].append([1, int(left), int(right), f'tsk_{ts.node(n).individual}_{int(n%ploidy+1)}'])
+                        tracts.loc[len(tracts.index)] = [1, int(left), int(right), f'tsk_{ts.node(n).individual}_{int(n%ploidy+1)}']
+
+    tracts = tracts.sort_values(by=['sample', 'chrom', 'start', 'end'])
 
     return tracts
 
@@ -222,5 +227,5 @@ def _add_label(row, intro_prop, not_intro_prop):
 if __name__ == '__main__':
     simulate(demo_model_file="./examples/models/ArchIE_3D19.yaml", nrep=1000, nref=50, ntgt=50, 
              ref_id='Ref', tgt_id='Tgt', src_id='Ghost', ploidy=2, seq_len=50000, mut_rate=1.25e-8, rec_rate=1e-8, thread=2,
-             feature_config="./examples/features/archie.features.yaml", is_phased=True, intro_prop=0.7, not_intro_prop=0.3, rm_sim_data=True,
-             output_prefix='test', output_dir='./sstar/test', seed=913)
+             feature_config=None, is_phased=False, intro_prop=0.7, not_intro_prop=0.3, keep_sim_data=True,
+             output_prefix='test', output_dir='./sstar/test6', seed=913)
