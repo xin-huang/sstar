@@ -36,13 +36,13 @@ def simulate(demo_model_file, nrep, nref, ntgt, ref_id, tgt_id, src_id, ploidy,
                             intro_prop=intro_prop, not_intro_prop=not_intro_prop,
                             output_prefix=output_prefix, output_dir=output_dir, seed=seed)
 
-    label_df = pd.DataFrame()
-    for i in range(nrep):
-        df = pd.read_csv(f'{output_dir}/{i}/{output_prefix}.{i}.labels', sep="\t")
-        label_df = pd.concat([label_df, df])
-    label_df.to_csv(f'{output_dir}/{output_prefix}.all.labels', sep="\t", index=False)
-
     if feature_config is not None:
+        label_df = pd.DataFrame()
+        for i in range(nrep):
+            df = pd.read_csv(f'{output_dir}/{i}/{output_prefix}.{i}.labels', sep="\t")
+            label_df = pd.concat([label_df, df])
+        label_df.to_csv(f'{output_dir}/{output_prefix}.all.labels', sep="\t", index=False)
+
         feature_df = pd.DataFrame()
         for i in range(nrep):
             df = pd.read_csv(f'{output_dir}/{i}/{output_prefix}.{i}.features', sep="\t")
@@ -107,10 +107,6 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
             sample_tracts['sample'] = s
             sample_tracts.to_csv(bed_file, sep="\t", mode='a', header=False, index=False)
 
-        _label(ind_file=tgt_ind_file, truth_tract_file=bed_file, output=label_file,
-               is_phased=kwargs["is_phased"], ploidy=kwargs["ploidy"], rep=rep,
-               seq_len=kwargs["seq_len"], intro_prop=kwargs["intro_prop"], not_intro_prop=kwargs["not_intro_prop"])
-
         if kwargs['feature_config'] is not None:
             preprocess(vcf_file=vcf_file, ref_ind_file=ref_ind_file, tgt_ind_file=tgt_ind_file, anc_allele_file=None,
                        feature_config=kwargs["feature_config"], is_phased=kwargs["is_phased"],
@@ -121,6 +117,9 @@ def _simulation_worker(in_queue, out_queue, **kwargs):
             feature_df = pd.read_csv(feature_file, sep="\t")
             feature_df['rep'] = rep
             feature_df.to_csv(feature_file, sep="\t", index=False)
+            _label(ind_file=tgt_ind_file, truth_tract_file=bed_file, output=label_file,
+                   is_phased=kwargs["is_phased"], ploidy=kwargs["ploidy"], rep=rep,
+                   seq_len=kwargs["seq_len"], intro_prop=kwargs["intro_prop"], not_intro_prop=kwargs["not_intro_prop"])
 
         out_queue.put(rep)
 
