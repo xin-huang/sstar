@@ -230,4 +230,4 @@ if __name__ == '__main__':
     simulate(demo_model_file="./examples/models/ArchIE_3D19.yaml", nrep=1, nref=50, ntgt=50, 
              ref_id='Ref', tgt_id='Tgt', src_id='Ghost', ploidy=2, seq_len=50000, mut_rate=1.25e-8, rec_rate=1e-8, thread=2,
              feature_config=None, is_phased=True, intro_prop=0.7, not_intro_prop=0.3, keep_sim_data=True,
-             output_prefix='test', output_dir='./sstar/test7', seed=913)
+             output_prefix='test', output_dir='./sstar/test7', seed=555)
