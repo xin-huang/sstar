@@ -3,6 +3,7 @@ channels:
         - conda-forge
         - bioconda
 dependencies:
+        - bedtools
         - demes
         - msprime
         - numpy
@@ -14,7 +15,6 @@ dependencies:
         - scikit-learn
         - scipy
         - snakemake
-        - statsmodels
         - pyyaml
         - pip:
                 - .

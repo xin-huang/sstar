@@ -23,14 +23,21 @@ from sstar.stats import cal_pr
 def evaluate(truth_tract_file, inferred_tract_file, output):
     """
     """
-    truth_tracts = pd.read_csv(truth_tract_file, sep="\t", header=None)
-    inferred_tracts = pd.read_csv(inferred_tract_file, sep="\t", header=None)
+    try:
+        truth_tracts = pd.read_csv(truth_tract_file, sep="\t", header=None)
+    except pd.errors.EmptyDataError:
+        truth_tracts_samples = []
+    else:
+        truth_tracts.columns = ['chrom', 'start', 'end', 'sample']
+        truth_tracts_samples = truth_tracts['sample'].unique()
 
-    truth_tracts.columns = ['chrom', 'start', 'end', 'sample']
-    inferred_tracts.columns = ['chrom', 'start', 'end', 'sample']
-
-    truth_tracts_samples = truth_tracts['sample'].unique()
-    inferred_tracts_samples = inferred_tracts['sample'].unique()
+    try:
+        inferred_tracts = pd.read_csv(inferred_tract_file, sep="\t", header=None)
+    except pd.errors.EmptyDataError:
+        inferred_tracts_samples = []
+    else:
+        inferred_tracts.columns = ['chrom', 'start', 'end', 'sample']
+        inferred_tracts_samples = inferred_tracts['sample'].unique()
 
     res = pd.DataFrame(columns=['sample', 'precision', 'recall', 'true_positive', 'inferred_tracts_length', 'truth_tracts_length'])
 
@@ -82,7 +89,7 @@ def evaluate(truth_tract_file, inferred_tract_file, output):
     total_precision, total_recall = cal_pr(sum_ntruth_tracts, sum_ninferred_tracts, sum_ntrue_positives)
     res.loc[len(res.index)] = ['Summary', total_precision, total_recall, sum_ntrue_positives, sum_ninferred_tracts, sum_ntruth_tracts]
 
-    res.to_csv(output, sep="\t", index=False)
+    res.fillna('NaN').to_csv(output, sep="\t", index=False)
 
 
 if __name__ == '__main__':
