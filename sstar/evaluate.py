@@ -22,6 +22,15 @@ from sstar.stats import cal_pr
 
 def evaluate(truth_tract_file, inferred_tract_file, output):
     """
+    Description:
+        Evaluates model performance with precision and recall.
+
+    Arguments:
+        truth_tract_file str: Name of the file containing true fragments.
+        inferred_tract_file str: Name of the file containing inferred fragments
+        cutoff float: Probability threshold to determine whether a fragment
+                      is introgressed or not.
+        output str: Name of the output file storing the model performance.
     """
     try:
         truth_tracts = pd.read_csv(truth_tract_file, sep="\t", header=None)
