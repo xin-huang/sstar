@@ -13,10 +13,9 @@ jobs:
       with:
         python-version: 3.8
     - name: Add micromamba to system path
-      uses: mamba-org/provision-with-micromamba@main
+      uses: mamba-org/setup-micromamba@v1
       with:
         environment-name: sstar
-        activate-environment: sstar
         environment-file: build-env.yml
     - name: Test dry-run
       run: |
