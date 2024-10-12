@@ -7,4 +7,4 @@
 [![codecov](https://codecov.io/gh/xin-huang/sstar/branch/main/graph/badge.svg?token=71r46xjWnU)](https://codecov.io/gh/xin-huang/sstar)
 [![Documentation Status](https://readthedocs.org/projects/sstar/badge/?version=latest)](https://sstar.readthedocs.io/en/latest/?badge=latest)
 
-The manual can be found [here](https://sstar.readthedocs.io/en/latest/).
+The manual can be found [here](https://xin-huang.github.io/sstar).
