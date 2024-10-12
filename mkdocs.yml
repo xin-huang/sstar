@@ -4,10 +4,10 @@ repo_url: "https://github.com/xin-huang/sstar"
 edit_uri: ""
 docs_dir: 'docs'
 theme:
-        name: "material"
-        palette:
-                primary: cyan
-                accent: cyan
+  name: "material"
+  palette:
+    primary: teal
+    accent: indigo
 plugins:
   - search
   - mkdocstrings:
@@ -29,11 +29,11 @@ extra_javascript:
 nav:
 - Home: 'index.md'
 - User Guide: 
-        - Overview: 'userguide/overview.md'
-        - Calculate S* scores: 'userguide/score.md'
-        - Calculate quanitles of expected S*: 'userguide/quantile.md'
-        - Calculate significant S* score thresholds: 'userguide/threshold.md'
-        - Calculate source match rates: 'userguide/matchrate.md'
-        - Get candidate introgressed fragments: 'userguide/tract.md'
+    - Overview: 'userguide/overview.md'
+    - Calculate S* scores: 'userguide/score.md'
+    - Calculate quanitles of expected S*: 'userguide/quantile.md'
+    - Calculate significant S* score thresholds: 'userguide/threshold.md'
+    - Calculate source match rates: 'userguide/matchrate.md'
+    - Get candidate introgressed fragments: 'userguide/tract.md'
 - Examples: 'examples.md'
 - References: 'references.md'

@@ -1,0 +1,27 @@
+name: build
+
+on: [push, pull_request]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Add micromamba to system path
+      uses: mamba-org/setup-micromamba@v1
+      with:
+        environment-name: sstar
+        environment-file: dev-env.yaml
+    - name: Test with pytest
+      run: |
+        micromamba run -n sstar pytest -vv --cov=. --cov-report term-missing -s --durations=10
+        micromamba run -n sstar coverage xml
+    - name: upload coverage report to codecov
+      uses: codecov/codecov-action@v4
+      with:
+          name: codecov-umbrella
+          fail_ci_if_error: true
+          env_vars: OS,PYTHON
+          token: ${{ secrets.CODECOV_TOKEN }}
