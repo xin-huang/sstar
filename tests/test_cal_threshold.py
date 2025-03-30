@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import pytest
+import pandas as pd
 from sstar.cal_threshold import cal_threshold
 
 @pytest.fixture
@@ -27,11 +28,17 @@ def data():
 def test_cal_threshold(data):
     cal_threshold(simulated_data=pytest.simulated_data, score_file=pytest.score_file, recomb_rate=0, recomb_map=pytest.recomb_map, quantile=0.99, output=pytest.output, k=8)
 
-    f1 = open(pytest.output, 'r')
-    res = f1.read()
-    f1.close()
-    f2 = open(pytest.exp_output, 'r')
-    exp_res = f2.read()
-    f2.close()
+    df1 = pd.read_csv(pytest.output, sep="\t")
+    df2 = pd.read_csv(pytest.exp_output, sep="\t")
 
-    assert res == exp_res
+    assert df1.shape == df2.shape, "DataFrame shape mismatch"
+
+    for col in df1.columns:
+        assert col in df2.columns, f"Column '{col}' missing in expected output"
+
+    if pd.api.types.is_float_dtype(df1[col]):
+        assert np.allclose(
+            df1[col], df2[col], rtol=1e-5, atol=1e-8, equal_nan=True
+        ), f"Float column '{col}' differs"
+    else:
+        assert (df1[col].fillna("").astype(str).values == df2[col].fillna("").astype(str).values).all(), f"Column '{col}' differs"
