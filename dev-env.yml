@@ -1,0 +1,23 @@
+name: sstar-dev
+channels:
+        - conda-forge
+        - bioconda
+dependencies:
+        - black
+        - codecov
+        - demes
+        - flake8
+        - numpy
+        - pandas
+        - pip
+        - pytest
+        - pytest-cov
+        - python=3.8
+        - scikit-allel
+        - scipy
+        - snakemake
+        - r-base=4.1.2
+        - r-essentials=4.1
+        - rpy2
+        - pip:
+                - sstar
