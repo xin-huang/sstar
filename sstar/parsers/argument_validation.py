@@ -1,3 +1,5 @@
+import argparse
+
 def required_length(nmin, nmax):
     class RequiredLength(argparse.Action):
         def __call__(self, parser, args, values, option_string=None):

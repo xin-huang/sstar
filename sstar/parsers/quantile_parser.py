@@ -1,4 +1,4 @@
-def sstar.parsers.argument_validation import required_length
+from sstar.parsers.argument_validation import required_length
 
 def run_quantile(args):
     from sstar.get_quantile import get_quantile

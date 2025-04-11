@@ -1,6 +1,6 @@
 from sstar.parsers.common_args import add_common_args, add_window_args, add_ref_ind_args, add_tgt_ind_args
 
-def _run_score(args):
+def run_score(args):
     from sstar.calc_s_star import calc_s_star
 
     calc_s_star(
