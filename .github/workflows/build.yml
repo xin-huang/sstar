@@ -1,0 +1,36 @@
+name: build
+
+on: [push, pull_request]
+
+jobs:
+  build-linux:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-20.04"]
+        python-version: ["3.8", "3.9"]
+      max-parallel: 5
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Add micromamba to system path
+      uses: mamba-org/setup-micromamba@v1
+      with:
+        environment-name: sstar
+        environment-file: build-env.yml
+    - name: Test with pytest
+      run: |
+        export R_LIBS=${CONDA_PREFIX}/lib/R/library
+        micromamba run -n sstar pytest --cov=. --cov-report term-missing
+        micromamba run -n sstar coverage xml
+    - name: upload coverage report to codecov
+      uses: codecov/codecov-action@v3
+      with:
+          name: codecov-umbrella
+          fail_ci_if_error: true
+          env_vars: OS,PYTHON
+          token: d257164e-ffda-43ba-b37b-f33b5dde0f34

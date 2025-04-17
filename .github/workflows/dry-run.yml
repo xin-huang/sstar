@@ -1,0 +1,23 @@
+name: dry-run
+
+on: ['push', 'pull_request']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.8
+    - name: Add micromamba to system path
+      uses: mamba-org/setup-micromamba@v1
+      with:
+        environment-name: sstar
+        environment-file: build-env.yml
+    - name: Test dry-run
+      run: |
+        cd examples/snakepipe
+        micromamba run -n sstar snakemake -np
