@@ -13,10 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 import allel
 import pytest
 import numpy as np
-from sstar.cal_s_star import cal_s_star
+from sstar.calc_s_star import calc_s_star
+
 
 @pytest.fixture
 def data():
@@ -27,12 +29,25 @@ def data():
     pytest.output = "./tests/results/test.score.results"
     pytest.exp_output = "./tests/results/test.score.exp.results"
 
-def test_cal_s_star(data):
-    cal_s_star(vcf=pytest.vcf, ref_ind_file=pytest.ref_ind_list, tgt_ind_file=pytest.tgt_ind_list, anc_allele_file=None, output=pytest.output, win_len=50000, win_step=10000, thread=1, match_bonus=5000, max_mismatch=5, mismatch_penalty=-10000)
-    f1 = open(pytest.output, 'r')
+
+def test_calc_s_star(data):
+    calc_s_star(
+        vcf=pytest.vcf,
+        ref_ind_file=pytest.ref_ind_list,
+        tgt_ind_file=pytest.tgt_ind_list,
+        anc_allele_file=None,
+        output=pytest.output,
+        win_len=50000,
+        win_step=10000,
+        thread=1,
+        match_bonus=5000,
+        max_mismatch=5,
+        mismatch_penalty=-10000,
+    )
+    f1 = open(pytest.output, "r")
     res = f1.read()
     f1.close()
-    f2 = open(pytest.exp_output, 'r')
+    f2 = open(pytest.exp_output, "r")
     exp_res = f2.read()
     f2.close()
 

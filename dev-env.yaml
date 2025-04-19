@@ -1,0 +1,21 @@
+name: sstar-dev
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - black
+  - codecov
+  - demes
+  - flake8
+  - numpy=1.26.4
+  - pandas
+  - pip
+  - pygam=0.9.1
+  - pytest
+  - pytest-cov
+  - python=3.9.19
+  - scikit-allel
+  - scipy
+  - statsmodels=0.14.4
+  - pip:
+      - -e .

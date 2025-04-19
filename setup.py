@@ -11,16 +11,16 @@ with open(os.path.join(HERE, "README.md")) as fid:
 # This call to setup() does all the work
 setup(
     name="sstar",
-    version="1.1.3",
+    version="2.0.0",
     description="A Python package for detecting archaic introgression from population genetic data with S*",
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/xin-huang/sstar",
     author="Xin Huang",
     author_email="xinhuang.res@gmail.com",
-    license="Apache-2.0",
+    license="GPLv3",
     classifiers=[
-        "License :: OSI Approved :: Apache Software License",
+        "License :: OSI Approved :: GNU General Public License",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
     ],
@@ -30,7 +30,7 @@ setup(
         "demes",
         "numpy",
         "pandas",
-        "rpy2",
+        "statsmodels",
         "scikit-allel",
         "scipy",
     ],
