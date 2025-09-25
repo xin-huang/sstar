@@ -201,8 +201,10 @@ def _read_recomb_map(recomb_map_file):
     """
     recomb_map = dict()
     with open(recomb_map_file, 'r') as f:
-        for line in f.readlines():
+        for line in f:
             line = line.rstrip()
+            if not line.strip():
+                continue
             element = line.split("\t")
             key = element[0]+":"+element[1]+"-"+element[2]
             if key not in recomb_map.keys(): recomb_map[key] = float(element[3])

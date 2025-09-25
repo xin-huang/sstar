@@ -4,12 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build-linux:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: ["ubuntu-20.04"]
-        python-version: ["3.8", "3.9"]
-      max-parallel: 5
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
@@ -28,9 +23,9 @@ jobs:
         micromamba run -n sstar pytest --cov=. --cov-report term-missing
         micromamba run -n sstar coverage xml
     - name: upload coverage report to codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
           name: codecov-umbrella
           fail_ci_if_error: true
           env_vars: OS,PYTHON
-          token: d257164e-ffda-43ba-b37b-f33b5dde0f34
+          token: ${{ secrets.CODECOV_TOKEN }}
