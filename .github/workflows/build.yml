@@ -20,7 +20,7 @@ jobs:
     - name: Test with pytest
       run: |
         export R_LIBS=${CONDA_PREFIX}/lib/R/library
-        micromamba run -n sstar pytest --cov=. --cov-report term-missing
+        micromamba run -n sstar pytest -vv --cov=. --cov-report term-missing
         micromamba run -n sstar coverage xml
     - name: upload coverage report to codecov
       uses: codecov/codecov-action@v4
