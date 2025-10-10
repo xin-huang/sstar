@@ -105,7 +105,7 @@ def filter_data(data, c, index):
     return data
 
 #@profile
-def read_data(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file):
+def read_data(vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, is_phased):
     """
     Description:
         Helper function for reading data from reference and target populations.
@@ -114,47 +114,58 @@ def read_data(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file):
         vcf str: Name of the VCF file containing genotype data from reference, target, and source populations.
         ref_ind_file str: Name of the file containing sample information from reference populations.
         tgt_ind_file str: Name of the file containing sample information from target populations.
-        src_ind_file str: Name of the file containing sample information from source populations.
         anc_allele_file str: Name of the file containing ancestral allele information.
+        phased bool: If True, use phased genotypes; otherwise, use unphased genotypes.
 
     Returns:
         ref_data dict: Genotype data from reference populations.
         ref_samples list: Sample information from reference populations.
         tgt_data dict: Genotype data from target populations.
         tgt_samples list: Sample information from target populations.
-        src_data list: Genotype data from source populations.
-        src_samples list: Sample information from source populations.
     """
-   
-    ref_data = ref_samples = tgt_data = tgt_samples = src_data = src_samples = None
-    if ref_ind_file != None: 
+
+    ref_data = ref_samples = tgt_data = tgt_samples = None
+    if ref_ind_file is not None:
         ref_samples = parse_ind_file(ref_ind_file)
-        ref_data = read_geno_data(vcf, ref_samples, anc_allele_file, True)
-        
-    if tgt_ind_file != None: 
+        ref_data = read_geno_data(vcf_file, ref_samples, anc_allele_file, True)
+
+    if tgt_ind_file is not None:
         tgt_samples = parse_ind_file(tgt_ind_file)
-        tgt_data = read_geno_data(vcf, tgt_samples, anc_allele_file, True)
+        tgt_data = read_geno_data(vcf_file, tgt_samples, anc_allele_file, True)
 
-    if src_ind_file != None:
-        src_samples = parse_ind_file(src_ind_file)
-        src_data = read_geno_data(vcf, src_samples, anc_allele_file, False)
-
-    if (ref_ind_file != None) and (tgt_ind_file != None):
+    if (ref_ind_file is not None) and (tgt_ind_file is not None):
         chr_names = tgt_data.keys()
         for c in chr_names:
             # Remove variants fixed in both the reference and target individuals
-            ref_fixed_variants = np.sum(ref_data[c]['GT'].is_hom_alt(),axis=1) == len(ref_samples)
-            tgt_fixed_variants = np.sum(tgt_data[c]['GT'].is_hom_alt(),axis=1) == len(tgt_samples)
+            ref_fixed_variants = np.sum(ref_data[c]["GT"].is_hom_alt(), axis=1) == len(
+                ref_samples
+            )
+            tgt_fixed_variants = np.sum(tgt_data[c]["GT"].is_hom_alt(), axis=1) == len(
+                tgt_samples
+            )
             fixed_index = np.logical_and(ref_fixed_variants, tgt_fixed_variants)
             index = np.logical_not(fixed_index)
-            fixed_pos =ref_data[c]['POS'][fixed_index]
+            fixed_pos = ref_data[c]["POS"][fixed_index]
             ref_data = filter_data(ref_data, c, index)
             tgt_data = filter_data(tgt_data, c, index)
-            if src_ind_file != None:
-                index = np.logical_not(np.in1d(src_data[c]['POS'], fixed_pos))
-                src_data = filter_data(src_data, c, index)
 
-    return ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples
+    if is_phased:
+        for c in chr_names:
+            mut_num, ind_num, ploidy = ref_data[c]["GT"].shape
+            ref_data[c]["GT"] = np.reshape(
+                ref_data[c]["GT"].values, (mut_num, ind_num * ploidy)
+            )
+            mut_num, ind_num, ploidy = tgt_data[c]["GT"].shape
+            tgt_data[c]["GT"] = np.reshape(
+                tgt_data[c]["GT"].values, (mut_num, ind_num * ploidy)
+            )
+    else:
+        for c in chr_names:
+            ref_data[c]["GT"] = np.sum(ref_data[c]["GT"], axis=2)
+            tgt_data[c]["GT"] = np.sum(tgt_data[c]["GT"], axis=2)
+
+    return ref_data, ref_samples, tgt_data, tgt_samples
+
 
 #@profile
 def get_ref_alt_allele(ref, alt, pos):
