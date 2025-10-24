@@ -105,7 +105,7 @@ def filter_data(data, c, index):
     return data
 
 #@profile
-def read_data(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file, is_phased=None):
+def read_data(vcf_file, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file, is_phased=None):
     """
     Description:
         Helper function for reading data from reference and target populations.
@@ -138,7 +138,7 @@ def read_data(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file, is
             s = parse_ind_file(f)
             samples[k] = s
             # Keep src less stringently filtered for missing (as in sstar)
-            data[k] = read_geno_data(vcf, s, anc_allele_file, ph)
+            data[k] = read_geno_data(vcf_file, s, anc_allele_file, ph)
 
     # --- Remove variants fixed as hom-ALT in BOTH ref and tgt -----------------
     # For each shared chromosome, remove variants fixed in both populations.
