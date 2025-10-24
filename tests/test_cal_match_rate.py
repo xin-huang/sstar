@@ -17,6 +17,7 @@ import pytest
 from sstar.cal_match_rate import cal_match_pct
 from sstar.utils import read_data
 
+
 @pytest.fixture
 def data():
     pytest.ref_ind_file = "./examples/data/ind_list/ref.ind.list"
@@ -27,11 +28,22 @@ def data():
     pytest.output = "./tests/results/test.match.rate.results"
     pytest.exp_output = "./tests/results/test.match.rate.exp.results"
 
+
 def test_cal_match_pct(data):
-    cal_match_pct(pytest.vcf, pytest.ref_ind_file, pytest.tgt_ind_file, pytest.src_ind_file, None, pytest.output, 1, pytest.score_file, None)
-    with open(pytest.output, 'r') as f:
+    cal_match_pct(
+        pytest.vcf,
+        pytest.ref_ind_file,
+        pytest.tgt_ind_file,
+        pytest.src_ind_file,
+        None,
+        pytest.output,
+        1,
+        pytest.score_file,
+        None,
+    )
+    with open(pytest.output, "r") as f:
         res = [l for l in f]
-    with open(pytest.exp_output, 'r') as f:
+    with open(pytest.exp_output, "r") as f:
         exp_res = [l for l in f]
 
     assert res == exp_res

@@ -17,7 +17,8 @@ import allel
 import math
 import numpy as np
 
-#@profile
+
+# @profile
 def parse_ind_file(filename):
     """
     Description:
@@ -29,17 +30,18 @@ def parse_ind_file(filename):
     Returns:
         samples list: Sample information.
     """
-  
-    f = open(filename, 'r') 
-    samples = [l.rstrip() for l in f.readlines()] 
+
+    f = open(filename, "r")
+    samples = [l.rstrip() for l in f.readlines()]
     f.close()
 
     if len(samples) == 0:
-        raise Exception(f'No sample is found in {filename}! Please check your data.')
+        raise Exception(f"No sample is found in {filename}! Please check your data.")
 
     return samples
 
-#@profile
+
+# @profile
 def read_geno_data(vcf, ind, anc_allele_file, filter_missing):
     """
     Description:
@@ -56,33 +58,36 @@ def read_geno_data(vcf, ind, anc_allele_file, filter_missing):
     """
 
     vcf = allel.read_vcf(vcf, alt_number=1, samples=ind)
-    gt = vcf['calldata/GT']
-    chr_names = np.unique(vcf['variants/CHROM'])
-    samples = vcf['samples']
-    pos = vcf['variants/POS']
-    ref = vcf['variants/REF']
-    alt = vcf['variants/ALT']
+    gt = vcf["calldata/GT"]
+    chr_names = np.unique(vcf["variants/CHROM"])
+    samples = vcf["samples"]
+    pos = vcf["variants/POS"]
+    ref = vcf["variants/REF"]
+    alt = vcf["variants/ALT"]
 
-    if anc_allele_file != None: anc_allele = read_anc_allele(anc_allele_file)
+    if anc_allele_file != None:
+        anc_allele = read_anc_allele(anc_allele_file)
     data = dict()
     for c in chr_names:
         if c not in data.keys():
             data[c] = dict()
-            data[c]['POS'] = pos
-            data[c]['REF'] = ref
-            data[c]['ALT'] = alt
-            data[c]['GT'] = gt
-        index = np.where(vcf['variants/CHROM'] == c)
+            data[c]["POS"] = pos
+            data[c]["REF"] = ref
+            data[c]["ALT"] = alt
+            data[c]["GT"] = gt
+        index = np.where(vcf["variants/CHROM"] == c)
         data = filter_data(data, c, index)
         # Remove missing data
         if filter_missing:
-            index = data[c]['GT'].count_missing(axis=1) == len(samples)
+            index = data[c]["GT"].count_missing(axis=1) == len(samples)
             data = filter_data(data, c, ~index)
-        if anc_allele_file != None: data = check_anc_allele(data, anc_allele, c)
+        if anc_allele_file != None:
+            data = check_anc_allele(data, anc_allele, c)
 
     return data
 
-#@profile
+
+# @profile
 def filter_data(data, c, index):
     """
     Description:
@@ -97,15 +102,18 @@ def filter_data(data, c, index):
         data dict: Genotype data after filtering.
     """
 
-    data[c]['POS'] = data[c]['POS'][index]
-    data[c]['REF'] = data[c]['REF'][index]
-    data[c]['ALT'] = data[c]['ALT'][index]
-    data[c]['GT'] = allel.GenotypeArray(data[c]['GT'][index])
+    data[c]["POS"] = data[c]["POS"][index]
+    data[c]["REF"] = data[c]["REF"][index]
+    data[c]["ALT"] = data[c]["ALT"][index]
+    data[c]["GT"] = allel.GenotypeArray(data[c]["GT"][index])
 
     return data
 
-#@profile
-def read_data(vcf_file, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file, is_phased=None):
+
+# @profile
+def read_data(
+    vcf_file, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file, is_phased=None
+):
     """
     Description:
         Helper function for reading data from reference and target populations.
@@ -128,31 +136,43 @@ def read_data(vcf_file, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_fil
     """
     # --- Initialize group structure and containers ----------------------------
     # Each group defines its individual file and whether data is read as phased.
-    groups = {"ref": (ref_ind_file, True), "tgt": (tgt_ind_file, True), "src": (src_ind_file, False)}
-    data, samples = {"ref": None, "tgt": None, "src": None}, {"ref": None, "tgt": None, "src": None}
+    groups = {
+        "ref": (ref_ind_file, True),
+        "tgt": (tgt_ind_file, True),
+        "src": (src_ind_file, True),
+    }
+    data, samples = {"ref": None, "tgt": None, "src": None}, {
+        "ref": None,
+        "tgt": None,
+        "src": None,
+    }
 
     # --- Load genotype data for each population group -------------------------
     # Parse sample lists and load genotype data from VCF if input file provided.
-    for k, (f, ph) in groups.items():
+    for k, (f, filter_missing) in groups.items():
         if f is not None:
             s = parse_ind_file(f)
             samples[k] = s
             # Keep src less stringently filtered for missing (as in sstar)
-            data[k] = read_geno_data(vcf_file, s, anc_allele_file, ph)
+            data[k] = read_geno_data(vcf_file, s, anc_allele_file, filter_missing)
 
     # --- Remove variants fixed as hom-ALT in BOTH ref and tgt -----------------
     # For each shared chromosome, remove variants fixed in both populations.
     # The same sites are removed from the source population for consistency.
     if data["ref"] and data["tgt"]:
-        for c in (data["ref"].keys() & data["tgt"].keys()):
-            ref_fixed = np.sum(data["ref"][c]['GT'].is_hom_alt(), axis=1) == len(samples["ref"])
-            tgt_fixed = np.sum(data["tgt"][c]['GT'].is_hom_alt(), axis=1) == len(samples["tgt"])
+        for c in data["ref"].keys() & data["tgt"].keys():
+            ref_fixed = np.sum(data["ref"][c]["GT"].is_hom_alt(), axis=1) == len(
+                samples["ref"]
+            )
+            tgt_fixed = np.sum(data["tgt"][c]["GT"].is_hom_alt(), axis=1) == len(
+                samples["tgt"]
+            )
             keep = ~(ref_fixed & tgt_fixed)
-            fixed_pos = data["ref"][c]['POS'][~keep]
+            fixed_pos = data["ref"][c]["POS"][~keep]
             data["ref"] = filter_data(data["ref"], c, keep)
             data["tgt"] = filter_data(data["tgt"], c, keep)
             if data["src"] and (c in data["src"]):
-                src_keep = ~np.in1d(data["src"][c]['POS'], fixed_pos)
+                src_keep = ~np.in1d(data["src"][c]["POS"], fixed_pos)
                 data["src"] = filter_data(data["src"], c, src_keep)
 
     # --- Determine chromosome names for downstream processing -----------------
@@ -166,18 +186,25 @@ def read_data(vcf_file, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_fil
         for k in ("ref", "tgt", "src"):
             if not data[k] or (c not in data[k]):
                 continue
-            GT = data[k][c]['GT']
-            if is_phased:
-                mut_num, ind_num, ploidy = GT.shape
-                data[k][c]['GT'] = np.reshape(GT.values, (mut_num, ind_num * ploidy))
-            else:
-                data[k][c]['GT'] = np.sum(GT, axis=2)
+            GT = data[k][c]["GT"]
+            # if is_phased:
+            #    mut_num, ind_num, ploidy = GT.shape
+            #    data[k][c]['GT'] = np.reshape(GT.values, (mut_num, ind_num * ploidy))
+            # else:
+            #    data[k][c]['GT'] = np.sum(GT, axis=2)
 
     # --- Return loaded and processed data -------------------------------------
-    return data["ref"], samples["ref"], data["tgt"], samples["tgt"], data["src"], samples["src"]
+    return (
+        data["ref"],
+        samples["ref"],
+        data["tgt"],
+        samples["tgt"],
+        data["src"],
+        samples["src"],
+    )
 
 
-#@profile
+# @profile
 def get_ref_alt_allele(ref, alt, pos):
     """
     Description:
@@ -192,7 +219,7 @@ def get_ref_alt_allele(ref, alt, pos):
         ref_allele dict: REF alleles.
         alt_allele dict: ALT alleles.
     """
-    
+
     ref_allele = dict()
     alt_allele = dict()
 
@@ -202,10 +229,11 @@ def get_ref_alt_allele(ref, alt, pos):
         p = pos[i]
         ref_allele[p] = r
         alt_allele[p] = a
-   
+
     return ref_allele, alt_allele
 
-#@profile
+
+# @profile
 def read_anc_allele(anc_allele_file):
     """
     Description:
@@ -219,17 +247,20 @@ def read_anc_allele(anc_allele_file):
     """
 
     anc_allele = dict()
-    with open(anc_allele_file, 'r') as f:
+    with open(anc_allele_file, "r") as f:
         for line in f.readlines():
             e = line.rstrip().split()
-            if e[0] not in anc_allele: anc_allele[e[0]] = dict()
+            if e[0] not in anc_allele:
+                anc_allele[e[0]] = dict()
             anc_allele[e[0]][int(e[2])] = e[3]
 
-    if not anc_allele: raise Exception(f'No ancestral allele is found! Please check your data.')
-    
+    if not anc_allele:
+        raise Exception(f"No ancestral allele is found! Please check your data.")
+
     return anc_allele
 
-#@profile
+
+# @profile
 def check_anc_allele(data, anc_allele, c):
     """
     Description:
@@ -247,7 +278,9 @@ def check_anc_allele(data, anc_allele, c):
         data dict: Genotype data after checking.
     """
 
-    ref_allele, alt_allele = get_ref_alt_allele(data[c]['REF'], data[c]['ALT'], data[c]['POS'])
+    ref_allele, alt_allele = get_ref_alt_allele(
+        data[c]["REF"], data[c]["ALT"], data[c]["POS"]
+    )
     # Remove variants not in the ancestral allele file
     intersect_snps = np.intersect1d(list(ref_allele.keys()), list(anc_allele[c].keys()))
     # Remove variants that neither the ref allele nor the alt allele is the ancestral allele
@@ -256,25 +289,28 @@ def check_anc_allele(data, anc_allele, c):
     flipped_snps = []
 
     for v in intersect_snps:
-        if (anc_allele[c][v] != ref_allele[v]) and (anc_allele[c][v] != alt_allele[v]): removed_snps.append(v)
-        elif (anc_allele[c][v] == alt_allele[v]): flipped_snps.append(v)
+        if (anc_allele[c][v] != ref_allele[v]) and (anc_allele[c][v] != alt_allele[v]):
+            removed_snps.append(v)
+        elif anc_allele[c][v] == alt_allele[v]:
+            flipped_snps.append(v)
 
-    intersect_snps = np.in1d(data[c]['POS'], intersect_snps)
+    intersect_snps = np.in1d(data[c]["POS"], intersect_snps)
     data = filter_data(data, c, intersect_snps)
 
     if len(removed_snps) != 0:
-        remained_snps = np.logical_not(np.in1d(data[c]['POS'], removed_snps))
+        remained_snps = np.logical_not(np.in1d(data[c]["POS"], removed_snps))
         data = filter_data(data, c, remained_snps)
 
-    is_flipped_snps = np.in1d(data[c]['POS'], flipped_snps)
+    is_flipped_snps = np.in1d(data[c]["POS"], flipped_snps)
     # Assume no missing data
-    for i in range(len(data[c]['POS'])):
+    for i in range(len(data[c]["POS"])):
         if is_flipped_snps[i]:
-            data[c]['GT'][i] = allel.GenotypeVector(abs(data[c]['GT'][i]-1))
+            data[c]["GT"][i] = allel.GenotypeVector(abs(data[c]["GT"][i] - 1))
 
     return data
 
-#@profile
+
+# @profile
 def read_mapped_region_file(mapped_region):
     """
     Description:
@@ -289,17 +325,33 @@ def read_mapped_region_file(mapped_region):
 
     if mapped_region != None:
         mapped_intervals = dict()
-        with open(mapped_region, 'r') as m:
+        with open(mapped_region, "r") as m:
             for line in m.readlines():
                 elements = line.rstrip().split("\t")
-                if elements[0] not in mapped_intervals.keys(): mapped_intervals[elements[0]] = []
-                mapped_intervals[elements[0]].append((int(elements[1]), int(elements[2])))
-    else: mapped_intervals = None
+                if elements[0] not in mapped_intervals.keys():
+                    mapped_intervals[elements[0]] = []
+                mapped_intervals[elements[0]].append(
+                    (int(elements[1]), int(elements[2]))
+                )
+    else:
+        mapped_intervals = None
 
     return mapped_intervals
 
-#@profile
-def cal_matchpct(chr_name, mapped_intervals, data, src_data, tgt_ind_index, src_ind_index, hap_index, win_start, win_end, sample_size):
+
+# @profile
+def cal_matchpct(
+    chr_name,
+    mapped_intervals,
+    data,
+    src_data,
+    tgt_ind_index,
+    src_ind_index,
+    hap_index,
+    win_start,
+    win_end,
+    sample_size,
+):
     """
     Description:
         Helper function to calculate match percents in a given individual.
@@ -320,37 +372,44 @@ def cal_matchpct(chr_name, mapped_intervals, data, src_data, tgt_ind_index, src_
         res list: List containing statistics for the given haplotype.
     """
 
-    if (win_start == 'NA') and (win_end == 'NA'): 
-        return ['NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA']
+    if (win_start == "NA") and (win_end == "NA"):
+        return ["NA", "NA", "NA", "NA", "NA", "NA", "NA"]
 
     win_start = int(win_start)
     win_end = int(win_end)
 
-    hap_match_pct = 'NA'
-    gt = data[chr_name]['GT']
-    pos = data[chr_name]['POS']
-    src_gt = src_data[chr_name]['GT']
-    src_pos = src_data[chr_name]['POS']
+    hap_match_pct = "NA"
+    gt = data[chr_name]["GT"]
+    pos = data[chr_name]["POS"]
+    src_gt = src_data[chr_name]["GT"]
+    src_pos = src_data[chr_name]["POS"]
     res = []
-    
-    sub_snps = np.where((pos>=win_start) & (pos<=win_end))[0]
-    sub_gt = gt[sub_snps][:,tgt_ind_index]
+
+    sub_snps = np.where((pos >= win_start) & (pos <= win_end))[0]
+    sub_gt = gt[sub_snps][:, tgt_ind_index]
     sub_pos = pos[sub_snps]
 
-    sub_src_snps = np.where((src_pos>=win_start) & (src_pos<=win_end))[0]
-    sub_src_gt = src_gt[sub_src_snps][:,src_ind_index]
+    sub_src_snps = np.where((src_pos >= win_start) & (src_pos <= win_end))[0]
+    sub_src_gt = src_gt[sub_src_snps][:, src_ind_index]
     sub_src_pos = src_pos[sub_src_snps]
-    missing_index = sub_src_gt.is_missing()
-    sub_src_gt = sub_src_gt[~missing_index]
-    sub_src_pos = sub_src_pos[~missing_index]
     src_hom_variants = sub_src_pos[sub_src_gt.is_hom_alt()]
     src_het_variants = sub_src_pos[sub_src_gt.is_het()]
     src_variants = np.concatenate((src_hom_variants, src_het_variants))
 
-    hap = sub_gt[:,hap_index]
+    hap = sub_gt[:, hap_index]
     hap_len = win_end - win_start
     hap_mapped_len = _cal_mapped_len(mapped_intervals, chr_name, win_start, win_end)
-    hap_variants_num, hap_site_num, hap_match_src_allele_num, hap_sfs, hap_match_pct = _cal_hap_stats(gt[sub_snps], hap, sub_pos, src_variants, src_hom_variants, src_het_variants, sample_size)
+    hap_variants_num, hap_site_num, hap_match_src_allele_num, hap_sfs, hap_match_pct = (
+        _cal_hap_stats(
+            gt[sub_snps],
+            hap,
+            sub_pos,
+            src_variants,
+            src_hom_variants,
+            src_het_variants,
+            sample_size,
+        )
+    )
 
     res.append(hap_variants_num)
     res.append(hap_len)
@@ -362,7 +421,8 @@ def cal_matchpct(chr_name, mapped_intervals, data, src_data, tgt_ind_index, src_
 
     return res
 
-#@profile
+
+# @profile
 def _cal_mapped_len(mapped_intervals, chr_name, win_start, win_end):
     """
     Description:
@@ -381,20 +441,33 @@ def _cal_mapped_len(mapped_intervals, chr_name, win_start, win_end):
     if (mapped_intervals == None) or (chr_name not in mapped_intervals.keys()):
         mapped_len = win_end - win_start
     else:
-        overlaps = [(idx[0], idx[1]) for idx in mapped_intervals[chr_name] if (win_start>=idx[0] and win_start<=idx[1]) or (win_end>=idx[0] and win_end<=idx[1]) or (win_start<=idx[0] and win_end>=idx[1])]
+        overlaps = [
+            (idx[0], idx[1])
+            for idx in mapped_intervals[chr_name]
+            if (win_start >= idx[0] and win_start <= idx[1])
+            or (win_end >= idx[0] and win_end <= idx[1])
+            or (win_start <= idx[0] and win_end >= idx[1])
+        ]
         mapped_len = 0
         for idx in overlaps:
-            if (idx[0]<=win_start) and (idx[1]>=win_end): mapped_len += win_end - win_start
-            elif (idx[0]>=win_start) and (idx[1]<=win_end): mapped_len += idx[1] - idx[0]
-            elif (idx[0]<=win_start) and (idx[1]<=win_end): mapped_len += idx[1] - win_start
-            else: mapped_len += win_end - idx[0]
+            if (idx[0] <= win_start) and (idx[1] >= win_end):
+                mapped_len += win_end - win_start
+            elif (idx[0] >= win_start) and (idx[1] <= win_end):
+                mapped_len += idx[1] - idx[0]
+            elif (idx[0] <= win_start) and (idx[1] <= win_end):
+                mapped_len += idx[1] - win_start
+            else:
+                mapped_len += win_end - idx[0]
 
     mapped_len = mapped_len // 1000 * 1000
-        
+
     return mapped_len
-     
-#@profile
-def _cal_hap_stats(gt, hap, pos, src_variants, src_hom_variants, src_het_variants, sample_size):
+
+
+# @profile
+def _cal_hap_stats(
+    gt, hap, pos, src_variants, src_hom_variants, src_het_variants, sample_size
+):
     """
     Description:
         Helper function for calculating statistics for a haplotype.
@@ -417,34 +490,56 @@ def _cal_hap_stats(gt, hap, pos, src_variants, src_hom_variants, src_het_variant
         sample_size int: Number of individuals analyzed.
     """
 
-    if hap is None: return 'NA', 'NA', 'NA', 'NA', 'NA'
+    if hap is None:
+        return "NA", "NA", "NA", "NA", "NA"
     else:
         hap_variants = pos[np.equal(hap, 1)]
         hap_variants_num = len(hap_variants)
         # Assume the alternative allele is the derived allele
-        hap_shared_src_hom_site_num = len(np.intersect1d(hap_variants, src_hom_variants))
-        hap_shared_src_het_site_num = len(np.intersect1d(hap_variants, src_het_variants))
+        hap_shared_src_hom_site_num = len(
+            np.intersect1d(hap_variants, src_hom_variants)
+        )
+        hap_shared_src_het_site_num = len(
+            np.intersect1d(hap_variants, src_het_variants)
+        )
         hap_site_num = len(np.union1d(hap_variants, src_variants))
-        hap_match_src_allele_num = hap_shared_src_hom_site_num + 0.5*hap_shared_src_het_site_num
-        hap_shared_src_site_num = hap_shared_src_hom_site_num + hap_shared_src_het_site_num
-        if hap_site_num != 0: hap_match_pct = round(hap_match_src_allele_num/hap_site_num, 6)
-        else: hap_match_pct = 'NA'
+        hap_match_src_allele_num = (
+            hap_shared_src_hom_site_num + 0.5 * hap_shared_src_het_site_num
+        )
+        hap_shared_src_site_num = (
+            hap_shared_src_hom_site_num + hap_shared_src_het_site_num
+        )
+        if hap_site_num != 0:
+            hap_match_pct = round(hap_match_src_allele_num / hap_site_num, 6)
+        else:
+            hap_match_pct = "NA"
 
         hap_sfs = np.sum(np.sum(gt[hap == 1], axis=2), axis=1)
         if hap_sfs.size != 0:
             hap_sfs_mean = np.mean(hap_sfs)
             # See https://stackoverflow.com/questions/10825926/python-3-x-rounding-behavior
-            #if not np.isnan(sfs_mean): sfs_mean = int(round(sfs_mean))
-            #if not np.isnan(hap_sfs_mean): hap_sfs = int(int(py2round(hap_sfs_mean))/10*108)
-            #if not np.isnan(hap_sfs_mean): hap_sfs = int(py2round(hap_sfs_mean))/(2*sample_size)
-            if not np.isnan(hap_sfs_mean): hap_sfs = round(hap_sfs_mean/(2*sample_size), 6)
+            # if not np.isnan(sfs_mean): sfs_mean = int(round(sfs_mean))
+            # if not np.isnan(hap_sfs_mean): hap_sfs = int(int(py2round(hap_sfs_mean))/10*108)
+            # if not np.isnan(hap_sfs_mean): hap_sfs = int(py2round(hap_sfs_mean))/(2*sample_size)
+            if not np.isnan(hap_sfs_mean):
+                hap_sfs = round(hap_sfs_mean / (2 * sample_size), 6)
         else:
             hap_sfs = np.nan
 
-    return hap_variants_num, hap_site_num, hap_match_src_allele_num, hap_sfs, hap_match_pct
+    return (
+        hap_variants_num,
+        hap_site_num,
+        hap_match_src_allele_num,
+        hap_sfs,
+        hap_match_pct,
+    )
+
 
 def py2round(x, d=0):
-    p = 10 ** d
-    if x > 0: return float(math.floor((x * p) + 0.5))/p
-    elif x < 0: float(math.ceil((x * p) - 0.5))/p
-    else: return 0.0
+    p = 10**d
+    if x > 0:
+        return float(math.floor((x * p) + 0.5)) / p
+    elif x < 0:
+        float(math.ceil((x * p) - 0.5)) / p
+    else:
+        return 0.0

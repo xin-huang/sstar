@@ -20,8 +20,11 @@ from rpy2.robjects import FloatVector, Formula, pandas2ri
 from rpy2.robjects.packages import importr
 from rpy2.robjects.conversion import localconverter
 
-#@profile
-def cal_threshold(simulated_data, score_file, recomb_rate, recomb_map, quantile, output, k):
+
+# @profile
+def cal_threshold(
+    simulated_data, score_file, recomb_rate, recomb_map, quantile, output, k
+):
     """
     Description:
         Calculate significant S* scores from simulated data.
@@ -30,22 +33,25 @@ def cal_threshold(simulated_data, score_file, recomb_rate, recomb_map, quantile,
         simulated_data str: Name of the file containing simulated data.
         score_file str: Name of the file containing S* scores.
         recomb_rate float: Uniform recombination rate assumed across the genome.
-        recomb_map str: Name of the file containing recombination maps. 
+        recomb_map str: Name of the file containing recombination maps.
         quantile float: Quantile for estimating significant S* scores.
         output str: Name of the output file.
         k int: Dimension(s) of the bases used to represent the smooth term.
     """
-    if (recomb_rate != None) and (recomb_map != None): fit_lr = True
-    else: fit_lr = False
+    if (recomb_rate != None) and (recomb_map != None):
+        fit_lr = True
+    else:
+        fit_lr = False
 
     gam = _build_gam_model(simulated_data, k, fit_lr)
     res = _predict_res(gam, score_file, recomb_rate, recomb_map, quantile, fit_lr)
-    header = 'chrom\tstart\tend\tsample\tS*_score\texpected_S*_score\tlocal_recomb_rate\tquantile\tsignificant'
-    with open(output, 'w') as o:
-        o.write(header+"\n")
-        o.write("\n".join(res)+"\n")
+    header = "chrom\tstart\tend\tsample\tS*_score\texpected_S*_score\tlocal_recomb_rate\tquantile\tsignificant"
+    with open(output, "w") as o:
+        o.write(header + "\n")
+        o.write("\n".join(res) + "\n")
 
-#@profile
+
+# @profile
 def _build_gam_model(simulated_data, k, fit_lr):
     """
     Description:
@@ -59,23 +65,24 @@ def _build_gam_model(simulated_data, k, fit_lr):
     Returns:
         gam rpy2.robjects: Generalized additive model for prediction.
     """
-    mgcv = importr('mgcv')
+    mgcv = importr("mgcv")
 
     data = pd.read_csv(simulated_data, sep="\t")
 
-    s_star = FloatVector(data.iloc[:,0].values)
-    snps = FloatVector(data.iloc[:,1].values)
-    q = FloatVector(data.iloc[:,2].values)
+    s_star = FloatVector(data.iloc[:, 0].values)
+    snps = FloatVector(data.iloc[:, 1].values)
+    q = FloatVector(data.iloc[:, 2].values)
 
-    ro.globalenv['s_star'] = s_star
-    ro.globalenv['snps'] = snps
-    ro.globalenv['q'] = q
+    ro.globalenv["s_star"] = s_star
+    ro.globalenv["snps"] = snps
+    ro.globalenv["q"] = q
 
-    if fit_lr: 
-        lr = FloatVector(data.iloc[:,3].values)
-        ro.globalenv['lr'] = lr
-        fmla = f's_star ~ te(snps, lr, q, k={k})'
-    else: fmla = f's_star ~ te(snps, q, k={k})'
+    if fit_lr:
+        lr = FloatVector(data.iloc[:, 3].values)
+        ro.globalenv["lr"] = lr
+        fmla = f"s_star ~ te(snps, lr, q, k={k})"
+    else:
+        fmla = f"s_star ~ te(snps, q, k={k})"
 
     fmla = Formula(fmla)
 
@@ -83,7 +90,8 @@ def _build_gam_model(simulated_data, k, fit_lr):
 
     return gam
 
-#@profile
+
+# @profile
 def _predict_res(gam, score_file, recomb_rate, recomb_map, quantile, fit_lr):
     """
     Description:
@@ -100,19 +108,26 @@ def _predict_res(gam, score_file, recomb_rate, recomb_map, quantile, fit_lr):
     Returns:
         res list: List containing results for output.
     """
-    stats = importr('stats')
+    stats = importr("stats")
 
-    if recomb_map != None: recomb_map = _read_recomb_map(recomb_map)
-    data, meta_data = _read_score_file(score_file, recomb_rate, recomb_map, quantile, fit_lr)
+    if recomb_map != None:
+        recomb_map = _read_recomb_map(recomb_map)
+    data, meta_data = _read_score_file(
+        score_file, recomb_rate, recomb_map, quantile, fit_lr
+    )
 
     thresholds = dict()
     for s in data.keys():
-        if fit_lr: pd_df = pd.DataFrame({'snps': data[s]['snps'], 'lr': data[s]['lr'], 'q': data[s]['q']})
-        else: pd_df = pd.DataFrame({'snps': data[s]['snps'], 'q': data[s]['q']})
+        if fit_lr:
+            pd_df = pd.DataFrame(
+                {"snps": data[s]["snps"], "lr": data[s]["lr"], "q": data[s]["q"]}
+            )
+        else:
+            pd_df = pd.DataFrame({"snps": data[s]["snps"], "q": data[s]["q"]})
 
         with localconverter(ro.default_converter + pandas2ri.converter):
             r_from_pd_df = ro.conversion.py2rpy(pd_df)
-        
+
         thresholds[s] = np.array(stats.predict(gam, r_from_pd_df))
 
     res = []
@@ -120,20 +135,23 @@ def _predict_res(gam, score_file, recomb_rate, recomb_map, quantile, fit_lr):
         for i in range(len(meta_data[s])):
             score = float(meta_data[s][i][4])
             null_score = round(thresholds[s][i], 6)
-            if score > null_score: sig = 'True'
-            else: sig = 'False'
+            if score > null_score:
+                sig = "True"
+            else:
+                sig = "False"
 
             line = "\t".join(meta_data[s][i])
             line += "\t" + str(null_score)
-            line += "\t" + str(data[s]['lr'][i])
-            line += "\t" + str(data[s]['q'][i])
+            line += "\t" + str(data[s]["lr"][i])
+            line += "\t" + str(data[s]["q"][i])
             line += "\t" + sig
 
             res.append(line)
 
     return res
 
-#@profile
+
+# @profile
 def _read_score_file(score_file, recomb_rate, recomb_map, quantile, fit_lr):
     """
     Description:
@@ -141,7 +159,7 @@ def _read_score_file(score_file, recomb_rate, recomb_map, quantile, fit_lr):
 
     Arguments:
         score_file str: Name of the file containing S* scores.
-        recomb_rate float: Uniform recombination rate assumed across the genome. 
+        recomb_rate float: Uniform recombination rate assumed across the genome.
         recomb_map str: Name of the file containing recombination maps.
         quantile float: Quantile for estimating significant S* scores.
         fit_lr bool: If True, building a gam with local recombination rate.
@@ -152,12 +170,13 @@ def _read_score_file(score_file, recomb_rate, recomb_map, quantile, fit_lr):
     """
     data = dict()
     meta_data = dict()
-    with open(score_file, 'r') as f:
+    with open(score_file, "r") as f:
         f.readline()
         for line in f.readlines():
             line = line.rstrip()
             element = line.split("\t")
-            if element[6] == 'NA': continue
+            if element[6] == "NA":
+                continue
             else:
                 chr_name = element[0]
                 win_start = element[1]
@@ -166,28 +185,33 @@ def _read_score_file(score_file, recomb_rate, recomb_map, quantile, fit_lr):
                 score = element[4]
                 total_snp_num = element[5]
                 if fit_lr:
-                    if recomb_map != None: 
-                        key = chr_name+":"+win_start+"-"+win_end
-                        if key in recomb_map.keys(): local_recomb_rate = recomb_map[key]
-                        else: continue
+                    if recomb_map != None:
+                        key = chr_name + ":" + win_start + "-" + win_end
+                        if key in recomb_map.keys():
+                            local_recomb_rate = recomb_map[key]
+                        else:
+                            continue
                     else:
                         local_recomb_rate = recomb_rate
-                else: local_recomb_rate = np.nan
+                else:
+                    local_recomb_rate = np.nan
 
-                if sample not in data.keys(): 
+                if sample not in data.keys():
                     data[sample] = dict()
-                    data[sample]['snps'] = list()
-                    data[sample]['lr'] = list()
-                    data[sample]['q'] = list()
-                if sample not in meta_data.keys(): meta_data[sample] = list()
-                data[sample]['snps'].append(float(total_snp_num))
-                data[sample]['lr'].append(local_recomb_rate)
-                data[sample]['q'].append(quantile)
+                    data[sample]["snps"] = list()
+                    data[sample]["lr"] = list()
+                    data[sample]["q"] = list()
+                if sample not in meta_data.keys():
+                    meta_data[sample] = list()
+                data[sample]["snps"].append(float(total_snp_num))
+                data[sample]["lr"].append(local_recomb_rate)
+                data[sample]["q"].append(quantile)
                 meta_data[sample].append([chr_name, win_start, win_end, sample, score])
 
     return data, meta_data
 
-#@profile
+
+# @profile
 def _read_recomb_map(recomb_map_file):
     """
     Description:
@@ -200,16 +224,25 @@ def _read_recomb_map(recomb_map_file):
         recomb_map dict: Dictionary containing recombination maps.
     """
     recomb_map = dict()
-    with open(recomb_map_file, 'r') as f:
+    with open(recomb_map_file, "r") as f:
         for line in f:
             line = line.rstrip()
             if not line.strip():
                 continue
             element = line.split("\t")
-            key = element[0]+":"+element[1]+"-"+element[2]
-            if key not in recomb_map.keys(): recomb_map[key] = float(element[3])
+            key = element[0] + ":" + element[1] + "-" + element[2]
+            if key not in recomb_map.keys():
+                recomb_map[key] = float(element[3])
 
     return recomb_map
 
-if __name__ == '__main__':
-   cal_threshold(simulated_data="../examples/data/simulated_data/gravel_asn_scale_60k.simulated.data", score_file="../tests/data/test.score", recomb_rate=1.29, recomb_map=None, quantile=0.99, output="threshold.out")
+
+if __name__ == "__main__":
+    cal_threshold(
+        simulated_data="../examples/data/simulated_data/gravel_asn_scale_60k.simulated.data",
+        score_file="../tests/data/test.score",
+        recomb_rate=1.29,
+        recomb_map=None,
+        quantile=0.99,
+        output="threshold.out",
+    )

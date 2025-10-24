@@ -21,8 +21,19 @@ import pandas as pd
 from multiprocessing import Process, Queue
 from sstar.utils import read_data, py2round, read_mapped_region_file, cal_matchpct
 
-#@profile
-def cal_match_pct(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file, output, thread, score_file, mapped_region_file):
+
+# @profile
+def cal_match_pct(
+    vcf,
+    ref_ind_file,
+    tgt_ind_file,
+    src_ind_file,
+    anc_allele_file,
+    output,
+    thread,
+    score_file,
+    mapped_region_file,
+):
     """
     Description:
         Calculate p-values for S* haplotypes in the target population with source genomes.
@@ -40,7 +51,9 @@ def cal_match_pct(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file
         mapped_region_file str: Name of the BED file containing mapped regions.
     """
 
-    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file)
+    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(
+        vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file
+    )
 
     res = []
     chr_names = ref_data.keys()
@@ -49,16 +62,28 @@ def cal_match_pct(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file
     data, windows, samples = _read_score_file(score_file, chr_names, tgt_samples)
     sample_size = len(samples)
 
-    header = 'chrom\tstart\tend\tsample\tmatch_rate\tsrc_sample'
+    header = "chrom\tstart\tend\tsample\tmatch_rate\tsrc_sample"
 
-    if thread > 1: thread = min(os.cpu_count()-1, sample_size, thread)    
-    res = _cal_tgt_match_pct_manager(data, mapped_intervals, samples, tgt_samples, src_samples, tgt_data, src_data, sample_size, thread)
+    if thread > 1:
+        thread = min(os.cpu_count() - 1, sample_size, thread)
+    res = _cal_tgt_match_pct_manager(
+        data,
+        mapped_intervals,
+        samples,
+        tgt_samples,
+        src_samples,
+        tgt_data,
+        src_data,
+        sample_size,
+        thread,
+    )
 
-    with open(output, 'w') as o:
-        o.write(header+"\n")
-        o.write("\n".join(res)+"\n")
+    with open(output, "w") as o:
+        o.write(header + "\n")
+        o.write("\n".join(res) + "\n")
 
-#@profile
+
+# @profile
 def _read_score_file(score_file, chr_names, tgt_samples):
     """
     Description:
@@ -81,7 +106,7 @@ def _read_score_file(score_file, chr_names, tgt_samples):
     for c in chr_names:
         windows[c] = []
     samples = []
-    with open(score_file, 'r') as f:
+    with open(score_file, "r") as f:
         header = f.readline().rstrip()
         for line in f.readlines():
             line = line.rstrip()
@@ -90,9 +115,11 @@ def _read_score_file(score_file, chr_names, tgt_samples):
             win_start = elements[1]
             win_end = elements[2]
             sample = elements[3]
-            if sample not in tgt_samples: continue
-            if elements[6] == 'NA': continue
-            if sample not in data.keys(): 
+            if sample not in tgt_samples:
+                continue
+            if elements[6] == "NA":
+                continue
+            if sample not in data.keys():
                 data[sample] = []
                 samples.append(sample)
             data[sample].append(line)
@@ -100,7 +127,18 @@ def _read_score_file(score_file, chr_names, tgt_samples):
 
     return data, windows, samples
 
-def _cal_tgt_match_pct_manager(data, mapped_intervals, samples, tgt_samples, src_samples, tgt_data, src_data, sample_size, thread):
+
+def _cal_tgt_match_pct_manager(
+    data,
+    mapped_intervals,
+    samples,
+    tgt_samples,
+    src_samples,
+    tgt_data,
+    src_data,
+    sample_size,
+    thread,
+):
     """
     Description:
         Manager function to calculate match percents in target populations using multiprocessing.
@@ -129,18 +167,33 @@ def _cal_tgt_match_pct_manager(data, mapped_intervals, samples, tgt_samples, src
 
     res = []
     in_queue, out_queue = Queue(), Queue()
-    workers = [Process(target=_cal_tgt_match_pct_worker, args=(in_queue, out_queue, mapped_intervals, tgt_data, src_data, src_samples, len(tgt_samples))) for ii in range(thread)]
+    workers = [
+        Process(
+            target=_cal_tgt_match_pct_worker,
+            args=(
+                in_queue,
+                out_queue,
+                mapped_intervals,
+                tgt_data,
+                src_data,
+                src_samples,
+                len(tgt_samples),
+            ),
+        )
+        for ii in range(thread)
+    ]
 
     for t in samples:
         index = tgt_samples.index(t)
         in_queue.put((index, data[t]))
-    
+
     try:
         for worker in workers:
             worker.start()
         for s in range(sample_size):
             item = out_queue.get()
-            if item != '': res.append(item)
+            if item != "":
+                res.append(item)
         for worker in workers:
             worker.terminate()
     finally:
@@ -149,7 +202,10 @@ def _cal_tgt_match_pct_manager(data, mapped_intervals, samples, tgt_samples, src
 
     return res
 
-def _cal_tgt_match_pct_worker(in_queue, out_queue, mapped_intervals, tgt_data, src_data, src_samples, sample_size):
+
+def _cal_tgt_match_pct_worker(
+    in_queue, out_queue, mapped_intervals, tgt_data, src_data, src_samples, sample_size
+):
     """
     Description:
         Worker function to calculate match percents in target populations.
@@ -166,11 +222,16 @@ def _cal_tgt_match_pct_worker(in_queue, out_queue, mapped_intervals, tgt_data, s
 
     while True:
         index, data = in_queue.get()
-        res = _cal_match_pct_ind(data, index, mapped_intervals, tgt_data, src_data, src_samples, sample_size )
+        res = _cal_match_pct_ind(
+            data, index, mapped_intervals, tgt_data, src_data, src_samples, sample_size
+        )
         out_queue.put("\n".join(res))
 
-#@profile
-def _cal_match_pct_ind(data, tgt_ind_index, mapped_intervals, tgt_data, src_data, src_samples, sample_size):
+
+# @profile
+def _cal_match_pct_ind(
+    data, tgt_ind_index, mapped_intervals, tgt_data, src_data, src_samples, sample_size
+):
     """
     Description:
         Helper function for calculating p-values in individuals.
@@ -196,20 +257,43 @@ def _cal_match_pct_ind(data, tgt_ind_index, mapped_intervals, tgt_data, src_data
 
         s_star_snps = elements[-1].split(",")
         s_start, s_end = s_star_snps[0], s_star_snps[-1]
-        key1 = win_start+'-'+win_end
-        key2 = s_start+'-'+s_end
+        key1 = win_start + "-" + win_end
+        key2 = s_start + "-" + s_end
 
         for src_ind_index in range(len(src_samples)):
             src_sample = src_samples[src_ind_index]
-            hap1_res = cal_matchpct(chr_name, mapped_intervals, tgt_data, src_data, tgt_ind_index, src_ind_index, 0, int(win_start), int(win_end), sample_size)
-            hap2_res = cal_matchpct(chr_name, mapped_intervals, tgt_data, src_data, tgt_ind_index, src_ind_index, 1, int(win_start), int(win_end), sample_size)
-            
+            hap1_res = cal_matchpct(
+                chr_name,
+                mapped_intervals,
+                tgt_data,
+                src_data,
+                tgt_ind_index,
+                src_ind_index,
+                0,
+                int(win_start),
+                int(win_end),
+                sample_size,
+            )
+            hap2_res = cal_matchpct(
+                chr_name,
+                mapped_intervals,
+                tgt_data,
+                src_data,
+                tgt_ind_index,
+                src_ind_index,
+                1,
+                int(win_start),
+                int(win_end),
+                sample_size,
+            )
+
             hap1_match_pct = hap1_res[-1]
             hap2_match_pct = hap2_res[-1]
-            hap_match_pct = 'NA'
+            hap_match_pct = "NA"
 
-            if (hap1_match_pct != 'NA') and (hap2_match_pct != 'NA'): hap_match_pct = (hap1_match_pct + hap2_match_pct) / 2
+            if (hap1_match_pct != "NA") and (hap2_match_pct != "NA"):
+                hap_match_pct = (hap1_match_pct + hap2_match_pct) / 2
 
-            line = f'{chr_name}\t{win_start}\t{win_end}\t{sample}\t{hap_match_pct}\t{src_sample}'
+            line = f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t{hap_match_pct}\t{src_sample}"
             res.append(line)
     return res
