@@ -451,7 +451,7 @@ def _cal_mapped_len(mapped_intervals, chr_name, win_start, win_end):
         mapped_len int: Length of the mapped region.
     """
 
-    if (mapped_intervals == None) or (chr_name not in mapped_intervals.keys()):
+    if mapped_intervals is None or chr_name not in mapped_intervals.keys():
         mapped_len = win_end - win_start
     else:
         overlaps = [
