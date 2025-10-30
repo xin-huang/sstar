@@ -33,6 +33,7 @@ def cal_s_star(
     match_bonus,
     max_mismatch,
     mismatch_penalty,
+    is_phased=False,  # ***** added is_phased switch: True keeps 3D (phased), False converts to 2D dosage (unphased)
 ):
     """
     Description:
@@ -50,19 +51,48 @@ def cal_s_star(
         match_bonus int: Bonus for matching genotypes of two different variants.
         max_mismatch int: Maximum genotype distance allowed.
         mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
+        is_phased bool: If True keep 3D haplotypes, else collapse to 2D dosages.  # ***** doc for the new switch
     """
 
     ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(
         vcf, ref_ind_file, tgt_ind_file, None, anc_allele_file
     )
 
+    # ***** normalize GT once: keep 3D when phased, otherwise convert to 2D dosage (variants x samples)
+    def _normalize(data_dict):
+        for c in data_dict.keys():
+            GT = data_dict[c]["GT"]
+            arr = GT.values if hasattr(GT, "values") else np.asarray(GT)
+            if is_phased:
+                # keep an allel.GenotypeArray with shape (variants, samples, ploidy)
+                data_dict[c]["GT"] = (
+                    GT
+                    if isinstance(GT, allel.GenotypeArray)
+                    else allel.GenotypeArray(arr)
+                )
+            else:
+                # convert to per-sample dosages: 0/1/2 in a 2D array (variants, samples)
+                if hasattr(GT, "to_n_alt"):
+                    data_dict[c]["GT"] = GT.to_n_alt()
+                else:
+                    data_dict[c]["GT"] = np.sum(arr, axis=2) if arr.ndim == 3 else arr
+
+    _normalize(ref_data)  # ***** ensure reference GT matches selected mode (3D or 2D)
+    _normalize(tgt_data)  # ***** ensure target GT matches selected mode (3D or 2D)
+
     chr_names = tgt_data.keys()
     for c in chr_names:
         # Remove variants observed in the reference populations
         # Assume 1 is the alt allele
-        variants_not_in_ref = np.sum(ref_data[c]["GT"].is_hom_ref(), axis=1) == len(
-            ref_samples
-        )
+        if is_phased:
+            variants_not_in_ref = np.sum(ref_data[c]["GT"].is_hom_ref(), axis=1) == len(
+                ref_samples
+            )  # ***** phased path: use allel .is_hom_ref() across samples
+        else:
+            ref_gt = ref_data[c]["GT"]
+            variants_not_in_ref = np.all(
+                ref_gt == 0, axis=1
+            )  # ***** unphased path: hom-ref == dosage 0 for all ref samples
         tgt_data = filter_data(tgt_data, c, variants_not_in_ref)
 
     # header = 'chrom\tsample\tstart\tend\ttotal_SNP_number\tS*_SNP_number\tS*_score\tS*_SNPs'
@@ -99,6 +129,7 @@ def cal_s_star(
         match_bonus,
         max_mismatch,
         mismatch_penalty,
+        is_phased=is_phased,  # ***** propagate mode to workers/scoring
     )
 
 
@@ -113,6 +144,7 @@ def _cal_score(
     match_bonus,
     max_mismatch,
     mismatch_penalty,
+    is_phased=False,  # ***** receive mode at manager level
 ):
     """
     Description:
@@ -129,6 +161,7 @@ def _cal_score(
         match_bonus int: Bonus for matching genotypes of two different variants.
         max_mismatch int: Maximum genotype distance allowed.
         mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
+        is_phased bool: phased/unphased switch propagated to workers.  # ***** doc
     """
 
     try:
@@ -154,6 +187,7 @@ def _cal_score(
                 match_bonus,
                 max_mismatch,
                 mismatch_penalty,
+                is_phased,  # ***** pass mode into each worker
             ),
         )
         for ii in range(thread)
@@ -193,6 +227,7 @@ def _cal_score_worker(
     match_bonus,
     max_mismatch,
     mismatch_penalty,
+    is_phased=False,  # ***** receive mode in worker
 ):
     """
     Description:
@@ -208,6 +243,7 @@ def _cal_score_worker(
         match_bonus int: Bonus for matching genotypes of two different variants.
         max_mismatch int: Maximum genotype distance allowed.
         mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
+        is_phased bool: phased/unphased switch used for masking and subsetting.  # ***** doc
     """
 
     while True:
@@ -216,14 +252,37 @@ def _cal_score_worker(
         for c in chr_names:
             tgt_gt = tgt_data[c]["GT"]
             tgt_pos = tgt_data[c]["POS"]
-            ind = tgt_gt[:, s]
+            ind = tgt_gt[
+                :, s
+            ]  # per-sample view (3D → GenotypeVector, 2D → dosage vector)
 
             ref_gt = ref_data[c]["GT"]
             ref_pos = ref_data[c]["POS"]
-            ref_sub_pos = ref_pos[~np.all(ref_gt.is_hom_ref(), axis=1)]
-            # Assume the ref allele is 0 and the alt allele is 1
-            tgt_sub_gt = tgt_gt[~ind.is_hom_ref()][:, s]
-            tgt_sub_pos = tgt_pos[~ind.is_hom_ref()]
+
+            if is_phased:
+                ref_sub_pos = ref_pos[
+                    ~np.all(ref_gt.is_hom_ref(), axis=1)
+                ]  # ***** phased: drop sites hom-ref across ref samples
+                # Assume the ref allele is 0 and the alt allele is 1
+                tgt_sub_gt = tgt_gt[~ind.is_hom_ref()][
+                    :, s
+                ]  # ***** phased: keep sites where target sample is non-hom-ref
+                tgt_sub_pos = tgt_pos[
+                    ~ind.is_hom_ref()
+                ]  # ***** phased: same mask for positions
+            else:
+                ref_sub_pos = ref_pos[
+                    ~np.all(ref_gt == 0, axis=1)
+                ]  # ***** unphased: hom-ref across refs == all dosages 0
+                # Assume the ref allele is 0 and the alt allele is 1
+                mask = ind != 0
+                tgt_sub_gt = ind[
+                    mask
+                ]  # ***** unphased: keep non-zero dosage sites for target
+                tgt_sub_pos = tgt_pos[
+                    mask
+                ]  # ***** unphased: positions for the same mask
+
             res = _cal_score_ind(
                 c,
                 sample_name,
@@ -235,6 +294,7 @@ def _cal_score_worker(
                 match_bonus,
                 max_mismatch,
                 mismatch_penalty,
+                is_phased=is_phased,  # ***** propagate mode to scoring
             )
             out_queue.put("\n".join(res))
 
@@ -251,6 +311,7 @@ def _cal_score_ind(
     match_bonus,
     max_mismatch,
     mismatch_penalty,
+    is_phased=False,  # ***** receive mode in scorer
 ):
     """
     Description:
@@ -299,12 +360,18 @@ def _cal_score_ind(
                 max_score = -np.inf
                 snps = []
                 for i in range(j):
-                    geno_dist = abs(
-                        tgt_snps_gt[j][0]
-                        - tgt_snps_gt[i][0]
-                        + tgt_snps_gt[j][1]
-                        - tgt_snps_gt[i][1]
-                    )
+                    if is_phased:
+                        geno_dist = abs(
+                            tgt_snps_gt[j][0]
+                            - tgt_snps_gt[i][0]
+                            + tgt_snps_gt[j][1]
+                            - tgt_snps_gt[i][1]
+                        )  # ***** phased: allele-by-allele distance (diploid)
+                    else:
+                        geno_dist = abs(
+                            tgt_snps_gt[j] - tgt_snps_gt[i]
+                        )  # ***** unphased: dosage difference (0/1/2)
+
                     phy_dist = abs(tgt_snps_pos[j] - tgt_snps_pos[i])
                     if phy_dist < 10:
                         score_ij = -np.inf
