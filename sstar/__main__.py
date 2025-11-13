@@ -37,6 +37,7 @@ def _run_score(args):
         match_bonus=args.match_bonus,
         max_mismatch=args.max_mismatch,
         mismatch_penalty=args.mismatch_penalty,
+        is_phased=args.phased,
     )
 
 
@@ -241,6 +242,11 @@ def _s_star_cli_parser():
         dest="mismatch_penalty",
         default=-10000,
         help="penalty for mismatching genotypes of two different variants; default: -10000",
+    )
+    parser.add_argument(
+        "--phased",
+        action="store_true",
+        help="",
     )
     parser.set_defaults(runner=_run_score)
 
