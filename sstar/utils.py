@@ -95,30 +95,17 @@ def filter_data(data, c, index):
 
     Arguments:
         data dict: Genotype data for filtering.
-        c str: Names of chromosomes.
+            c str: Names of chromosomes.
         index numpy.ndarray: A boolean array determines variants to be removed.
 
     Returns:
         data dict: Genotype data after filtering.
     """
 
-    # Slice the main variant attributes by index
     data[c]["POS"] = data[c]["POS"][index]
     data[c]["REF"] = data[c]["REF"][index]
     data[c]["ALT"] = data[c]["ALT"][index]
-
-    gt_slice = data[c]["GT"][index]
-
-    # ***** Shape-aware GT handling *****
-    # allel.GenotypeArray expects a 3D array (variants × samples × ploidy).
-    # When working in unphased 2D mode (dosage matrix: variants × samples),
-    # that shape would raise TypeError ("expected 3D, found 2D").
-    # This branch ensures 3D stays as GenotypeArray and 2D stays as ndarray.
-    if hasattr(gt_slice, "ndim") and gt_slice.ndim == 3:
-        data[c]["GT"] = allel.GenotypeArray(gt_slice)
-    else:
-        # ***** For 2D data (e.g., is_phased=False) just keep it as a numpy array *****
-        data[c]["GT"] = np.asarray(gt_slice)
+    data[c]["GT"] = allel.GenotypeArray(data[c]["GT"][index])
 
     return data
 
