@@ -17,25 +17,7 @@ import allel
 import numpy as np
 import os
 from multiprocessing import Process, Queue
-from sstar.utils import read_data, filter_data
-
-
-def _to_dosage(GT):
-    """
-    Convert any allel.GenotypeArray or ndarray GT into a 2D numpy array (variants, samples)
-    of alt-allele counts (0/1/2). If already 2D, return as-is.
-    """
-    # Fast path for scikit-allel GenotypeArray-like
-    if hasattr(GT, "to_n_alt"):
-        return GT.to_n_alt()  # (V, S)
-    # Fallback to numpy
-    arr = GT.values if hasattr(GT, "values") else np.asarray(GT)
-    if arr.ndim == 3:
-        # (V, S, ploidy) -> sum alt alleles per sample (dosage)
-        return np.sum(arr, axis=2)
-    if arr.ndim == 2:
-        return arr
-    raise ValueError(f"Unexpected GT shape: {arr.shape}")
+from sstar.utils import read_data
 
 
 # @profile
@@ -69,51 +51,78 @@ def cal_s_star(
         match_bonus int: Bonus for matching genotypes of two different variants.
         max_mismatch int: Maximum genotype distance allowed.
         mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
+        is_phased bool: If True, flatten haplotypes; else convert to dosages.
     """
 
+    # --- Load data in 3D GenotypeArray form (V x N x ploidy) -----------------
     ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(
-        vcf, ref_ind_file, tgt_ind_file, None, anc_allele_file
+        vcf_file=vcf,
+        ref_ind_file=ref_ind_file,
+        tgt_ind_file=tgt_ind_file,
+        src_ind_file=None,
+        anc_allele_file=anc_allele_file,
+        is_phased=is_phased,
     )
 
-    # --- Normalize to 2D dosage (variants x samples) immediately, regardless of phasing ---
-    for c in list(tgt_data.keys()):
-        ref_data[c]["GT"] = _to_dosage(ref_data[c]["GT"])
-        tgt_data[c]["GT"] = _to_dosage(tgt_data[c]["GT"])
-        # ensure POS are numpy arrays
-        if not isinstance(ref_data[c]["POS"], np.ndarray):
-            ref_data[c]["POS"] = np.asarray(ref_data[c]["POS"])
-        if not isinstance(tgt_data[c]["POS"], np.ndarray):
-            tgt_data[c]["POS"] = np.asarray(tgt_data[c]["POS"])
+    # --- Convert GT to 2D: phased haplotypes or genotype dosage -------------
+    # This corresponds to Xin Huang's original commented logic:
+    #   if is_phased:
+    #       mut_num, ind_num, ploidy = GT.shape
+    #       data[k][c]['GT'] = np.reshape(GT.values, (mut_num, ind_num * ploidy))
+    #   else:
+    #       data[k][c]['GT'] = np.sum(GT, axis=2)
+    for data_dict in (ref_data, tgt_data, src_data):
+        if data_dict is None:
+            continue
+        for d in data_dict.values():
+            GT = d["GT"]  # allel.GenotypeArray (V, N, P)
+            A = GT.values  # ndarray (V, N, P)
+            if is_phased:
+                v, n, p = A.shape
+                d["GT"] = A.reshape(v, n * p)  # (V, N*P) haplotypes (0/1)
+            else:
+                d["GT"] = A.sum(axis=2)  # (V, N) dosage (0/1/2)
+            # ensure POS is a numpy array
+            if not isinstance(d["POS"], np.ndarray):
+                d["POS"] = np.asarray(d["POS"])
 
-    chr_names = tgt_data.keys()
-    for c in chr_names:
-        # Remove variants observed in the reference populations
-        # Assume 1 is the alt allele
-        # (original used ref_data[c]["GT"].is_hom_ref(); in 2D dosage, hom-ref == 0)
-        ref_gt = ref_data[c]["GT"]  # (V_ref, S_ref)
+    # --- Remove variants observed in the reference populations --------------
+    # original logic (Xin Huang):
+    #   # Remove variants observed in the reference populations
+    #   # Assume 1 is the alt allele
+    #   # (original used ref_data[c]["GT"].is_hom_ref(); in 2D dosage, hom-ref == 0)
+    for c, d_tgt in tgt_data.items():
+        ref_gt = ref_data[c]["GT"]  # 2D: (V_ref, N_ref)
         variants_not_in_ref = np.all(ref_gt == 0, axis=1)
-        tgt_data = filter_data(tgt_data, c, variants_not_in_ref)
+        for key in ("POS", "REF", "ALT", "GT"):
+            if key in d_tgt:
+                d_tgt[key] = d_tgt[key][variants_not_in_ref]
 
+    # ------------------------------------------------------------------------
+    # original single-thread implementation by Xin Huang, kept as comment:
+    #
     # header = 'chrom\tsample\tstart\tend\ttotal_SNP_number\tS*_SNP_number\tS*_score\tS*_SNPs'
     # o = open(output, 'w')
     # o.write(header+'\n')
     # for s in range(len(tgt_samples)):
-    #    chr_names = tgt_data.keys()
-    #    for c in chr_names:
-    #        tgt_gt = tgt_data[c]['GT']
-    #        tgt_pos = tgt_data[c]['POS']
-    #        ind = tgt_gt[:,s]
+    #     chr_names = tgt_data.keys()
+    #     for c in chr_names:
+    #         tgt_gt = tgt_data[c]['GT']
+    #         tgt_pos = tgt_data[c]['POS']
+    #         ind = tgt_gt[:,s]
     #
-    #        ref_gt = ref_data[c]['GT']
-    #        ref_pos = ref_data[c]['POS']
-    #        ref_sub_pos = ref_pos[~np.all(ref_gt.is_hom_ref(), axis=1)]
-    # Assume the ref allele is 0 and the alt allele is 1
-    #        tgt_sub_gt = tgt_gt[~ind.is_hom_ref()][:,s]
-    #        tgt_sub_pos = tgt_pos[~ind.is_hom_ref()]
-    #        res = _cal_score_ind(c, tgt_samples[s], ref_sub_pos, tgt_sub_pos, tgt_sub_gt, win_step, win_len)
-    #        o.write('\n'.join(res))
+    #         ref_gt = ref_data[c]['GT']
+    #         ref_pos = ref_data[c]['POS']
+    #         ref_sub_pos = ref_pos[~np.all(ref_gt.is_hom_ref(), axis=1)]
+    #         # Assume the ref allele is 0 and the alt allele is 1
+    #         tgt_sub_gt = tgt_gt[~ind.is_hom_ref()][:,s]
+    #         tgt_sub_pos = tgt_pos[~ind.is_hom_ref()]
+    #         res = _cal_score_ind(c, tgt_samples[s], ref_sub_pos, tgt_sub_pos, tgt_sub_gt, win_step, win_len)
+    #         o.write('\n'.join(res))
     # o.close()
-    # (kept verbatim as in original; actual implementation below uses 2D dosage equivalents)
+    #
+    # (The actual implementation below uses multiprocessing and the new 2D logic.)
+    # ------------------------------------------------------------------------
 
     if thread > 1:
         thread = min(os.cpu_count() - 1, len(tgt_samples), thread)
@@ -129,10 +138,11 @@ def cal_s_star(
         match_bonus,
         max_mismatch,
         mismatch_penalty,
-        is_phased=is_phased,  # threaded but currently unused
+        is_phased=is_phased,  # threaded but currently unused; kept for future phased support
     )
 
 
+# @profile
 def _cal_score(
     ref_data,
     tgt_data,
@@ -144,7 +154,7 @@ def _cal_score(
     match_bonus,
     max_mismatch,
     mismatch_penalty,
-    is_phased: bool = False,  # threaded but currently unused
+    is_phased: bool = False,  # threaded but currently unused; kept for future phased support
 ):
     """
     Description:
@@ -189,7 +199,7 @@ def _cal_score(
                 is_phased,  # threaded but currently unused
             ),
         )
-        for ii in range(thread)
+        for _ in range(thread)
     ]
     for s in range(len(samples)):
         in_queue.put((s, samples[s]))
@@ -198,7 +208,7 @@ def _cal_score(
         for worker in workers:
             worker.start()
 
-        for s in range(len(samples)):
+        for _ in range(len(samples)):
             item = out_queue.get()
             if item != "":
                 res.append(item)
@@ -216,6 +226,7 @@ def _cal_score(
         o.write("\n")
 
 
+# @profile
 def _cal_score_worker(
     in_queue,
     out_queue,
@@ -226,7 +237,7 @@ def _cal_score_worker(
     match_bonus,
     max_mismatch,
     mismatch_penalty,
-    is_phased: bool = False,  # threaded but currently unused
+    is_phased: bool = False,  # threaded but currently unused; kept for future phased support
 ):
     """
     Description:
@@ -248,18 +259,18 @@ def _cal_score_worker(
         s, sample_name = in_queue.get()
         chr_names = tgt_data.keys()
         for c in chr_names:
-            tgt_gt = tgt_data[c]["GT"]
+            tgt_gt = tgt_data[c]["GT"]  # 2D: (V, N_tgt)
             tgt_pos = tgt_data[c]["POS"]
-            ind = tgt_gt[:, s]
+            ind = tgt_gt[:, s]  # 1D: (V,)
 
-            ref_gt = ref_data[c]["GT"]
+            ref_gt = ref_data[c]["GT"]  # 2D: (V, N_ref)
             ref_pos = ref_data[c]["POS"]
             # original: ref_sub_pos = ref_pos[~np.all(ref_gt.is_hom_ref(), axis=1)]
-            # 2D dosage equivalent: hom-ref across refs == all dosages 0
+            # 2D dosage/haplotype equivalent: hom-ref == 0
             ref_sub_pos = ref_pos[~np.all(ref_gt == 0, axis=1)]
             # Assume the ref allele is 0 and the alt allele is 1
             # original: tgt_sub_gt = tgt_gt[~ind.is_hom_ref()][:,s]; tgt_sub_pos = tgt_pos[~ind.is_hom_ref()]
-            # 2D dosage equivalent: keep sites where this target sample is not hom-ref
+            # 2D equivalent: keep sites where this target sample is not hom-ref (ind != 0)
             mask = ind != 0
             tgt_sub_gt = ind[mask]
             tgt_sub_pos = tgt_pos[mask]
@@ -300,7 +311,7 @@ def _cal_score_ind(
         sample_name str: Name of the sample.
         ref_pos list: List of position for variants in reference populations.
         tgt_pos list: List of position for variants in target populations.
-        tgt_gt allel.GenotypeArray: Genotype data from target populations.
+        tgt_gt: Genotype data (here: 1D array of dosages/haploid alleles) from target populations.
         win_step int: Length of sliding windows.
         win_len int: Step size of sliding windows.
         match_bonus int: Bonus for matching genotypes of two different variants.
@@ -312,7 +323,8 @@ def _cal_score_ind(
     """
     res = []
     if len(tgt_gt) <= 2:
-        last_pos = 0  # An indivinual should have at least three SNPs for S* calculation
+        # An individual should have at least three SNPs for S* calculation
+        last_pos = 0
         win_start = 0
     else:
         win_start = (tgt_pos[0] + win_step) // win_step * win_step - win_len
@@ -338,14 +350,14 @@ def _cal_score_ind(
                 max_score = -np.inf
                 snps = []
                 for i in range(j):
-                    # original phased allele-wise distance (removed in 2D dosage mode):
+                    # original phased allele-wise distance (Xin Huang):
                     # geno_dist = abs(
                     #     tgt_snps_gt[j][0]
                     #     - tgt_snps_gt[i][0]
                     #     + tgt_snps_gt[j][1]
                     #     - tgt_snps_gt[i][1]
                     # )
-                    # 2D dosage distance (works for haploid 0/1 or diploid 0/1/2):
+                    # 2D dosage/haplotype distance:
                     geno_dist = abs(tgt_snps_gt[j] - tgt_snps_gt[i])
 
                     phy_dist = abs(tgt_snps_pos[j] - tgt_snps_pos[i])
@@ -385,7 +397,10 @@ def _cal_score_ind(
             s_star_score = "NA"
             haplotype = "NA"
 
-        line = f"{chr_name}\t{win_start}\t{win_end}\t{sample_name}\t{s_star_score}\t{total_snps}\t{s_star_snp_num}\t{haplotype}"
+        line = (
+            f"{chr_name}\t{win_start}\t{win_end}\t{sample_name}\t"
+            f"{s_star_score}\t{total_snps}\t{s_star_snp_num}\t{haplotype}"
+        )
 
         win_start += win_step
         res.append(line)
