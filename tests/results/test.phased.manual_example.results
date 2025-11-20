@@ -1,0 +1,4 @@
+chrom	start	end	sample	S*_score	region_ind_SNP_number	S*_SNP_number	S*_SNPs
+21	500	1500	tgt1	25500	6	6	1000,1100,1200,1300,1400,1500
+21	1000	2000	tgt1	30600	7	7	1100,1200,1300,1400,1500,1600,1700
+21	1500	2500	tgt1	NA	2	NA	NA

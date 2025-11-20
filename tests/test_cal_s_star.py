@@ -29,7 +29,7 @@ def data():
     pytest.exp_output = "./tests/results/test.score.exp.results"
 
 
-def test_cal_s_star(data):
+def test_cal_s_star_with_unphased_data(data):
     cal_s_star(
         vcf=pytest.vcf,
         ref_ind_file=pytest.ref_ind_list,
@@ -42,6 +42,7 @@ def test_cal_s_star(data):
         match_bonus=5000,
         max_mismatch=5,
         mismatch_penalty=-10000,
+        is_phased=False,
     )
     f1 = open(pytest.output, "r")
     res = f1.read()
@@ -49,5 +50,37 @@ def test_cal_s_star(data):
     f2 = open(pytest.exp_output, "r")
     exp_res = f2.read()
     f2.close()
+
+    assert res == exp_res
+
+def test_cal_s_star_with_phased_data(tmp_path):
+    # Paths to phased test inputs
+    vcf = "./tests/data/test.phased.score.data.vcf"
+    ref_ind_list = "./tests/data/test.phased.ref.ind.list"
+    tgt_ind_list = "./tests/data/test.phased.tgt.ind.list"
+    exp_output = "./tests/results/test.phased.score.exp.results"
+
+    # Temporary output file for this test run
+    output = tmp_path / "test.phased.score.results"
+
+    cal_s_star(
+        vcf=vcf,
+        ref_ind_file=ref_ind_list,
+        tgt_ind_file=tgt_ind_list,
+        anc_allele_file=None,
+        output=str(output),
+        win_len=500,       # must match what you used to create the expected file
+        win_step=100,
+        thread=1,
+        match_bonus=5000,
+        max_mismatch=5,
+        mismatch_penalty=-10000,
+        is_phased=True
+    )
+
+    with open(output) as f1:
+        res = f1.read()
+    with open(exp_output) as f2:
+        exp_res = f2.read()
 
     assert res == exp_res
