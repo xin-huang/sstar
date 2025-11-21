@@ -55,13 +55,13 @@ def test_cal_s_star_with_unphased_data(data):
 
 def test_cal_s_star_with_phased_data(tmp_path):
     # Paths to phased test inputs
-    vcf = "./tests/data/test.phased.score.data.vcf"
+    vcf = "./tests/data/test.phased.manual_example.vcf"
     ref_ind_list = "./tests/data/test.phased.ref.ind.list"
     tgt_ind_list = "./tests/data/test.phased.tgt.ind.list"
-    exp_output = "./tests/results/test.phased.score.exp.results"
+    exp_output = ""
 
     # Temporary output file for this test run
-    output = tmp_path / "test.phased.score.results"
+    output = tmp_path / "test.phased.manual_example.results"
 
     cal_s_star(
         vcf=vcf,
