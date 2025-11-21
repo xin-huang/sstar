@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sstar"
+version = "2.0.0"
+description = "A Python Package for S*-based archaic introgression detection with quantile regression"
+readme = "README.md"
+requires-python = "==3.11.14"
+license = {text = "GPLv3"}
+authors = [
+    {name = "Xin Huang", email = "xinhuang.res@gmail.com"},
+    {name = "Andrea Koca"},
+    {name = "Simon Chen"}
+]
+urls = {Homepage = "https://github.com/xin-huang/sstar"}
+
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11"
+]
+
+dependencies = [
+    "demes==0.2.3",
+    "numpy==2.3.5",
+    "pandas==2.3.3",
+    "scikit-allel==1.3.13",
+    "scikit-learn==1.7.2",
+    "scipy==1.16.3",
+]
+
+[project.scripts]
+sstar = "sstar.__main__:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
