@@ -29,7 +29,7 @@ def data():
     pytest.output = "./tests/results/test.threshold.results"
     pytest.exp_output = "./tests/results/test.threshold.exp.results"
 
-@pytest.mark.slow
+
 def test_cal_threshold(data):
     cal_threshold(
         simulated_data=pytest.simulated_data,
