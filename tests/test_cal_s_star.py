@@ -57,16 +57,21 @@ def test_cal_s_star_with_unphased_data(data):
 def test_cal_s_star_with_phased_data_same_input(data):
     """
     Run the SAME VCF as the unphased test, but treat GT as PHASED (haplotypes).
+
+    We assert:
+      - header is correct
+      - output has at least one data row
+      - both haplotype suffixes ('_hap1', '_hap2') are present in sample labels
+      - phased output has at least as many rows as the unphased expected output
     """
-    # Just use a normal string path for the phased output
     output_phased = "./tests/results/test.score.phased_same_input.results"
 
     cal_s_star(
-        vcf=pytest.vcf,                         # SAME INPUT as unphased test
+        vcf=pytest.vcf,
         ref_ind_file=pytest.ref_ind_list,
         tgt_ind_file=pytest.tgt_ind_list,
         anc_allele_file=None,
-        output=output_phased,                  # <-- use local variable, not pytest.*
+        output=output_phased,
         win_len=50000,
         win_step=10000,
         thread=1,
@@ -76,13 +81,14 @@ def test_cal_s_star_with_phased_data_same_input(data):
         is_phased=True,
     )
 
+    # Read phased result
     with open(output_phased) as f:
-        lines = f.readlines()
+        phased_lines = [l.rstrip("\n") for l in f]
 
     # Header + at least one data row
-    assert len(lines) > 1
+    assert len(phased_lines) > 1
 
-    header = lines[0].rstrip("\n").split("\t")
+    header = phased_lines[0].split("\t")
     assert header == [
         "chrom",
         "start",
@@ -94,9 +100,25 @@ def test_cal_s_star_with_phased_data_same_input(data):
         "S*_SNPs",
     ]
 
-    first_data = lines[1].rstrip("\n").split("\t")
+    # Basic row integrity
+    first_data = phased_lines[1].split("\t")
     assert len(first_data) == 8
 
+    # Check that both haplotype suffixes occur across sample labels
+    samples = {line.split("\t")[3] for line in phased_lines[1:]}
+    assert any(s.endswith("_hap1") for s in samples)
+    assert any(s.endswith("_hap2") for s in samples)
+
+    # Compare number of rows to *expected* unphased output (static file)
+    with open(pytest.exp_output) as f:
+        unphased_lines = [l.rstrip("\n") for l in f]
+
+    # Ignore headers (first line)
+    phased_n = len(phased_lines) - 1
+    unphased_n = len(unphased_lines) - 1
+
+    # Phased run has at least as many windows as the unphased one
+    assert phased_n >= unphased_n
 
 def test_cal_score_ind_with_too_few_snps():
     """
@@ -209,4 +231,5 @@ def test_cal_score_ind_with_short_phy_distance():
     assert len(res) >= 1
     fields = res[0].split("\t")
     assert len(fields) == 8
+
 

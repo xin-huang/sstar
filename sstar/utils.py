@@ -179,19 +179,11 @@ def read_data(
     # Use chromosome keys from tgt > ref > src depending on availability.
     chr_names = (data["tgt"] or data["ref"] or data["src"] or {}).keys()
 
-    # --- Apply phasing or dosage transformation -------------------------------
-    # If is_phased=True: flatten haplotypes -> (variants, individuals*ploidy)
-    # If is_phased=False: sum over ploidy -> dosage representation (0/1/2)
     for c in chr_names:
         for k in ("ref", "tgt", "src"):
             if not data[k] or (c not in data[k]):
                 continue
             GT = data[k][c]["GT"]
-            # if is_phased:
-            #    mut_num, ind_num, ploidy = GT.shape
-            #    data[k][c]['GT'] = np.reshape(GT.values, (mut_num, ind_num * ploidy))
-            # else:
-            #    data[k][c]['GT'] = np.sum(GT, axis=2)
 
     # --- Return loaded and processed data -------------------------------------
     return (
@@ -540,6 +532,6 @@ def py2round(x, d=0):
     if x > 0:
         return float(math.floor((x * p) + 0.5)) / p
     elif x < 0:
-        float(math.ceil((x * p) - 0.5)) / p
+        return float(math.ceil((x * p) - 0.5)) / p
     else:
         return 0.0

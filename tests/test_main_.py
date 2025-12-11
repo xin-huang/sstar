@@ -21,6 +21,38 @@ def test_score_subcommand_calls_runner():
         assert call_args.tgt_ind == "tgt.txt"
 
 
+def test_score_subcommand_phased_flag():
+    """
+    Ensure that the --phased flag on the CLI is parsed and propagated
+    to _run_score (and therefore to cal_s_star).
+    """
+    with patch("sstar.__main__._run_score") as mock_run:
+        main(
+            [
+                "score",
+                "--vcf",
+                "test.vcf",
+                "--ref",
+                "ref.txt",
+                "--tgt",
+                "tgt.txt",
+                "--output",
+                "out.txt",
+                "--phased",
+            ]
+        )
+
+        # Verify that _run_score was called exactly once
+        mock_run.assert_called_once()
+
+        # Extract the argparse Namespace passed into _run_score
+        args = mock_run.call_args[0][0]
+
+        # Confirm the CLI flag is correctly set
+        assert args.phased is True
+
+
+
 def test_quantile_subcommand_calls_runner():
     with patch("sstar.__main__._run_quantile") as mock_run:
         main([

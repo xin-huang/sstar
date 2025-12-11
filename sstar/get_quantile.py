@@ -324,9 +324,9 @@ def _run_ms_simulation_worker(
             subprocess.call(["mkdir", output_subdir])
         with open(ms_script, "w") as o:
             o.write(cmd + "\n")
-        subprocess.call(["bash", ms_script])
+        subprocess.check_call(["bash", ms_script])
         _ms2vcf(output_ms, output_vcf, nsamp, seq_len)
-        subprocess.call(
+        subprocess.check_call(
             [
                 "sstar",
                 "score",

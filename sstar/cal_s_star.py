@@ -65,12 +65,6 @@ def cal_s_star(
     )
 
     # --- Convert GT to 2D: phased haplotypes or genotype dosage -------------
-    # This corresponds to Xin Huang's original commented logic:
-    #   if is_phased:
-    #       mut_num, ind_num, ploidy = GT.shape
-    #       data[k][c]['GT'] = np.reshape(GT.values, (mut_num, ind_num * ploidy))
-    #   else:
-    #       data[k][c]['GT'] = np.sum(GT, axis=2)
     for data_dict in (ref_data, tgt_data, src_data):
         if data_dict is None:
             continue
@@ -97,32 +91,6 @@ def cal_s_star(
         for key in ("POS", "REF", "ALT", "GT"):
             if key in d_tgt:
                 d_tgt[key] = d_tgt[key][variants_not_in_ref]
-
-    # ------------------------------------------------------------------------
-    # original single-thread implementation by Xin Huang, kept as comment:
-    #
-    # header = 'chrom\tsample\tstart\tend\ttotal_SNP_number\tS*_SNP_number\tS*_score\tS*_SNPs'
-    # o = open(output, 'w')
-    # o.write(header+'\n')
-    # for s in range(len(tgt_samples)):
-    #     chr_names = tgt_data.keys()
-    #     for c in chr_names:
-    #         tgt_gt = tgt_data[c]['GT']
-    #         tgt_pos = tgt_data[c]['POS']
-    #         ind = tgt_gt[:,s]
-    #
-    #         ref_gt = ref_data[c]['GT']
-    #         ref_pos = ref_data[c]['POS']
-    #         ref_sub_pos = ref_pos[~np.all(ref_gt.is_hom_ref(), axis=1)]
-    #         # Assume the ref allele is 0 and the alt allele is 1
-    #         tgt_sub_gt = tgt_gt[~ind.is_hom_ref()][:,s]
-    #         tgt_sub_pos = tgt_pos[~ind.is_hom_ref()]
-    #         res = _cal_score_ind(c, tgt_samples[s], ref_sub_pos, tgt_sub_pos, tgt_sub_gt, win_step, win_len)
-    #         o.write('\n'.join(res))
-    # o.close()
-    #
-    # (The actual implementation below uses multiprocessing and the new 2D logic.)
-    # ------------------------------------------------------------------------
 
     if thread > 1:
         thread = min(os.cpu_count() - 1, len(tgt_samples), thread)
@@ -365,14 +333,6 @@ def _cal_score_ind(
                 max_score = -np.inf
                 snps = []
                 for i in range(j):
-                    # original phased allele-wise distance (Xin Huang):
-                    # geno_dist = abs(
-                    #     tgt_snps_gt[j][0]
-                    #     - tgt_snps_gt[i][0]
-                    #     + tgt_snps_gt[j][1]
-                    #     - tgt_snps_gt[i][1]
-                    # )
-                    # 2D dosage/haplotype distance:
                     geno_dist = abs(tgt_snps_gt[j] - tgt_snps_gt[i])
 
                     phy_dist = abs(tgt_snps_pos[j] - tgt_snps_pos[i])
