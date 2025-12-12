@@ -17,7 +17,6 @@ import pytest
 import pandas as pd
 import numpy as np
 from sstar.cal_threshold import cal_threshold
-from sstar.cal_s_star import cal_s_star
 
 @pytest.fixture
 def data():
@@ -49,12 +48,12 @@ def test_cal_threshold(data):
     for col in df1.columns:
         assert col in df2.columns, f"Column '{col}' missing in expected output"
 
-        if pd.api.types.is_float_dtype(df1[col]):
-            assert np.allclose(
-                df1[col], df2[col], rtol=1e-5, atol=1e-8, equal_nan=True
-         ), f"Float column '{col}' differs"
-        else:
-            assert (
-                df1[col].fillna("").astype(str).values
-             == df2[col].fillna("").astype(str).values
-            ).all(), f"Column '{col}' differs"
+    if pd.api.types.is_float_dtype(df1[col]):
+         assert np.allclose(
+             df1[col], df2[col], rtol=1e-5, atol=1e-8, equal_nan=True
+     ), f"Float column '{col}' differs"
+    else:
+        assert (
+            df1[col].fillna("").astype(str).values
+         == df2[col].fillna("").astype(str).values
+        ).all(), f"Column '{col}' differs"
