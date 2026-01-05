@@ -22,6 +22,20 @@ from multiprocessing import Process, Queue
 from sstar.utils import read_data, py2round, read_mapped_region_file, cal_matchpct
 
 
+def calc_match_pct(x, y, P=2):
+    """
+    match(x,y) = 1 - |x-y|/P
+    x,y: allele-1 copy numbers (dosage). Missing encoded as -1 and ignored.
+    Returns float in [0,1] or 'NA' if no callable sites.
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    ok = (x >= 0) & (y >= 0)
+    if not np.any(ok):
+        return "NA"
+    return float(np.mean(1.0 - np.abs(x[ok] - y[ok]) / float(P)))
+
+
 # @profile
 def cal_match_pct(
     vcf,
@@ -262,37 +276,37 @@ def _cal_match_pct_ind(
 
         for src_ind_index in range(len(src_samples)):
             src_sample = src_samples[src_ind_index]
-            hap1_res = cal_matchpct(
-                chr_name,
-                mapped_intervals,
-                tgt_data,
-                src_data,
-                tgt_ind_index,
-                src_ind_index,
-                0,
-                int(win_start),
-                int(win_end),
-                sample_size,
-            )
-            hap2_res = cal_matchpct(
-                chr_name,
-                mapped_intervals,
-                tgt_data,
-                src_data,
-                tgt_ind_index,
-                src_ind_index,
-                1,
-                int(win_start),
-                int(win_end),
-                sample_size,
-            )
-
-            hap1_match_pct = hap1_res[-1]
-            hap2_match_pct = hap2_res[-1]
-            hap_match_pct = "NA"
-
-            if (hap1_match_pct != "NA") and (hap2_match_pct != "NA"):
-                hap_match_pct = (hap1_match_pct + hap2_match_pct) / 2
+#            hap1_res = cal_matchpct(
+#                chr_name,
+#                mapped_intervals,
+#                tgt_data,
+#                src_data,
+#                tgt_ind_index,
+#                src_ind_index,
+#                0,
+#                int(win_start),
+#                int(win_end),
+#                sample_size,
+#            )
+#            hap2_res = cal_matchpct(
+#                chr_name,
+#                mapped_intervals,
+#                tgt_data,
+#               src_data
+#                tgt_ind_index,
+#                src_ind_index,
+#                1,
+#                int(win_start),
+#                int(win_end),
+#                sample_size,
+#            )
+#
+#            hap1_match_pct = hap1_res[-1]
+#            hap2_match_pct = hap2_res[-1]
+#            hap_match_pct = "NA"
+#
+#            if (hap1_match_pct != "NA") and (hap2_match_pct != "NA"):
+#                hap_match_pct = (hap1_match_pct + hap2_match_pct) / 2
 
             line = f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t{hap_match_pct}\t{src_sample}"
             res.append(line)
