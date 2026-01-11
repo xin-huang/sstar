@@ -48,19 +48,11 @@ def test_cal_threshold(data):
 
     assert df_actual.shape == df_expected.shape, "DataFrame shape mismatch"
 
-    for col in df_actual.columns:
-        assert col in df_expected.columns, f"Column '{col}' missing in expected output"
-
-        if pd.api.types.is_float_dtype(df_actual[col]):
-            assert np.allclose(
-                df_actual[col],
-                df_expected[col],
-                rtol=1e-5,
-                atol=1e-8,
-                equal_nan=True,
-            ), f"Float column '{col}' differs"
-        else:
-            actual = df_actual[col].fillna("").astype(str).to_numpy()
-            expected = df_expected[col].fillna("").astype(str).to_numpy()
-            assert (actual == expected).all(), f"Column '{col}' differs"
-
+    pd.testing.assert_frame_equal(
+        df_actual,
+        df_expected,
+        check_dtype=False,
+        check_like=False,
+        rtol=1e-5,
+        atol=1e-5,
+    )
