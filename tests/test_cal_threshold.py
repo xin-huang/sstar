@@ -43,17 +43,13 @@ def test_cal_threshold(data):
     df1 = pd.read_csv(pytest.output, sep="\t")
     df2 = pd.read_csv(pytest.exp_output, sep="\t")
 
-    assert df1.shape == df2.shape, "DataFrame shape mismatch"
 
-    for col in df1.columns:
-        assert col in df2.columns, f"Column '{col}' missing in expected output"
+    pd.testing.assert_frame_equal(
+        df1,
+        df2,
+        check_dtype=False,
+        check_like=False,
+        rtol=1e-5,
+        atol=1e-5,
+    )
 
-    if pd.api.types.is_float_dtype(df1[col]):
-         assert np.allclose(
-             df1[col], df2[col], rtol=1e-5, atol=1e-8, equal_nan=True
-     ), f"Float column '{col}' differs"
-    else:
-        assert (
-            df1[col].fillna("").astype(str).values
-         == df2[col].fillna("").astype(str).values
-        ).all(), f"Column '{col}' differs"

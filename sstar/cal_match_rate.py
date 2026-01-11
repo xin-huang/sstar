@@ -21,19 +21,26 @@ import pandas as pd
 from multiprocessing import Process, Queue
 from sstar.utils import read_data, py2round, read_mapped_region_file, cal_matchpct
 
-
 def calc_match_pct(x, y, P=2):
     """
-    match(x,y) = 1 - |x-y|/P
-    x,y: allele-1 copy numbers (dosage). Missing encoded as -1 and ignored.
-    Returns float in [0,1] or 'NA' if no callable sites.
+    Dosage-based match rate.
+
+    For biallelic variants with ploidy P, x and y are allele-1 copy numbers (dosage).
+    Unmatched copies = |x - y|, so matched copies = P - |x - y|.
+    Match rate = (P - |x - y|) / P = 1 - |x - y|/P
+
+    Missing values must be encoded as -1 and are ignored.
+    Returns float in [0,1] or "NA" if no callable sites.
     """
-    x = np.asarray(x, dtype=float)
-    y = np.asarray(y, dtype=float)
+    x = np.atleast_1d(np.asarray(x, dtype=float))
+    y = np.atleast_1d(np.asarray(y, dtype=float))
+
     ok = (x >= 0) & (y >= 0)
     if not np.any(ok):
         return "NA"
+
     return float(np.mean(1.0 - np.abs(x[ok] - y[ok]) / float(P)))
+
 
 
 # @profile
