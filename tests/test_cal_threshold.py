@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,13 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
+
 from sstar.cal_threshold import cal_threshold
+
 
 @pytest.fixture
 def data():
+    """Test file paths used by cal_threshold tests."""
     pytest.simulated_data = (
         "./examples/data/simulated_data/gravel_asn_scale_60k.simulated.data"
     )
@@ -40,16 +43,24 @@ def test_cal_threshold(data):
         k=8,
     )
 
-    df1 = pd.read_csv(pytest.output, sep="\t")
-    df2 = pd.read_csv(pytest.exp_output, sep="\t")
+    df_actual = pd.read_csv(pytest.output, sep="\t")
+    df_expected = pd.read_csv(pytest.exp_output, sep="\t")
 
+    assert df_actual.shape == df_expected.shape, "DataFrame shape mismatch"
 
-    pd.testing.assert_frame_equal(
-        df1,
-        df2,
-        check_dtype=False,
-        check_like=False,
-        rtol=1e-5,
-        atol=1e-5,
-    )
+    for col in df_actual.columns:
+        assert col in df_expected.columns, f"Column '{col}' missing in expected output"
+
+        if pd.api.types.is_float_dtype(df_actual[col]):
+            assert np.allclose(
+                df_actual[col],
+                df_expected[col],
+                rtol=1e-5,
+                atol=1e-8,
+                equal_nan=True,
+            ), f"Float column '{col}' differs"
+        else:
+            actual = df_actual[col].fillna("").astype(str).to_numpy()
+            expected = df_expected[col].fillna("").astype(str).to_numpy()
+            assert (actual == expected).all(), f"Column '{col}' differs"
 
