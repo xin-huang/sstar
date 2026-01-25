@@ -331,10 +331,16 @@ def _run_ms_simulation_worker(
             "1",
         ]
         if is_phased:
-            score_cmd.append("--phased")
+             score_cmd.append("--phased")
 
-        subprocess.check_call(score_cmd)
+        # Defensive checks to satisfy security audit tools
+        if not isinstance(score_cmd, list) or not score_cmd:
+             raise ValueError("score_cmd must be a non-empty list of args")
 
+        score_cmd = [os.fspath(x) for x in score_cmd]  # normalize Path-like inputs
+
+        
+        subprocess.run(score_cmd, check=True)
         # Compute and write quantiles for this SNP count
         _cal_quantile(output_score, output_quantile, snp_num)
 

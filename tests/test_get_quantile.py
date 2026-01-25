@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import builtins
+import subprocess
 import textwrap
 
 import numpy as np
@@ -243,11 +244,18 @@ def test_run_ms_simulation_worker_simple(tmp_path, monkeypatch):
 
         captured = []
 
+        # Intercept the "bash run_ms.sh" call
         def fake_check_call(cmd, *a, **k):
             captured.append(cmd)
             return 0
 
+        # Intercept the "sstar score ..." call (now uses subprocess.run)
+        def fake_run(cmd, *a, **k):
+            captured.append(cmd)
+            return subprocess.CompletedProcess(cmd, 0)
+
         monkeypatch.setattr("sstar.get_quantile.subprocess.check_call", fake_check_call)
+        monkeypatch.setattr("sstar.get_quantile.subprocess.run", fake_run)
         monkeypatch.setattr("sstar.get_quantile._ms2vcf", lambda *a, **k: None)
         monkeypatch.setattr("sstar.get_quantile._cal_quantile", lambda *a, **k: None)
 
@@ -277,3 +285,4 @@ def test_run_ms_simulation_worker_simple(tmp_path, monkeypatch):
 
     run_case(False)
     run_case(True)
+
