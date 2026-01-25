@@ -169,10 +169,11 @@ def _cal_score(
         )
         for _ in range(thread)
     ]
+
     if is_phased:
-    # GT shape is V x (N * ploidy) after flattening, so we need 1 job per haplotype
+        # GT shape is V x (N * ploidy) after flattening, so we need 1 job per haplotype
         any_chr = next(iter(tgt_data.values()))
-        n_cols = any_chr["GT"].shape[1]      # total haplotypes
+        n_cols = any_chr["GT"].shape[1]  # total haplotypes
         n_samples = len(samples)
         ploidy = n_cols // n_samples
 
@@ -184,7 +185,8 @@ def _cal_score(
             in_queue.put((hap_idx, sample_name))
     else:
         n_jobs = len(samples)
-        for s in range(len(samples)):
+        # CHANGE REQUESTED BY XIN (Dec 5, 2025): use n_jobs in the loop range
+        for s in range(n_jobs):
             in_queue.put((s, samples[s]))
 
     try:
@@ -381,3 +383,4 @@ def _cal_score_ind(
         res.append(line)
 
     return res
+

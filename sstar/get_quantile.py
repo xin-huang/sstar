@@ -41,6 +41,7 @@ def get_quantile(
     output_dir,
     thread,
     seeds,
+    is_phased: bool = False,
 ):
     """
     Description:
@@ -59,16 +60,23 @@ def get_quantile(
         mut_rate float: Mutation rate.
         rec_rate float: Recombination rate.
         seq_len int: Length of simulated sequence.
-        snp_num_range list: Range of SNP numbers in ms simulation; the first parameter is the minimum SNP number, the second parameter is the maximum SNP number, the third parameter is the step size.
-        output_dir str: Number of the output directory.
+        snp_num_range list: Range of SNP numbers in ms simulation; the first parameter is the minimum SNP number,
+                            the second parameter is the maximum SNP number, the third parameter is the step size.
+        output_dir str: Name of the output directory.
         thread int: Number of threads.
-        seeds: list: Three random seed numbers used in ms simulation.
+        seeds list: Three random seed numbers used in ms simulation.
+        is_phased bool: Whether to run sstar score in phased mode.
     """
     if seeds is not None:
         np.random.seed(np.sum(seeds))
+
     output_dir = os.path.abspath(output_dir)
+    if is_phased:
+        output_dir = output_dir + ".phased"
+
     if os.path.exists(output_dir) is False:
         subprocess.call(["mkdir", output_dir])
+
     _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output_dir)
     _run_ms_simulation(
         model,
@@ -85,6 +93,7 @@ def get_quantile(
         output_dir,
         thread,
         seeds,
+        is_phased=is_phased,
     )
     _summary(output_dir, rec_rate)
 
@@ -93,14 +102,6 @@ def _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output
     """
     Description:
         Helper function to create different combination of mutation rates and recombination rates.
-
-    Arguments:
-        N0 int: N0 used in ms simulation.
-        nreps int: Number of replicates used in ms simulation.
-        mut_rate float: Mutation rate.
-        rec_rate float: Recombination rate.
-        seq_len int: Length of simulated sequence.
-        output_dir str: Name of the output directory.
     """
     scaled_mut_rate = 4 * N0 * mut_rate * seq_len
     scaled_rec_rate = 4 * N0 * rec_rate * seq_len
@@ -114,9 +115,9 @@ def _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output
                 mut_rate_list[i] = 0.001
             if rec_rate_list[i] < 0.001:
                 rec_rate_list[i] = 0.001
-            mut_rate = mut_rate_list[i]
-            rec_rate = rec_rate_list[i]
-            o.write(f"{mut_rate}\t{rec_rate}\n")
+            mut_rate_i = mut_rate_list[i]
+            rec_rate_i = rec_rate_list[i]
+            o.write(f"{mut_rate_i}\t{rec_rate_i}\n")
 
 
 def _run_ms_simulation(
@@ -134,32 +135,18 @@ def _run_ms_simulation(
     output_dir,
     thread,
     seeds,
+    is_phased: bool = False,
 ):
     """
     Description
         Helper function for running ms simulation.
-
-    Arguments:
-        model str: Name of file containing the demographic model for simulation.
-        ms_dir str: Name of the directory containing the ms program.
-        N0 int: N0 used in ms simulation.
-        nsamp int: Sample size (haploid) used in ms simulation.
-        nreps int: Number of replicates used in ms simulation.
-        ref_index int: Index of the reference population in the demographic model (start from 1).
-        ref_size int: Sample size (haploid) of the reference population.
-        tgt_index int: Index of the target population in the demographic model (start from 1).
-        tgt_size int: Sample size (haploid) of the target population.
-        seq_len int: Length of simulated sequence.
-        snp_num_range list: Range of SNP numbers in ms simulation; the first parameter is the minimum SNP number, the second parameter is the maximum SNP number, the third parameter is the step size.
-        output_dir str: Name of the output directory.
-        thread int: Number of threads.
-        seeds list: Three random seed numbers used in ms simulation.
     """
     graph = demes.load(model)
     samples = np.zeros(len(graph.demes))
     samples[ref_index - 1] = ref_size
     samples[tgt_index - 1] = tgt_size
     ms_params = demes.to_ms(graph, N0=N0, samples=samples)
+
     snp_num_list = np.arange(
         snp_num_range[0], snp_num_range[1] + snp_num_range[2], snp_num_range[2]
     )
@@ -168,8 +155,10 @@ def _run_ms_simulation(
     rates = f"{output_dir}/rates.combination"
     ref_list = f"{output_dir}/sim.ref.list"
     tgt_list = f"{output_dir}/sim.tgt.list"
-    ref_size = int(ref_size / 2)
-    tgt_size = int(tgt_size / 2)
+
+    # The lists are individual IDs. Existing code uses /2 for diploid individuals.
+    ref_size_ind = int(ref_size / 2)
+    tgt_size_ind = int(tgt_size / 2)
 
     if ref_index == tgt_index:
         raise Exception(
@@ -177,17 +166,17 @@ def _run_ms_simulation(
         )
     elif ref_index < tgt_index:
         with open(ref_list, "w") as o:
-            for i in range(ref_size):
+            for i in range(ref_size_ind):
                 o.write(f"ms_{i}\n")
         with open(tgt_list, "w") as o:
-            for i in range(tgt_size):
-                o.write(f"ms_{i+ref_size}\n")
+            for i in range(tgt_size_ind):
+                o.write(f"ms_{i + ref_size_ind}\n")
     else:
         with open(ref_list, "w") as o:
-            for i in range(ref_size):
-                o.write(f"ms_{i+tgt_size}\n")
+            for i in range(ref_size_ind):
+                o.write(f"ms_{i + tgt_size_ind}\n")
         with open(tgt_list, "w") as o:
-            for i in range(tgt_size):
+            for i in range(tgt_size_ind):
                 o.write(f"ms_{i}\n")
 
     try:
@@ -214,18 +203,19 @@ def _run_ms_simulation(
                 ref_list,
                 tgt_list,
                 seeds,
+                is_phased,
             ),
         )
-        for ii in range(thread)
+        for _ in range(thread)
     ]
 
     for snp_num in snp_num_list:
-        in_queue.put(snp_num)
+        in_queue.put(int(snp_num))
 
     try:
         for worker in workers:
             worker.start()
-        for snp_num in snp_num_list:
+        for _ in snp_num_list:
             out_queue.get()
         for worker in workers:
             worker.terminate()
@@ -247,27 +237,15 @@ def _run_ms_simulation_worker(
     ref_list,
     tgt_list,
     seeds,
+    is_phased: bool = False,
 ):
     """
     Description:
         Worker function for running ms simulation.
-
-    Arguments:
-        in_queue multiprocessing.Queue: multiprocessing.Queue instance to receive parameters from the manager.
-        out_queue multiprocessing.Queue: multiprocessing.Queue instance to send results back to the manager.
-        output_dir str: Name of the output directory.
-        rates str: Name of the file containing different combination of mutation rates and recombination rates.
-        ms_exec str: Path to the ms program.
-        nsamp int: Sample size (haploid) used in ms simulation.
-        nreps int: Number of replicates used in ms simulation.
-        seq_len int: Length of the simulated sequeuence.
-        ms_params list: List of ms parameters.
-        ref_list str: Name of the file containing individuals from the reference population.
-        tgt_list str: Name of the file containing individuals from the target population.
-        seeds list: Three random seed numbers used in ms simulation.
     """
     while True:
         snp_num = in_queue.get()
+
         output_subdir = f"{output_dir}/{snp_num}"
         output_ms = f"{output_subdir}/sim.ms"
         output_vcf = f"{output_subdir}/sim.vcf"
@@ -275,6 +253,11 @@ def _run_ms_simulation_worker(
         output_quantile = f"{output_subdir}/sim.quantile"
         ms_script = f"{output_subdir}/run_ms.sh"
 
+        # Ensure subdir exists for BOTH seeded and unseeded runs
+        if os.path.exists(output_subdir) is False:
+            subprocess.call(["mkdir", output_subdir])
+
+        # Build ms command (both cases run the same downstream steps)
         if seeds is not None:
             cmd = " ".join(
                 [
@@ -320,33 +303,41 @@ def _run_ms_simulation_worker(
                 ]
             )
 
-        if os.path.exists(output_subdir) is False:
-            subprocess.call(["mkdir", output_subdir])
+        # Run ms via a small script (matches original style)
         with open(ms_script, "w") as o:
             o.write(cmd + "\n")
         subprocess.check_call(["bash", ms_script])
+
+        # Convert ms -> VCF
         _ms2vcf(output_ms, output_vcf, nsamp, seq_len)
-        subprocess.check_call(
-            [
-                "sstar",
-                "score",
-                "--vcf",
-                output_vcf,
-                "--ref",
-                ref_list,
-                "--tgt",
-                tgt_list,
-                "--output",
-                output_score,
-                "--win-len",
-                str(seq_len),
-                "--win-step",
-                str(seq_len),
-                "--thread",
-                "1",
-            ]
-        )
+
+        # Run sstar score; append --phased iff requested
+        score_cmd = [
+            "sstar",
+            "score",
+            "--vcf",
+            output_vcf,
+            "--ref",
+            ref_list,
+            "--tgt",
+            tgt_list,
+            "--output",
+            output_score,
+            "--win-len",
+            str(seq_len),
+            "--win-step",
+            str(seq_len),
+            "--thread",
+            "1",
+        ]
+        if is_phased:
+            score_cmd.append("--phased")
+
+        subprocess.check_call(score_cmd)
+
+        # Compute and write quantiles for this SNP count
         _cal_quantile(output_score, output_quantile, snp_num)
+
         out_queue.put("Finished")
 
 
@@ -354,13 +345,6 @@ def _ms2vcf(ms_file, vcf_file, nsamp, seq_len, ploidy=2):
     """
     Description:
         Converts ms output files into the VCF format.
-
-    Arguments:
-        ms_file str: Name of the ms file (input).
-        vcf_file str: Name of the VCF file (output).
-        nsamp int: Number of haploid genomes.
-        seq_len int: Sequence length.
-        ploidy int: Ploidy of each individual.
     """
     data = []
     i = -1
@@ -407,11 +391,6 @@ def _cal_quantile(in_file, out_file, snp_num):
     """
     Description:
         Helper function for calculating quantiles of expected S* with a given SNP number.
-
-    Arguments:
-        in_file str: Name of the input file containing S* scores.
-        out_file str: Name of the output file.
-        snp_num int: Number of SNPs used in the simulation.
     """
     df = pd.read_csv(in_file, sep="\t").dropna()
     quantiles = np.arange(0.5, 1, 0.005)
@@ -431,10 +410,6 @@ def _summary(output_dir, rec_rate):
     """
     Description:
         Helper function for summarize quantiles of expected S* from different SNP numbers.
-
-    Arguments:
-        output_dir str: Name of the output directory.
-        rec_rate float: Recombination rate.
     """
     all_files = glob.glob(f"{output_dir}/*/*.quantile")
     li = []
