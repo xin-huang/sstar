@@ -1,13 +1,13 @@
 # Apache License Version 2.0
 # Copyright 2022 Xin Huang
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #    http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software
+# Unless required by applicable law or agreed to in writing software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
@@ -41,7 +41,6 @@ def get_quantile(
     output_dir,
     thread,
     seeds,
-    is_phased: bool = False,
 ):
     """
     Description:
@@ -64,18 +63,13 @@ def get_quantile(
                             the second parameter is the maximum SNP number, the third parameter is the step size.
         output_dir str: Name of the output directory.
         thread int: Number of threads.
-        seeds list: Three random seed numbers used in ms simulation.
-        is_phased bool: Whether to run sstar score in phased mode.
+        seeds: list: Three random seed numbers used in ms simulation.
     """
     if seeds is not None:
         np.random.seed(np.sum(seeds))
 
     output_dir = os.path.abspath(output_dir)
-    if is_phased:
-        output_dir = output_dir + ".phased"
-
-    if os.path.exists(output_dir) is False:
-        subprocess.call(["mkdir", output_dir])
+    os.makedirs(output_dir, exist_ok=True)
 
     _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output_dir)
     _run_ms_simulation(
@@ -93,7 +87,6 @@ def get_quantile(
         output_dir,
         thread,
         seeds,
-        is_phased=is_phased,
     )
     _summary(output_dir, rec_rate)
 
@@ -115,9 +108,9 @@ def _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output
                 mut_rate_list[i] = 0.001
             if rec_rate_list[i] < 0.001:
                 rec_rate_list[i] = 0.001
-            mut_rate_i = mut_rate_list[i]
-            rec_rate_i = rec_rate_list[i]
-            o.write(f"{mut_rate_i}\t{rec_rate_i}\n")
+            m = mut_rate_list[i]
+            r = rec_rate_list[i]
+            o.write(f"{m}\t{r}\n")
 
 
 def _run_ms_simulation(
@@ -135,10 +128,9 @@ def _run_ms_simulation(
     output_dir,
     thread,
     seeds,
-    is_phased: bool = False,
 ):
     """
-    Description
+    Description:
         Helper function for running ms simulation.
     """
     graph = demes.load(model)
@@ -155,10 +147,8 @@ def _run_ms_simulation(
     rates = f"{output_dir}/rates.combination"
     ref_list = f"{output_dir}/sim.ref.list"
     tgt_list = f"{output_dir}/sim.tgt.list"
-
-    # The lists are individual IDs. Existing code uses /2 for diploid individuals.
-    ref_size_ind = int(ref_size / 2)
-    tgt_size_ind = int(tgt_size / 2)
+    ref_size = int(ref_size / 2)
+    tgt_size = int(tgt_size / 2)
 
     if ref_index == tgt_index:
         raise Exception(
@@ -166,17 +156,17 @@ def _run_ms_simulation(
         )
     elif ref_index < tgt_index:
         with open(ref_list, "w") as o:
-            for i in range(ref_size_ind):
+            for i in range(ref_size):
                 o.write(f"ms_{i}\n")
         with open(tgt_list, "w") as o:
-            for i in range(tgt_size_ind):
-                o.write(f"ms_{i + ref_size_ind}\n")
+            for i in range(tgt_size):
+                o.write(f"ms_{i + ref_size}\n")
     else:
         with open(ref_list, "w") as o:
-            for i in range(ref_size_ind):
-                o.write(f"ms_{i + tgt_size_ind}\n")
+            for i in range(ref_size):
+                o.write(f"ms_{i + tgt_size}\n")
         with open(tgt_list, "w") as o:
-            for i in range(tgt_size_ind):
+            for i in range(tgt_size):
                 o.write(f"ms_{i}\n")
 
     try:
@@ -203,19 +193,18 @@ def _run_ms_simulation(
                 ref_list,
                 tgt_list,
                 seeds,
-                is_phased,
             ),
         )
-        for _ in range(thread)
+        for _ii in range(thread)
     ]
 
     for snp_num in snp_num_list:
-        in_queue.put(int(snp_num))
+        in_queue.put(snp_num)
 
     try:
         for worker in workers:
             worker.start()
-        for _ in snp_num_list:
+        for _snp_num in snp_num_list:
             out_queue.get()
         for worker in workers:
             worker.terminate()
@@ -237,7 +226,7 @@ def _run_ms_simulation_worker(
     ref_list,
     tgt_list,
     seeds,
-    is_phased: bool = False,
+    is_phased=False,
 ):
     """
     Description:
@@ -251,78 +240,53 @@ def _run_ms_simulation_worker(
         output_vcf = f"{output_subdir}/sim.vcf"
         output_score = f"{output_subdir}/sim.score"
         output_quantile = f"{output_subdir}/sim.quantile"
-        ms_script = f"{output_subdir}/run_ms.sh"
 
-        # Ensure subdir exists for BOTH seeded and unseeded runs
-        if os.path.exists(output_subdir) is False:
-            subprocess.call(["mkdir", output_subdir])
+        os.makedirs(output_subdir, exist_ok=True)
 
-        # Build ms command (both cases run the same downstream steps)
+        # -------------------------
+        # Run ms (no shell pipeline)
+        # -------------------------
+        ms_cmd = [os.fspath(ms_exec), str(nsamp), str(nreps)]
         if seeds is not None:
-            cmd = " ".join(
-                [
-                    "cat",
-                    rates,
-                    "|",
-                    ms_exec,
-                    str(nsamp),
-                    str(nreps),
-                    "-seeds",
-                    " ".join([str(s) for s in seeds]),
-                    "-t",
-                    "tbs",
-                    "-r",
-                    "tbs",
-                    str(seq_len),
-                    "-s",
-                    str(snp_num),
-                    ms_params,
-                    ">",
-                    output_ms,
-                ]
-            )
-        else:
-            cmd = " ".join(
-                [
-                    "cat",
-                    rates,
-                    "|",
-                    ms_exec,
-                    str(nsamp),
-                    str(nreps),
-                    "-t",
-                    "tbs",
-                    "-r",
-                    "tbs",
-                    str(seq_len),
-                    "-s",
-                    str(snp_num),
-                    ms_params,
-                    ">",
-                    output_ms,
-                ]
-            )
+            ms_cmd.extend(["-seeds"] + [str(s) for s in seeds])
 
-        # Run ms via a small script (matches original style)
-        with open(ms_script, "w") as o:
-            o.write(cmd + "\n")
-        subprocess.check_call(["bash", ms_script])
+        ms_cmd.extend(
+            [
+                "-t",
+                "tbs",
+                "-r",
+                "tbs",
+                str(seq_len),
+                "-s",
+                str(snp_num),
+            ]
+        )
+        ms_cmd.extend(str(ms_params).split())
 
-        # Convert ms -> VCF
+        # Hard allowlist: only allow an executable named "ms"
+        if os.path.basename(ms_cmd[0]) != "ms":
+            raise ValueError(f"Unexpected ms executable: {ms_cmd[0]}")
+
+        with open(rates, "r") as rate_fh, open(output_ms, "w") as out_fh:
+            # opengrep:ignore python.lang.security.audit.dangerous-subprocess-use-audit
+            subprocess.run(ms_cmd, stdin=rate_fh, stdout=out_fh, check=True)
+
         _ms2vcf(output_ms, output_vcf, nsamp, seq_len)
 
-        # Run sstar score; append --phased iff requested
+        # -------------------------
+        # Run sstar score (allowlisted)
+        # -------------------------
         score_cmd = [
             "sstar",
             "score",
             "--vcf",
-            output_vcf,
+            os.fspath(output_vcf),
             "--ref",
-            ref_list,
+            os.fspath(ref_list),
             "--tgt",
-            tgt_list,
+            os.fspath(tgt_list),
             "--output",
-            output_score,
+            os.fspath(output_score),
             "--win-len",
             str(seq_len),
             "--win-step",
@@ -331,19 +295,16 @@ def _run_ms_simulation_worker(
             "1",
         ]
         if is_phased:
-             score_cmd.append("--phased")
+            score_cmd.append("--phased")
 
-        # Defensive checks to satisfy security audit tools
-        if not isinstance(score_cmd, list) or not score_cmd:
-             raise ValueError("score_cmd must be a non-empty list of args")
+        # Hard allowlist: only allow "sstar score"
+        if len(score_cmd) < 2 or score_cmd[0] != "sstar" or score_cmd[1] != "score":
+            raise ValueError(f"Unexpected sstar invocation: {score_cmd[:2]}")
 
-        score_cmd = [os.fspath(x) for x in score_cmd]  # normalize Path-like inputs
-
-        
+        # opengrep:ignore python.lang.security.audit.dangerous-subprocess-use-audit
         subprocess.run(score_cmd, check=True)
-        # Compute and write quantiles for this SNP count
-        _cal_quantile(output_score, output_quantile, snp_num)
 
+        _cal_quantile(output_score, output_quantile, snp_num)
         out_queue.put("Finished")
 
 
@@ -356,8 +317,9 @@ def _ms2vcf(ms_file, vcf_file, nsamp, seq_len, ploidy=2):
     i = -1
     header = "##fileformat=VCFv4.2\n"
     header += '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-    header += "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" + "\t".join(
-        ["ms_" + str(i) for i in range(int(nsamp / ploidy))]
+    header += (
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t"
+        + "\t".join(["ms_" + str(i) for i in range(int(nsamp / ploidy))])
     )
 
     with open(ms_file, "r") as f:
@@ -386,7 +348,9 @@ def _ms2vcf(ms_file, vcf_file, nsamp, seq_len, ploidy=2):
                 genotypes = "\t".join(
                     [
                         a + "|" + b
-                        for a, b in zip(genotypes[0::ploidy], genotypes[1::ploidy])
+                        for a, b in zip(
+                            genotypes[0::ploidy], genotypes[1::ploidy]
+                        )
                     ]
                 )
                 o.write(f"1\t{pos}\t.\tA\tT\t100\tPASS\t.\tGT\t{genotypes}\n")
@@ -428,3 +392,4 @@ def _summary(output_dir, rec_rate):
     df.sort_values(by=["SNP_num", "quantile"]).to_csv(
         f"{output_dir}/quantile.summary.txt", sep="\t", index=False
     )
+
