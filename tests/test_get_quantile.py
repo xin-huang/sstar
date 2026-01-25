@@ -244,12 +244,10 @@ def test_run_ms_simulation_worker_simple(tmp_path, monkeypatch):
 
         captured = []
 
-        # Intercept the "bash run_ms.sh" call
         def fake_check_call(cmd, *a, **k):
             captured.append(cmd)
             return 0
 
-        # Intercept the "sstar score ..." call (now uses subprocess.run)
         def fake_run(cmd, *a, **k):
             captured.append(cmd)
             return subprocess.CompletedProcess(cmd, 0)
