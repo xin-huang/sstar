@@ -248,7 +248,7 @@ def test_run_ms_simulation_worker_simple(tmp_path, monkeypatch):
             return 0
 
         # Production code uses subprocess.call(...) for both bash and sstar
-        monkeypatch.setattr("sstar.get_quantile.subprocess.call", fake_call)
+        monkeypatch.setattr("sstar.get_quantile.subprocess.run", fake_call)
         monkeypatch.setattr("sstar.get_quantile._ms2vcf", lambda *a, **k: None)
         monkeypatch.setattr("sstar.get_quantile._cal_quantile", lambda *a, **k: None)
 
@@ -282,4 +282,3 @@ def test_run_ms_simulation_worker_simple(tmp_path, monkeypatch):
 
     run_case(False)
     run_case(True)
-

@@ -1,7 +1,7 @@
 # Apache License Version 2.0
 # Copyright 2022 Xin Huang
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
@@ -95,6 +95,7 @@ def _run_match_pct(args):
         thread=args.thread,
         score_file=args.score,
         mapped_region_file=args.mapped_region_file,
+        phased=args.phased,  # ✅ FIX: wire CLI flag into matchrate implementation
     )
 
 
@@ -188,7 +189,7 @@ def _s_star_cli_parser():
     parser.add_argument("--phased", action="store_true")
     parser.set_defaults(runner=_run_score)
 
-    # quantile  ✅ FIXED
+    # quantile
     parser = subparsers.add_parser("quantile")
     parser.add_argument("--phased", action="store_true")
     parser.add_argument("--model", type=str, required=True)
@@ -223,8 +224,9 @@ def _s_star_cli_parser():
     parser.add_argument("--k", type=int, default=8)
     parser.set_defaults(runner=_run_threshold)
 
-    # matchrate
+    # matchrate  ✅ FIXED: expose --phased and plumb it into cal_match_pct
     parser = subparsers.add_parser("matchrate")
+    parser.add_argument("--phased", action="store_true")  # ✅ FIX: new CLI flag
     parser.add_argument("--vcf", type=str, required=True)
     _add_ref_ind_args(parser)
     _add_tgt_ind_args(parser)
@@ -256,3 +258,4 @@ def main(arg_list=None):
     parser = _s_star_cli_parser()
     args = parser.parse_args(arg_list)
     args.runner(args)
+
