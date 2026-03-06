@@ -46,11 +46,9 @@ def cal_threshold(
         phased bool: If True, expect score_file to contain haplotype sample IDs (*_hap1/*_hap2).
     """
 
-
-# FORCE legacy + correct behavior:
+    # FORCE legacy + correct behavior:
     # If a recombination map is provided, we use lr (this matches the expected file)
     fit_lr = recomb_map is not None
-
 
     gam = _build_gam_model(simulated_data, k, fit_lr)
     res = _predict_res(
@@ -112,6 +110,7 @@ def _build_gam_model(simulated_data, k, fit_lr):
 
     gam = mgcv.gam(fmla)
     return gam
+
 
 def _predict_res(gam, score_file, recomb_rate, recomb_map, quantile, fit_lr, phased):
     """
@@ -272,4 +271,3 @@ if __name__ == "__main__":
         k=8,
         phased=False,
     )
-

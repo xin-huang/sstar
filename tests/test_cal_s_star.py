@@ -120,6 +120,7 @@ def test_cal_s_star_with_phased_data_same_input(data):
     # Phased run has at least as many windows as the unphased one
     assert phased_n >= unphased_n
 
+
 def test_cal_score_ind_with_too_few_snps():
     """
     len(tgt_gt) <= 2 -> early-exit branch.
@@ -231,5 +232,3 @@ def test_cal_score_ind_with_short_phy_distance():
     assert len(res) >= 1
     fields = res[0].split("\t")
     assert len(fields) == 8
-
-

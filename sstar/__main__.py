@@ -258,4 +258,3 @@ def main(arg_list=None):
     parser = _s_star_cli_parser()
     args = parser.parse_args(arg_list)
     args.runner(args)
-

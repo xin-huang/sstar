@@ -383,4 +383,3 @@ def _cal_score_ind(
         res.append(line)
 
     return res
-

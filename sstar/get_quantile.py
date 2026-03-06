@@ -428,9 +428,8 @@ def _ms2vcf(ms_file, vcf_file, nsamp, seq_len, ploidy=2):
     i = -1
     header = "##fileformat=VCFv4.2\n"
     header += '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-    header += (
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t"
-        + "\t".join(["ms_" + str(i) for i in range(int(nsamp / ploidy))])
+    header += "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" + "\t".join(
+        ["ms_" + str(i) for i in range(int(nsamp / ploidy))]
     )
 
     with open(ms_file, "r") as f:
@@ -510,4 +509,3 @@ def _summary(output_dir, rec_rate):
     df.sort_values(by=["SNP_num", "quantile"]).to_csv(
         f"{output_dir}/quantile.summary.txt", sep="\t", index=False
     )
-
