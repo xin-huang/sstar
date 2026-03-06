@@ -33,7 +33,7 @@ def cal_s_star(
     match_bonus,
     max_mismatch,
     mismatch_penalty,
-    is_phased: bool = False,  # added but currently unused; kept for future phased support
+    is_phased: bool = False,
 ):
     """
     Description:
@@ -106,7 +106,7 @@ def cal_s_star(
         match_bonus,
         max_mismatch,
         mismatch_penalty,
-        is_phased=is_phased,  # threaded but currently unused; kept for future phased support
+        is_phased=is_phased,
     )
 
 
@@ -122,7 +122,7 @@ def _cal_score(
     match_bonus,
     max_mismatch,
     mismatch_penalty,
-    is_phased: bool = False,  # threaded but currently unused; kept for future phased support
+    is_phased: bool = False,
 ):
     """
     Description:
@@ -164,7 +164,7 @@ def _cal_score(
                 match_bonus,
                 max_mismatch,
                 mismatch_penalty,
-                is_phased,  # threaded but currently unused
+                is_phased,
             ),
         )
         for _ in range(thread)
@@ -222,7 +222,7 @@ def _cal_score_worker(
     match_bonus,
     max_mismatch,
     mismatch_penalty,
-    is_phased: bool = False,  # threaded but currently unused; kept for future phased support
+    is_phased: bool = False,
 ):
     """
     Description:
