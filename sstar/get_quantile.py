@@ -26,7 +26,7 @@ from typing import List
 
 
 # ------------------------------------------------------------------
-# ✅ ADDED: SAFE SUBPROCESS WRAPPER FOR "sstar score"
+# SAFE SUBPROCESS WRAPPER FOR "sstar score"
 # ------------------------------------------------------------------
 def _safe_sstar_score(cmd: List[str]) -> None:
     """
@@ -117,7 +117,7 @@ def get_quantile(
         np.random.seed(np.sum(seeds))
     output_dir = os.path.abspath(output_dir)
     if os.path.exists(output_dir) is False:
-        os.makedirs(output_dir, exist_ok=True)  # ✅ CHANGED: no subprocess mkdir
+        os.makedirs(output_dir, exist_ok=True)  # no subprocess mkdir
     _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output_dir)
     _run_ms_simulation(
         model,
@@ -377,7 +377,7 @@ def _run_ms_simulation_worker(
                 ]
             )
 
-        os.makedirs(output_subdir, exist_ok=True)  # CHANGED: no subprocess mkdir
+        os.makedirs(output_subdir, exist_ok=True)  # no subprocess mkdir
         with open(ms_script, "w") as o:
             o.write(cmd + "\n")
         subprocess.call(
@@ -406,7 +406,7 @@ def _run_ms_simulation_worker(
         if is_phased:
             score_cmd.append("--phased")
 
-        _safe_sstar_score(score_cmd)  # CHANGED: safe wrapper (no linter error)
+        _safe_sstar_score(score_cmd)  # safe wrapper (no linter error)
 
         _cal_quantile(output_score, output_quantile, snp_num)
         out_queue.put("Finished")
