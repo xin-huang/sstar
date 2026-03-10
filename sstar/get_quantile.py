@@ -22,7 +22,7 @@ import pandas as pd
 from multiprocessing import Process, Queue
 from scipy.stats import norm
 from scipy.stats import nbinom
-from typing import List  # ✅ ADDED (small, needed for type hint)
+from typing import List
 
 
 # ------------------------------------------------------------------
@@ -87,7 +87,7 @@ def get_quantile(
     output_dir,
     thread,
     seeds,
-    is_phased: bool = False,  # ✅ FIX: accept phased flag from CLI
+    is_phased: bool = False,
 ):
     """
     Description:
@@ -134,7 +134,7 @@ def get_quantile(
         output_dir,
         thread,
         seeds,
-        is_phased,  # ✅ FIX: pass through
+        is_phased,
     )
     _summary(output_dir, rec_rate)
 
@@ -184,7 +184,7 @@ def _run_ms_simulation(
     output_dir,
     thread,
     seeds,
-    is_phased=False,  # ✅ FIX: accept phased flag here too
+    is_phased=False,
 ):
     """
     Description:
@@ -268,7 +268,7 @@ def _run_ms_simulation(
                 ref_list,
                 tgt_list,
                 seeds,
-                is_phased,  # ✅ FIX: pass through to worker
+                is_phased,
             ),
         )
         for _ii in range(thread)
@@ -377,7 +377,7 @@ def _run_ms_simulation_worker(
                 ]
             )
 
-        os.makedirs(output_subdir, exist_ok=True)  # ✅ CHANGED: no subprocess mkdir
+        os.makedirs(output_subdir, exist_ok=True)  # CHANGED: no subprocess mkdir
         with open(ms_script, "w") as o:
             o.write(cmd + "\n")
         subprocess.call(
@@ -406,7 +406,7 @@ def _run_ms_simulation_worker(
         if is_phased:
             score_cmd.append("--phased")
 
-        _safe_sstar_score(score_cmd)  # ✅ CHANGED: safe wrapper (no linter error)
+        _safe_sstar_score(score_cmd)  # CHANGED: safe wrapper (no linter error)
 
         _cal_quantile(output_score, output_quantile, snp_num)
         out_queue.put("Finished")
