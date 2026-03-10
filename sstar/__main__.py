@@ -95,7 +95,7 @@ def _run_match_pct(args):
         thread=args.thread,
         score_file=args.score,
         mapped_region_file=args.mapped_region_file,
-        phased=args.phased,  # ✅ FIX: wire CLI flag into matchrate implementation
+        phased=args.phased,
     )
 
 
@@ -224,9 +224,9 @@ def _s_star_cli_parser():
     parser.add_argument("--k", type=int, default=8)
     parser.set_defaults(runner=_run_threshold)
 
-    # matchrate  ✅ FIXED: expose --phased and plumb it into cal_match_pct
+    # matchrate
     parser = subparsers.add_parser("matchrate")
-    parser.add_argument("--phased", action="store_true")  # ✅ FIX: new CLI flag
+    parser.add_argument("--phased", action="store_true")
     parser.add_argument("--vcf", type=str, required=True)
     _add_ref_ind_args(parser)
     _add_tgt_ind_args(parser)
