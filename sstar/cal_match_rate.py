@@ -16,64 +16,137 @@
 import allel
 import gzip
 import os
+import queue
 import numpy as np
 import pandas as pd
 from multiprocessing import Process, Queue
 from sstar.utils import read_data, py2round, read_mapped_region_file, cal_matchpct
 
-#@profile
-def cal_match_pct(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file, output, thread, score_file, mapped_region_file):
+
+def calc_match_pct(x, y, P=2):
+    """
+    Dosage-based match rate.
+
+    For biallelic variants with ploidy P, x and y are allele-1 copy numbers (dosage).
+    Unmatched copies = |x - y|, so matched copies = P - |x - y|.
+    Match rate = (P - |x - y|) / P = 1 - |x - y|/P
+
+    Missing values must be encoded as -1 and are ignored.
+    Returns float in [0,1] or "NA" if no callable sites.
+    """
+    x = np.atleast_1d(np.asarray(x, dtype=float))
+    y = np.atleast_1d(np.asarray(y, dtype=float))
+
+    ok = (x >= 0) & (y >= 0)
+    if not np.any(ok):
+        return "NA"
+
+    return float(np.mean(1.0 - np.abs(x[ok] - y[ok]) / float(P)))
+
+
+def _dosage_for_positions(gt, pos, ind_index, positions):
+    """
+    Return ALT dosage (0/1/2) for one individual at exact `positions`.
+
+    If a position is absent in `pos`, dosage stays -1.
+    If genotype is missing at that position, dosage is -1.
+
+    Notes:
+      - We must keep the sample axis so allel.GenotypeArray sees 3D input.
+    """
+    pos = np.asarray(pos)
+    gt_arr = np.asarray(gt)
+
+    pos_to_i = {int(p): i for i, p in enumerate(pos)}
+
+    out = np.full(len(positions), -1.0, dtype=float)
+    idx = []
+    out_i = []
+
+    for j, p in enumerate(positions):
+        i = pos_to_i.get(int(p))
+        if i is not None:
+            idx.append(i)
+            out_i.append(j)
+
+    if not idx:
+        return out
+
+    idx = np.asarray(idx, dtype=int)
+    out_i = np.asarray(out_i, dtype=int)
+
+    # Keep sample axis: (k, 1, ploidy)
+    sub = gt_arr[idx, ind_index : ind_index + 1, :]
+
+    g = allel.GenotypeArray(sub)  # (k, 1, ploidy)
+    dos = g.to_n_alt().astype(float)  # (k, 1)
+    dos[g.is_missing()] = -1
+
+    out[out_i] = dos[:, 0]
+    return out
+
+
+# @profile
+def cal_match_pct(
+    vcf,
+    ref_ind_file,
+    tgt_ind_file,
+    src_ind_file,
+    anc_allele_file,
+    output,
+    thread,
+    score_file,
+    mapped_region_file,
+    phased=True,  # NEW: phased/unphased flag
+):
     """
     Description:
-        Calculate p-values for S* haplotypes in the target population with source genomes.
+        Calculate match rates for S* haplotypes in the target population with source genomes.
 
-    Arguments:
-        vcf str: Name of the VCF file containing genotypes.
-        src_vcf str: Name of the VCF file containing genotypes from source populations.
-        ref_ind_file str: Name of the file containing sample information from reference populations.
-        tgt_ind_file str: Name of the file containing sample information from target populations.
-        src_ind_file str: Name of the file containing sample information from source populations.
-        anc_allele_file str: Name of the file containing ancestral allele information.
-        output str: Name of the output file.
-        thread int: Number of threads.
-        score_file str: Name of the file containing S* scores calculated by `s-star score`.
-        mapped_region_file str: Name of the BED file containing mapped regions.
+    phased=True:
+        Use original haplotype-based logic (cal_matchpct hap0/hap1, averaged).
+    phased=False:
+        Use dosage-based match rate (calc_match_pct) on the S* SNP positions from the score file.
     """
 
-    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file)
+    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(
+        vcf, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file
+    )
 
-    res = []
     chr_names = ref_data.keys()
 
     mapped_intervals = read_mapped_region_file(mapped_region_file)
     data, windows, samples = _read_score_file(score_file, chr_names, tgt_samples)
     sample_size = len(samples)
 
-    header = 'chrom\tstart\tend\tsample\tmatch_rate\tsrc_sample'
+    header = "chrom\tstart\tend\tsample\tmatch_rate\tsrc_sample"
 
-    if thread > 1: thread = min(os.cpu_count()-1, sample_size, thread)    
-    res = _cal_tgt_match_pct_manager(data, mapped_intervals, samples, tgt_samples, src_samples, tgt_data, src_data, sample_size, thread)
+    if thread > 1:
+        thread = min(os.cpu_count() - 1, sample_size, thread)
 
-    with open(output, 'w') as o:
-        o.write(header+"\n")
-        o.write("\n".join(res)+"\n")
+    res = _cal_tgt_match_pct_manager(
+        data,
+        mapped_intervals,
+        samples,
+        tgt_samples,
+        src_samples,
+        tgt_data,
+        src_data,
+        sample_size,
+        thread,
+        phased,  # NEW
+    )
 
-#@profile
+    with open(output, "w") as o:
+        o.write(header + "\n")
+        o.write("\n".join(res) + "\n")
+
+
+# @profile
 def _read_score_file(score_file, chr_names, tgt_samples):
     """
     Description:
         Helper function for reading the file generated by `sstar score`.
-
-    Arguments:
-        score_file str: Name of the file containing S* scores generated by `sstar score`.
-        chr_names list: List containing names of chromosomes for analysis.
-        tgt_samples list: List containing names of samples from the target population for analysis.
-
-    Returns:
-        data dict: Dictionary containing S* for analysis.
-        windows dict: Dictionary containing windows for analysis.
-        header str: Header from the file generated by `sstar score`.
-        samples list: List containing names of samples in the target population for analysis.
     """
 
     data = dict()
@@ -81,7 +154,7 @@ def _read_score_file(score_file, chr_names, tgt_samples):
     for c in chr_names:
         windows[c] = []
     samples = []
-    with open(score_file, 'r') as f:
+    with open(score_file, "r") as f:
         header = f.readline().rstrip()
         for line in f.readlines():
             line = line.rstrip()
@@ -90,9 +163,11 @@ def _read_score_file(score_file, chr_names, tgt_samples):
             win_start = elements[1]
             win_end = elements[2]
             sample = elements[3]
-            if sample not in tgt_samples: continue
-            if elements[6] == 'NA': continue
-            if sample not in data.keys(): 
+            if sample not in tgt_samples:
+                continue
+            if elements[6] == "NA":
+                continue
+            if sample not in data.keys():
                 data[sample] = []
                 samples.append(sample)
             data[sample].append(line)
@@ -100,24 +175,22 @@ def _read_score_file(score_file, chr_names, tgt_samples):
 
     return data, windows, samples
 
-def _cal_tgt_match_pct_manager(data, mapped_intervals, samples, tgt_samples, src_samples, tgt_data, src_data, sample_size, thread):
+
+def _cal_tgt_match_pct_manager(
+    data,
+    mapped_intervals,
+    samples,
+    tgt_samples,
+    src_samples,
+    tgt_data,
+    src_data,
+    sample_size,
+    thread,
+    phased,  # NEW
+):
     """
     Description:
         Manager function to calculate match percents in target populations using multiprocessing.
-
-    Arguments:
-        data dict: Lines from the output file created by `sstar score`.
-        mapped_intervals dict: Dictionary of tuples containing mapped regions across the genome.
-        sample list: Sample information for individuals needed to be estimated match percents.
-        tgt_samples list: Sample information from target populations.
-        src_samples list: Sample information from source populations.
-        tgt_data dict: Genotype data from target populations.
-        src_data dict: Genotype data from source populations.
-        sample_size int: Number of individuals analyzed.
-        thread int: Number of threads.
-
-    Returns:
-        res list: Match percents for target populations.
     """
 
     try:
@@ -129,18 +202,43 @@ def _cal_tgt_match_pct_manager(data, mapped_intervals, samples, tgt_samples, src
 
     res = []
     in_queue, out_queue = Queue(), Queue()
-    workers = [Process(target=_cal_tgt_match_pct_worker, args=(in_queue, out_queue, mapped_intervals, tgt_data, src_data, src_samples, len(tgt_samples))) for ii in range(thread)]
+    workers = [
+        Process(
+            target=_cal_tgt_match_pct_worker,
+            args=(
+                in_queue,
+                out_queue,
+                mapped_intervals,
+                tgt_data,
+                src_data,
+                src_samples,
+                len(tgt_samples),
+                phased,  # NEW
+            ),
+        )
+        for ii in range(thread)
+    ]
 
     for t in samples:
         index = tgt_samples.index(t)
         in_queue.put((index, data[t]))
-    
+
     try:
         for worker in workers:
             worker.start()
+
+        # Use timeout to avoid deadlock if worker crashes
         for s in range(sample_size):
-            item = out_queue.get()
-            if item != '': res.append(item)
+            try:
+                item = out_queue.get(timeout=60)
+            except queue.Empty:
+                for worker in workers:
+                    worker.terminate()
+                raise RuntimeError("Worker produced no output (likely crashed).")
+
+            if item != "":
+                res.append(item)
+
         for worker in workers:
             worker.terminate()
     finally:
@@ -149,67 +247,120 @@ def _cal_tgt_match_pct_manager(data, mapped_intervals, samples, tgt_samples, src
 
     return res
 
-def _cal_tgt_match_pct_worker(in_queue, out_queue, mapped_intervals, tgt_data, src_data, src_samples, sample_size):
+
+def _cal_tgt_match_pct_worker(
+    in_queue,
+    out_queue,
+    mapped_intervals,
+    tgt_data,
+    src_data,
+    src_samples,
+    sample_size,
+    phased,  # NEW
+):
     """
     Description:
         Worker function to calculate match percents in target populations.
-
-    Arguments:
-        in_queue multiprocessing.Queue: multiprocessing.Queue instance to receive parameters from the manager.
-        out_queue multiprocessing.Queue: multiprocessing.Queue instance to send results back to the manager.
-        mapped_intervals dict: Dictionary of tuples containing mapped regions across the genome.
-        tgt_data dict: Genotype data from target populations.
-        src_data dict: Genotype data from source populations.
-        src_samples list: List containing sample information for source populations.
-        sample_size int: Number of individuals analyzed.
     """
 
     while True:
         index, data = in_queue.get()
-        res = _cal_match_pct_ind(data, index, mapped_intervals, tgt_data, src_data, src_samples, sample_size )
+        res = _cal_match_pct_ind(
+            data,
+            index,
+            mapped_intervals,
+            tgt_data,
+            src_data,
+            src_samples,
+            sample_size,
+            phased,  # NEW
+        )
         out_queue.put("\n".join(res))
 
-#@profile
-def _cal_match_pct_ind(data, tgt_ind_index, mapped_intervals, tgt_data, src_data, src_samples, sample_size):
+
+# @profile
+def _cal_match_pct_ind(
+    data,
+    tgt_ind_index,
+    mapped_intervals,
+    tgt_data,
+    src_data,
+    src_samples,
+    sample_size,
+    phased,  # NEW
+):
     """
-    Description:
-        Helper function for calculating p-values in individuals.
-
-    Arguments:
-        data dict: Dictionary containing S* for analysis.
-        tgt_ind_index int: Index of the target individual for analysis.
-        mapped_intervals dict: Dictionary of tuples containing mapped regions across the genome.
-        tgt_data dict: Genotype data from target populations.
-        src_data dict: Genotype data from source populations.
-        src_samples list: List of samples from source populations.
-        sample_size int: Number of individuals analyzed.
-
-    Returns:
-        res list: List containing estimated p-values and other statistics.
+    phased=True  -> original haplotype-based matching (supervisor logic)
+    phased=False -> dosage-based matching (calc_match_pct) on S* SNP positions
     """
     res = []
     for line in data:
         elements = line.split("\t")
         chr_name = elements[0]
-        win_start, win_end = elements[1], elements[2]
+        win_start, win_end = int(elements[1]), int(elements[2])
         sample = elements[3]
 
-        s_star_snps = elements[-1].split(",")
-        s_start, s_end = s_star_snps[0], s_star_snps[-1]
-        key1 = win_start+'-'+win_end
-        key2 = s_start+'-'+s_end
+        # S* SNP positions (comma-separated positions in the score file)
+        snp_positions = [int(p) for p in elements[-1].split(",") if p]
 
         for src_ind_index in range(len(src_samples)):
             src_sample = src_samples[src_ind_index]
-            hap1_res = cal_matchpct(chr_name, mapped_intervals, tgt_data, src_data, tgt_ind_index, src_ind_index, 0, int(win_start), int(win_end), sample_size)
-            hap2_res = cal_matchpct(chr_name, mapped_intervals, tgt_data, src_data, tgt_ind_index, src_ind_index, 1, int(win_start), int(win_end), sample_size)
-            
-            hap1_match_pct = hap1_res[-1]
-            hap2_match_pct = hap2_res[-1]
-            hap_match_pct = 'NA'
 
-            if (hap1_match_pct != 'NA') and (hap2_match_pct != 'NA'): hap_match_pct = (hap1_match_pct + hap2_match_pct) / 2
+            if phased:
+                # ---------------------------
+                # ORIGINAL SUPERVISOR LOGIC
+                # ---------------------------
+                hap1_res = cal_matchpct(
+                    chr_name,
+                    mapped_intervals,
+                    tgt_data,
+                    src_data,
+                    tgt_ind_index,
+                    src_ind_index,
+                    0,
+                    int(win_start),
+                    int(win_end),
+                    sample_size,
+                )
+                hap2_res = cal_matchpct(
+                    chr_name,
+                    mapped_intervals,
+                    tgt_data,
+                    src_data,  # FIXED: missing comma/typo in your commented block
+                    tgt_ind_index,
+                    src_ind_index,
+                    1,
+                    int(win_start),
+                    int(win_end),
+                    sample_size,
+                )
 
-            line = f'{chr_name}\t{win_start}\t{win_end}\t{sample}\t{hap_match_pct}\t{src_sample}'
-            res.append(line)
+                hap1_match_pct = hap1_res[-1]
+                hap2_match_pct = hap2_res[-1]
+                hap_match_pct = "NA"
+
+                if (hap1_match_pct != "NA") and (hap2_match_pct != "NA"):
+                    hap_match_pct = (hap1_match_pct + hap2_match_pct) / 2
+
+            else:
+                # -------------------------------------
+                # NEW UNPHASED (DOSAGE-BASED) LOGIC
+                # -------------------------------------
+                tgt_gt = tgt_data[chr_name]["GT"]
+                tgt_pos = tgt_data[chr_name]["POS"]
+                src_gt = src_data[chr_name]["GT"]
+                src_pos = src_data[chr_name]["POS"]
+
+                tgt_dos = _dosage_for_positions(
+                    tgt_gt, tgt_pos, tgt_ind_index, snp_positions
+                )
+                src_dos = _dosage_for_positions(
+                    src_gt, src_pos, src_ind_index, snp_positions
+                )
+
+                hap_match_pct = calc_match_pct(tgt_dos, src_dos, P=2)
+
+            line_out = f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t{hap_match_pct}\t{src_sample}"
+            res.append(line_out)
+
     return res
