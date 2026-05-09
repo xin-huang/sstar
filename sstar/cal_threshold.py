@@ -15,6 +15,7 @@
 
 import numpy as np
 import pandas as pd
+import re
 import rpy2.robjects as ro
 from rpy2.robjects import FloatVector, Formula, pandas2ri
 from rpy2.robjects.packages import importr
@@ -43,7 +44,7 @@ def cal_threshold(
         quantile float: Quantile for estimating significant S* scores.
         output str: Name of the output file.
         k int: Dimension(s) of the bases used to represent the smooth term.
-        phased bool: If True, expect score_file to contain haplotype sample IDs (*_hap1/*_hap2).
+        phased bool: If True, expect score_file to contain haplotype sample IDs (*_<hap-index>, e.g. *_1).
     """
 
     # FORCE legacy + correct behavior:
@@ -178,7 +179,8 @@ def _read_score_file(score_file, recomb_rate, recomb_map, quantile, fit_lr, phas
     meta_data = {}
 
     with open(score_file, "r") as f:
-        f.readline()  # header
+        header = f.readline().rstrip().split("\t")
+        col = {name: i for i, name in enumerate(header)}
         for line in f:
             line = line.rstrip()
             if not line:
@@ -186,31 +188,32 @@ def _read_score_file(score_file, recomb_rate, recomb_map, quantile, fit_lr, phas
 
             element = line.split("\t")
 
-            # element[6] is "match rate" column in sstar score output; skip NA rows
-            if element[6] == "NA":
+            # Skip rows where S* SNP number is NA
+            if element[col["S*_SNP_number"]] == "NA":
                 continue
 
-            chr_name = element[0]
-            win_start = element[1]
-            win_end = element[2]
-            sample = element[3]
+            chr_name = element[col["chrom"]]
+            win_start = element[col["start"]]
+            win_end = element[col["end"]]
+            sample = element[col["sample"]]
+            hap_index = element[col["hap_index"]] if "hap_index" in col else "NA"
 
-            is_hap_row = sample.endswith("_hap1") or sample.endswith("_hap2")
+            is_hap_row = hap_index != "NA"
 
             if phased and not is_hap_row:
                 raise ValueError(
-                    "threshold called with --phased but score file does not contain haplotype sample IDs "
-                    "(expected *_hap1/*_hap2)."
+                    "threshold called with --phased but score file does not contain phased rows "
+                    "(expected hap_index column to contain non-NA values)."
                 )
 
             if (not phased) and is_hap_row:
                 raise ValueError(
-                    "threshold called without --phased but score file appears phased "
-                    "(contains *_hap1/*_hap2). Use phased quantiles and run threshold with --phased."
+                    "threshold called without --phased but score file contains phased rows "
+                    "(hap_index has non-NA values). Use phased quantiles and run threshold with --phased."
                 )
 
-            score = element[4]
-            total_snp_num = element[5]
+            score = element[col["S*_score"]]
+            total_snp_num = element[col["region_ind_SNP_number"]]
 
             if fit_lr:
                 if recomb_map is not None:

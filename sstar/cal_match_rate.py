@@ -116,10 +116,12 @@ def cal_match_pct(
     chr_names = ref_data.keys()
 
     mapped_intervals = read_mapped_region_file(mapped_region_file)
-    data, windows, samples = _read_score_file(score_file, chr_names, tgt_samples)
+    data, windows, samples, score_col = _read_score_file(
+        score_file, chr_names, tgt_samples
+    )
     sample_size = len(samples)
 
-    header = "chrom\tstart\tend\tsample\tmatch_rate\tsrc_sample"
+    header = "chrom\tstart\tend\tsample\thap_index\tmatch_rate\tsrc_sample"
 
     if thread > 1:
         thread = min(os.cpu_count() - 1, sample_size, thread)
@@ -135,6 +137,7 @@ def cal_match_pct(
         sample_size,
         thread,
         phased,  # NEW
+        score_col,
     )
 
     with open(output, "w") as o:
@@ -155,25 +158,26 @@ def _read_score_file(score_file, chr_names, tgt_samples):
         windows[c] = []
     samples = []
     with open(score_file, "r") as f:
-        header = f.readline().rstrip()
+        header = f.readline().rstrip().split("\t")
+        col = {name: i for i, name in enumerate(header)}
         for line in f.readlines():
             line = line.rstrip()
             elements = line.split("\t")
-            chr_name = elements[0]
-            win_start = elements[1]
-            win_end = elements[2]
-            sample = elements[3]
+            chr_name = elements[col["chrom"]]
+            win_start = elements[col["start"]]
+            win_end = elements[col["end"]]
+            sample = elements[col["sample"]]
             if sample not in tgt_samples:
                 continue
-            if elements[6] == "NA":
+            if elements[col["S*_SNP_number"]] == "NA":
                 continue
             if sample not in data.keys():
                 data[sample] = []
                 samples.append(sample)
             data[sample].append(line)
-            windows[c].append((int(win_start), int(win_end)))
+            windows[chr_name].append((int(win_start), int(win_end)))
 
-    return data, windows, samples
+    return data, windows, samples, col
 
 
 def _cal_tgt_match_pct_manager(
@@ -187,6 +191,7 @@ def _cal_tgt_match_pct_manager(
     sample_size,
     thread,
     phased,  # NEW
+    score_col,
 ):
     """
     Description:
@@ -214,6 +219,7 @@ def _cal_tgt_match_pct_manager(
                 src_samples,
                 len(tgt_samples),
                 phased,  # NEW
+                score_col,
             ),
         )
         for ii in range(thread)
@@ -257,6 +263,7 @@ def _cal_tgt_match_pct_worker(
     src_samples,
     sample_size,
     phased,  # NEW
+    score_col,
 ):
     """
     Description:
@@ -274,6 +281,7 @@ def _cal_tgt_match_pct_worker(
             src_samples,
             sample_size,
             phased,  # NEW
+            score_col,
         )
         out_queue.put("\n".join(res))
 
@@ -288,6 +296,7 @@ def _cal_match_pct_ind(
     src_samples,
     sample_size,
     phased,  # NEW
+    score_col,
 ):
     """
     phased=True  -> original haplotype-based matching (supervisor logic)
@@ -296,71 +305,80 @@ def _cal_match_pct_ind(
     res = []
     for line in data:
         elements = line.split("\t")
-        chr_name = elements[0]
-        win_start, win_end = int(elements[1]), int(elements[2])
-        sample = elements[3]
+        chr_name = elements[score_col["chrom"]]
+        win_start = int(elements[score_col["start"]])
+        win_end = int(elements[score_col["end"]])
+        sample = elements[score_col["sample"]]
+        hap_index = elements[score_col["hap_index"]]
 
         # S* SNP positions (comma-separated positions in the score file)
-        snp_positions = [int(p) for p in elements[-1].split(",") if p]
+        snp_positions = [
+            int(p)
+            for p in elements[score_col["S*_SNPs"]].split(",")
+            if p and p != "NA"
+        ]
 
         for src_ind_index in range(len(src_samples)):
             src_sample = src_samples[src_ind_index]
 
+            hap1_res = cal_matchpct(
+                chr_name,
+                mapped_intervals,
+                tgt_data,
+                src_data,
+                tgt_ind_index,
+                src_ind_index,
+                0,
+                int(win_start),
+                int(win_end),
+                sample_size,
+            )
+            hap2_res = cal_matchpct(
+                chr_name,
+                mapped_intervals,
+                tgt_data,
+                src_data,
+                tgt_ind_index,
+                src_ind_index,
+                1,
+                int(win_start),
+                int(win_end),
+                sample_size,
+            )
+
+            hap1_match_pct = hap1_res[-1]
+            hap2_match_pct = hap2_res[-1]
+            hap_match_pct = "NA"
+            if (hap1_match_pct != "NA") and (hap2_match_pct != "NA"):
+                hap_match_pct = (hap1_match_pct + hap2_match_pct) / 2
+
             if phased:
-                # ---------------------------
-                # ORIGINAL SUPERVISOR LOGIC
-                # ---------------------------
-                hap1_res = cal_matchpct(
-                    chr_name,
-                    mapped_intervals,
-                    tgt_data,
-                    src_data,
-                    tgt_ind_index,
-                    src_ind_index,
-                    0,
-                    int(win_start),
-                    int(win_end),
-                    sample_size,
+                res.append(
+                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t1\t{hap1_match_pct}\t{src_sample}"
                 )
-                hap2_res = cal_matchpct(
-                    chr_name,
-                    mapped_intervals,
-                    tgt_data,
-                    src_data,  # FIXED: missing comma/typo in your commented block
-                    tgt_ind_index,
-                    src_ind_index,
-                    1,
-                    int(win_start),
-                    int(win_end),
-                    sample_size,
+                res.append(
+                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t2\t{hap2_match_pct}\t{src_sample}"
                 )
-
-                hap1_match_pct = hap1_res[-1]
-                hap2_match_pct = hap2_res[-1]
-                hap_match_pct = "NA"
-
-                if (hap1_match_pct != "NA") and (hap2_match_pct != "NA"):
-                    hap_match_pct = (hap1_match_pct + hap2_match_pct) / 2
-
             else:
+                res.append(
+                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t{hap_index}\t{hap_match_pct}\t{src_sample}"
+                )
+
                 # -------------------------------------
                 # NEW UNPHASED (DOSAGE-BASED) LOGIC
                 # -------------------------------------
-                tgt_gt = tgt_data[chr_name]["GT"]
-                tgt_pos = tgt_data[chr_name]["POS"]
-                src_gt = src_data[chr_name]["GT"]
-                src_pos = src_data[chr_name]["POS"]
+                #tgt_gt = tgt_data[chr_name]["GT"]
+                #tgt_pos = tgt_data[chr_name]["POS"]
+                #src_gt = src_data[chr_name]["GT"]
+                #src_pos = src_data[chr_name]["POS"]
 
-                tgt_dos = _dosage_for_positions(
-                    tgt_gt, tgt_pos, tgt_ind_index, snp_positions
-                )
-                src_dos = _dosage_for_positions(
-                    src_gt, src_pos, src_ind_index, snp_positions
-                )
+                #tgt_dos = _dosage_for_positions(
+                #    tgt_gt, tgt_pos, tgt_ind_index, snp_positions
+                #)
+                #src_dos = _dosage_for_positions(
+                #    src_gt, src_pos, src_ind_index, snp_positions
+                #)
 
-                hap_match_pct = calc_match_pct(tgt_dos, src_dos, P=2)
-
-            line_out = f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t{hap_match_pct}\t{src_sample}"
-            res.append(line_out)
+                #hap_match_pct = calc_match_pct(tgt_dos, src_dos, P=2)
 
     return res

@@ -28,7 +28,12 @@ import pytest
 import numpy as np
 import allel
 
-from sstar.cal_match_rate import calc_match_pct, cal_match_pct
+from sstar.cal_match_rate import (
+    calc_match_pct,
+    cal_match_pct,
+    _read_score_file,
+    _cal_match_pct_ind,
+)
 
 
 @pytest.fixture
@@ -51,6 +56,25 @@ def data():
         # New repo golden (you must create/commit this file after generating it once).
         "exp_output_unphased": "./tests/results/test.match.rate.exp.unphased.results",
     }
+
+
+def test_read_score_file_accepts_phased_sample_ids(tmp_path):
+    score = tmp_path / "score.tsv"
+    score.write_text(
+        "chrom\tstart\tend\tsample\thap_index\tS*_score\tregion_ind_SNP_number\tS*_SNP_number\tS*_SNPs\n"
+        "1\t100\t200\ttgt1\t1\t1.0\t2\t2\t100,150\n"
+        "1\t100\t200\ttgt1\t2\t0.9\t2\t2\t100,150\n"
+        "1\t100\t200\ttgt2\tNA\t0.8\t2\t2\t100,150\n"
+        "1\t100\t200\tignore_me\t1\t0.7\t2\t2\t100,150\n"
+    )
+
+    data, windows, samples, col = _read_score_file(str(score), ["1"], ["tgt1", "tgt2"])
+
+    assert samples == ["tgt1", "tgt2"]
+    assert col["hap_index"] == 4
+    assert len(data["tgt1"]) == 2
+    assert len(data["tgt2"]) == 1
+    assert windows["1"] == [(100, 200), (100, 200), (100, 200)]
 
 
 # ----------------------------
@@ -116,18 +140,26 @@ def _assert_output_sane(lines):
 
     Guarantees:
     - correct header
-    - each row has 6 columns
+    - each row has 7 columns
     - match_rate is "NA" or a float within [0,1]
     """
     assert len(lines) > 1, "Expected header + at least one row"
 
     header = lines[0].split("\t")
-    assert header == ["chrom", "start", "end", "sample", "match_rate", "src_sample"]
+    assert header == [
+        "chrom",
+        "start",
+        "end",
+        "sample",
+        "hap_index",
+        "match_rate",
+        "src_sample",
+    ]
 
     for row in lines[1:]:
         fields = row.split("\t")
-        assert len(fields) == 6, f"Expected 6 columns, got {len(fields)}: {row}"
-        mr = fields[4]
+        assert len(fields) == 7, f"Expected 7 columns, got {len(fields)}: {row}"
+        mr = fields[5]
         if mr != "NA":
             v = float(mr)
             assert 0.0 <= v <= 1.0, f"match_rate out of bounds: {v}"

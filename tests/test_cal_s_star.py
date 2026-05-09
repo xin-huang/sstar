@@ -61,7 +61,7 @@ def test_cal_s_star_with_phased_data_same_input(data):
     We assert:
       - header is correct
       - output has at least one data row
-      - both haplotype suffixes ('_hap1', '_hap2') are present in sample labels
+      - both haplotype suffixes ('_1', '_2') are present in sample labels
       - phased output has at least as many rows as the unphased expected output
     """
     output_phased = "./tests/results/test.score.phased_same_input.results"
@@ -94,6 +94,7 @@ def test_cal_s_star_with_phased_data_same_input(data):
         "start",
         "end",
         "sample",
+        "hap_index",
         "S*_score",
         "region_ind_SNP_number",
         "S*_SNP_number",
@@ -102,12 +103,12 @@ def test_cal_s_star_with_phased_data_same_input(data):
 
     # Basic row integrity
     first_data = phased_lines[1].split("\t")
-    assert len(first_data) == 8
+    assert len(first_data) == 9
 
-    # Check that both haplotype suffixes occur across sample labels
-    samples = {line.split("\t")[3] for line in phased_lines[1:]}
-    assert any(s.endswith("_hap1") for s in samples)
-    assert any(s.endswith("_hap2") for s in samples)
+    # Check that hap_index column includes phased haplotypes 1 and 2
+    hap_indices = {line.split("\t")[4] for line in phased_lines[1:]}
+    assert "1" in hap_indices
+    assert "2" in hap_indices
 
     # Compare number of rows to *expected* unphased output (static file)
     with open(pytest.exp_output) as f:
@@ -133,6 +134,7 @@ def test_cal_score_ind_with_too_few_snps():
     res = _cal_score_ind(
         chr_name="chr1",
         sample_name="ind1",
+        hap_index="NA",
         ref_pos=ref_pos,
         tgt_pos=tgt_pos,
         tgt_gt=tgt_gt,
@@ -158,6 +160,7 @@ def test_cal_score_ind_with_perfect_ld_chain():
     res = _cal_score_ind(
         chr_name="chr1",
         sample_name="ind1",
+        hap_index="NA",
         ref_pos=ref_pos,
         tgt_pos=tgt_pos,
         tgt_gt=tgt_gt,
@@ -170,10 +173,10 @@ def test_cal_score_ind_with_perfect_ld_chain():
 
     assert len(res) >= 1
     fields = res[0].split("\t")
-    assert len(fields) == 8
+    assert len(fields) == 9
 
-    s_star_score = fields[4]
-    s_star_snp_num = fields[6]
+    s_star_score = fields[5]
+    s_star_snp_num = fields[7]
 
     assert s_star_score != "NA"
     assert s_star_snp_num != "NA"
@@ -191,6 +194,7 @@ def test_cal_score_ind_with_mismatch_penalty():
     res = _cal_score_ind(
         chr_name="chr1",
         sample_name="ind1",
+        hap_index="NA",
         ref_pos=ref_pos,
         tgt_pos=tgt_pos,
         tgt_gt=tgt_gt,
@@ -203,7 +207,7 @@ def test_cal_score_ind_with_mismatch_penalty():
 
     assert len(res) >= 1
     fields = res[0].split("\t")
-    assert len(fields) == 8
+    assert len(fields) == 9
     # S*_score may be "NA" or numeric depending on the optimal chain,
     # but the function must run and produce well-formed output.
 
@@ -219,6 +223,7 @@ def test_cal_score_ind_with_short_phy_distance():
     res = _cal_score_ind(
         chr_name="chr1",
         sample_name="ind1",
+        hap_index="NA",
         ref_pos=ref_pos,
         tgt_pos=tgt_pos,
         tgt_gt=tgt_gt,
@@ -231,4 +236,4 @@ def test_cal_score_ind_with_short_phy_distance():
 
     assert len(res) >= 1
     fields = res[0].split("\t")
-    assert len(fields) == 8
+    assert len(fields) == 9
