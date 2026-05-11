@@ -96,6 +96,51 @@ def test_quantile_subcommand_calls_runner():
             ]
         )
         mock_run.assert_called_once()
+        args = mock_run.call_args[0][0]
+        assert args.keep_simulated_data is False
+
+
+def test_quantile_subcommand_keep_simulated_data_flag():
+    with patch("sstar.__main__._run_quantile") as mock_run:
+        main(
+            [
+                "quantile",
+                "--model",
+                "model.yaml",
+                "--ms-dir",
+                "/tmp/ms",
+                "--N0",
+                "10000",
+                "--nsamp",
+                "20",
+                "--nreps",
+                "10",
+                "--ref-index",
+                "1",
+                "--ref-size",
+                "10",
+                "--tgt-index",
+                "2",
+                "--tgt-size",
+                "10",
+                "--mut-rate",
+                "1e-8",
+                "--rec-rate",
+                "1e-8",
+                "--seq-len",
+                "100000",
+                "--snp-num-range",
+                "50",
+                "200",
+                "10",
+                "--output-dir",
+                "quant_out",
+                "--keep-simulated-data",
+            ]
+        )
+        mock_run.assert_called_once()
+        args = mock_run.call_args[0][0]
+        assert args.keep_simulated_data is True
 
 
 def test_threshold_subcommand_calls_runner():

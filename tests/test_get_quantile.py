@@ -23,6 +23,7 @@ import pytest
 from sstar.get_quantile import (
     get_quantile,
     _cal_quantile,
+    _cleanup_simulated_data,
     _summary,
     _ms2vcf,
     _run_ms_simulation,
@@ -141,6 +142,50 @@ def test_summary_aggregates_quantiles(tmp_path):
     assert "log(local_recomb_rate)" in out.columns
     assert set(out["SNP_num"]) == {10, 20}
     assert np.isclose(out["log(local_recomb_rate)"].iloc[0], -8.0)
+
+
+def test_cleanup_simulated_data_keeps_summary(tmp_path):
+    (tmp_path / "quantile.summary.txt").write_text("x\n")
+    (tmp_path / "rates.combination").write_text("y\n")
+    (tmp_path / "sim.ref.list").write_text("ref\n")
+    (tmp_path / "sim.tgt.list").write_text("tgt\n")
+    (tmp_path / "user.notes.txt").write_text("keep me\n")
+
+    simulated_subdir = tmp_path / "10"
+    simulated_subdir.mkdir()
+    for filename in ["sim.ms", "sim.vcf", "sim.score", "sim.quantile", "run_ms.sh"]:
+        (simulated_subdir / filename).write_text("z\n")
+
+    unrelated_subdir = tmp_path / "analysis"
+    unrelated_subdir.mkdir()
+    (unrelated_subdir / "result.txt").write_text("keep directory\n")
+
+    _cleanup_simulated_data(str(tmp_path), simulated_snp_dirs=["10"])
+
+    assert (tmp_path / "quantile.summary.txt").exists()
+    assert not (tmp_path / "rates.combination").exists()
+    assert not (tmp_path / "sim.ref.list").exists()
+    assert not (tmp_path / "sim.tgt.list").exists()
+    assert not simulated_subdir.exists()
+    assert (tmp_path / "user.notes.txt").exists()
+    assert unrelated_subdir.exists()
+
+
+def test_cleanup_simulated_data_only_removes_tracked_dirs(tmp_path):
+    tracked_subdir = tmp_path / "10"
+    tracked_subdir.mkdir()
+    for filename in ["sim.ms", "sim.vcf", "sim.score", "sim.quantile", "run_ms.sh"]:
+        (tracked_subdir / filename).write_text("z\n")
+
+    untracked_subdir = tmp_path / "20"
+    untracked_subdir.mkdir()
+    for filename in ["sim.ms", "sim.vcf", "sim.score", "sim.quantile", "run_ms.sh"]:
+        (untracked_subdir / filename).write_text("z\n")
+
+    _cleanup_simulated_data(str(tmp_path), simulated_snp_dirs=["10"])
+
+    assert not tracked_subdir.exists()
+    assert untracked_subdir.exists()
 
 
 def test_ms2vcf_roundtrip(tmp_path):
