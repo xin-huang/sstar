@@ -24,6 +24,7 @@ from sstar.get_quantile import (
     get_quantile,
     _cal_quantile,
     _cleanup_simulated_data,
+    _get_pop_index,
     _summary,
     _ms2vcf,
     _run_ms_simulation,
@@ -50,9 +51,9 @@ def test_get_quantile(data):
         N0=1000,
         nsamp=22,
         nreps=20000,
-        ref_index=4,
+        ref_pop="Western",
         ref_size=20,
-        tgt_index=3,
+        tgt_pop="Central",
         tgt_size=2,
         mut_rate=1.2e-8,
         rec_rate=0.7e-8,
@@ -85,9 +86,9 @@ def test_get_quantile_raises_if_ref_equals_tgt(tmp_path, data):
             N0=1000,
             nsamp=22,
             nreps=10,
-            ref_index=3,
+            ref_pop="Central",
             ref_size=20,
-            tgt_index=3,
+            tgt_pop="Central",
             tgt_size=2,
             mut_rate=1.2e-8,
             rec_rate=0.7e-8,
@@ -236,9 +237,9 @@ def test_run_ms_simulation_ref_lt_tgt_importerror(tmp_path, data, monkeypatch):
         N0=1000,
         nsamp=4,
         nreps=1,
-        ref_index=1,
+        ref_pop="Western",
         ref_size=4,
-        tgt_index=2,
+        tgt_pop="Bonobo",
         tgt_size=2,
         seq_len=1000,
         snp_num_range=[10, 5, 1],
@@ -249,6 +250,48 @@ def test_run_ms_simulation_ref_lt_tgt_importerror(tmp_path, data, monkeypatch):
 
     assert (output_dir / "sim.ref.list").exists()
     assert (output_dir / "sim.tgt.list").exists()
+
+
+def test_run_ms_simulation_raises_if_pop_not_in_model(tmp_path, data):
+    output_dir = tmp_path / "ms_sim_invalid_pop"
+    output_dir.mkdir()
+
+    with pytest.raises(
+        ValueError, match="Population 'MissingPop' not found in model"
+    ):
+        _run_ms_simulation(
+            model=pytest.model,
+            ms_dir="./ext/msdir",
+            N0=1000,
+            nsamp=4,
+            nreps=1,
+            ref_pop="MissingPop",
+            ref_size=4,
+            tgt_pop="Central",
+            tgt_size=2,
+            seq_len=1000,
+            snp_num_range=[10, 5, 1],
+            output_dir=str(output_dir),
+            thread=1,
+            seeds=[1, 2, 3],
+        )
+
+
+def test_get_pop_index_matches_expected_demes_order():
+    class FakeDeme:
+        def __init__(self, name):
+            self.name = name
+
+    class FakeGraph:
+        def __init__(self, names):
+            self.demes = [FakeDeme(name) for name in names]
+
+    graph = FakeGraph(["Ghost", "Bonobo", "Central", "Western"])
+
+    assert _get_pop_index(graph, "Ghost") == 1
+    assert _get_pop_index(graph, "Bonobo") == 2
+    assert _get_pop_index(graph, "Central") == 3
+    assert _get_pop_index(graph, "Western") == 4
 
 
 # ------------------------------------------------------
