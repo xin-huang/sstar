@@ -16,6 +16,7 @@
 import os
 import demes
 import glob
+import shutil
 import subprocess
 import numpy as np
 import pandas as pd
@@ -88,6 +89,7 @@ def get_quantile(
     thread,
     seeds,
     is_phased: bool = False,
+    keep_simulated_data: bool = False,
 ):
     """
     Description:
@@ -112,6 +114,7 @@ def get_quantile(
         thread int: Number of threads.
         seeds: list: Three random seed numbers used in ms simulation.
         is_phased bool: Whether to run sstar score with --phased.
+        keep_simulated_data bool: Whether to keep intermediate simulation files.
     """
     if seeds is not None:
         np.random.seed(np.sum(seeds))
@@ -119,7 +122,7 @@ def get_quantile(
     if os.path.exists(output_dir) is False:
         os.makedirs(output_dir, exist_ok=True)  # no subprocess mkdir
     _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output_dir)
-    _run_ms_simulation(
+    simulated_snp_dirs = _run_ms_simulation(
         model,
         ms_dir,
         N0,
@@ -137,6 +140,8 @@ def get_quantile(
         is_phased,
     )
     _summary(output_dir, rec_rate)
+    if not keep_simulated_data:
+        _cleanup_simulated_data(output_dir, simulated_snp_dirs)
 
 
 def _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output_dir):
@@ -287,6 +292,8 @@ def _run_ms_simulation(
     finally:
         for worker in workers:
             worker.join()
+
+    return [str(snp_num) for snp_num in snp_num_list]
 
 
 def _run_ms_simulation_worker(
@@ -509,3 +516,35 @@ def _summary(output_dir, rec_rate):
     df.sort_values(by=["SNP_num", "quantile"]).to_csv(
         f"{output_dir}/quantile.summary.txt", sep="\t", index=False
     )
+
+
+def _cleanup_simulated_data(output_dir, simulated_snp_dirs):
+    """
+    Description:
+        Remove intermediate files generated during ms simulations.
+
+    Arguments:
+        output_dir str: Name of the output directory.
+        simulated_snp_dirs list[str]: SNP-number directories created by this run.
+    """
+    generated_files = {"rates.combination", "sim.ref.list", "sim.tgt.list"}
+    simulated_dir_required_files = {
+        "sim.ms",
+        "sim.vcf",
+        "sim.score",
+        "sim.quantile",
+        "run_ms.sh",
+    }
+
+    for filename in generated_files:
+        path = os.path.join(output_dir, filename)
+        if os.path.isfile(path):
+            os.remove(path)
+
+    for dirname in simulated_snp_dirs:
+        subdir = os.path.join(output_dir, dirname)
+        if not os.path.isdir(subdir):
+            continue
+        existing_files = set(os.listdir(subdir))
+        if simulated_dir_required_files.issubset(existing_files):
+            shutil.rmtree(subdir)

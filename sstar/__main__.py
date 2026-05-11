@@ -64,6 +64,7 @@ def _run_quantile(args):
         thread=args.thread,
         seeds=args.seeds,
         is_phased=args.phased,
+        keep_simulated_data=args.keep_simulated_data,
     )
 
 
@@ -210,6 +211,7 @@ def _s_star_cli_parser():
     )
     parser.add_argument("--output-dir", type=str, dest="output_dir", required=True)
     parser.add_argument("--thread", type=int, default=1)
+    parser.add_argument("--keep-simulated-data", action="store_true")
     parser.set_defaults(runner=_run_quantile)
 
     # threshold
