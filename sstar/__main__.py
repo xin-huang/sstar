@@ -52,9 +52,9 @@ def _run_quantile(args):
         N0=args.N0,
         nsamp=args.nsamp,
         nreps=args.nreps,
-        ref_index=args.ref_index,
+        ref_pop=args.ref_pop,
         ref_size=args.ref_size,
-        tgt_index=args.tgt_index,
+        tgt_pop=args.tgt_pop,
         tgt_size=args.tgt_size,
         mut_rate=args.mut_rate,
         rec_rate=args.rec_rate,
@@ -199,9 +199,9 @@ def _s_star_cli_parser():
     parser.add_argument("--nsamp", type=int, required=True)
     parser.add_argument("--nreps", type=int, required=True)
     parser.add_argument("--seeds", type=int, nargs=3, default=None)
-    parser.add_argument("--ref-index", type=int, dest="ref_index", required=True)
+    parser.add_argument("--ref-pop", type=str, dest="ref_pop", required=True)
     parser.add_argument("--ref-size", type=int, dest="ref_size", required=True)
-    parser.add_argument("--tgt-index", type=int, dest="tgt_index", required=True)
+    parser.add_argument("--tgt-pop", type=str, dest="tgt_pop", required=True)
     parser.add_argument("--tgt-size", type=int, dest="tgt_size", required=True)
     parser.add_argument("--mut-rate", type=float, dest="mut_rate", required=True)
     parser.add_argument("--rec-rate", type=float, dest="rec_rate", required=True)

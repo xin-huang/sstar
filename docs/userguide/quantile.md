@@ -6,7 +6,7 @@
 
 Users need to install the `ms` program from [Hudson Lab](https://home.uchicago.edu/~rhudson1/source/mksamples.html) and provide a demographic model (e.g. BonoboGhost_4K19_no_introgression.yaml[](https://github.com/admixVIE/sstar-analysis/blob/main/config/simulation/models/BonoboGhost_4K19_no_introgression.yaml)) in [Demes](https://popsim-consortium.github.io/demes-spec-docs/main/introduction.html) YAML format. Then users can use the following command:
 
-	sstar quantile --model BonoboGhost_4K19_no_introgression.yaml --ms-dir ./msdir/ --N0 1000 --nsamp 22 --nreps 20000 --ref-index 4 --ref-size 20 --tgt-index 3 --tgt-size 2 --mut-rate 1.2e-8 --rec-rate 0.7e-8 --seq-len 40000 --snp-num-range 25 30 5 --output-dir quantiles --thread 2
+	sstar quantile --model BonoboGhost_4K19_no_introgression.yaml --ms-dir ./msdir/ --N0 1000 --nsamp 22 --nreps 20000 --ref-pop Western --ref-size 20 --tgt-pop Central --tgt-size 2 --mut-rate 1.2e-8 --rec-rate 0.7e-8 --seq-len 40000 --snp-num-range 25 30 5 --output-dir quantiles --thread 2
 
 The meaning of each option can be found using `sstar quantile -h`.
 

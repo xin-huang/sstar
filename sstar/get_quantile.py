@@ -77,9 +77,9 @@ def get_quantile(
     N0,
     nsamp,
     nreps,
-    ref_index,
+    ref_pop,
     ref_size,
-    tgt_index,
+    tgt_pop,
     tgt_size,
     mut_rate,
     rec_rate,
@@ -101,9 +101,9 @@ def get_quantile(
         N0 int: N0 used in ms simulation.
         nsamp int: Sample size (haploid) used in ms simulation.
         nreps int: Number of replicates used in ms simulation.
-        ref_index int: Index of the reference population in the demographic model (start from 1).
+        ref_pop str: Name of the reference population in the demographic model.
         ref_size int: Sample size (haploid) of the reference population.
-        tgt_index int: Index of the target population in the demographic model (start from 1).
+        tgt_pop str: Name of the target population in the demographic model.
         tgt_size int: Sample size (haploid) of the target population.
         mut_rate float: Mutation rate.
         rec_rate float: Recombination rate.
@@ -128,9 +128,9 @@ def get_quantile(
         N0,
         nsamp,
         nreps,
-        ref_index,
+        ref_pop,
         ref_size,
-        tgt_index,
+        tgt_pop,
         tgt_size,
         seq_len,
         snp_num_range,
@@ -173,6 +173,28 @@ def _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output
             r = rec_rate_list[i]
             o.write(f"{m}\t{r}\n")
 
+def _get_pop_index(graph: demes.Graph, pop_name: str) -> int:
+    """Get 1-based index of a deme name from a demes graph.
+
+    Parameters
+    ----------
+    graph : demes.Graph
+        Demographic graph loaded by demes.
+    pop_name : str
+        Deme name to resolve.
+
+    Returns
+    -------
+    int
+        1-based population index for use in ms population ordering.
+    """
+    names = [deme.name for deme in graph.demes]
+    if pop_name not in names:
+        raise ValueError(
+            f"Population '{pop_name}' not found in model. "
+            f"Available populations: {', '.join(names)}"
+        )
+    return names.index(pop_name) + 1
 
 def _run_ms_simulation(
     model,
@@ -180,9 +202,9 @@ def _run_ms_simulation(
     N0,
     nsamp,
     nreps,
-    ref_index,
+    ref_pop,
     ref_size,
-    tgt_index,
+    tgt_pop,
     tgt_size,
     seq_len,
     snp_num_range,
@@ -201,9 +223,9 @@ def _run_ms_simulation(
         N0 int: N0 used in ms simulation.
         nsamp int: Sample size (haploid) used in ms simulation.
         nreps int: Number of replicates used in ms simulation.
-        ref_index int: Index of the reference population in the demographic model (start from 1).
+        ref_pop str: Name of the reference population in the demographic model.
         ref_size int: Sample size (haploid) of the reference population.
-        tgt_index int: Index of the target population in the demographic model (start from 1).
+        tgt_pop str: Name of the target population in the demographic model.
         tgt_size int: Sample size (haploid) of the target population.
         seq_len int: Length of simulated sequence.
         snp_num_range list: Range of SNP numbers in ms simulation; the first parameter is the minimum SNP number,
@@ -214,6 +236,8 @@ def _run_ms_simulation(
         is_phased bool: Whether to run sstar score with --phased.
     """
     graph = demes.load(model)
+    ref_index = _get_pop_index(graph, ref_pop)
+    tgt_index = _get_pop_index(graph, tgt_pop)
     samples = np.zeros(len(graph.demes))
     samples[ref_index - 1] = ref_size
     samples[tgt_index - 1] = tgt_size
