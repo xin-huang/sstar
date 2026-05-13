@@ -17,41 +17,54 @@ import allel
 import numpy as np
 import os
 from multiprocessing import Process, Queue
+from typing import Optional, Union
 from sstar.utils import read_data
 
 
 # @profile
 def cal_s_star(
-    vcf,
-    ref_ind_file,
-    tgt_ind_file,
-    anc_allele_file,
-    output,
-    win_len,
-    win_step,
-    thread,
-    match_bonus,
-    max_mismatch,
-    mismatch_penalty,
+    vcf: str,
+    ref_ind_file: str,
+    tgt_ind_file: str,
+    anc_allele_file: Optional[str],
+    output: str,
+    win_len: int,
+    win_step: int,
+    thread: int,
+    match_bonus: int,
+    max_mismatch: int,
+    mismatch_penalty: int,
     is_phased: bool = False,
-):
+) -> None:
     """
-    Description:
-        Calculate S* scores.
+    Calculate S* scores from genotype data.
 
-    Arguments:
-        vcf str: Name of the VCF file containing genotype data.
-        ref_ind_file str: Name of the file containing sample information from the reference population.
-        tgt_ind_file str: Name of the file containing sample information from the target population.
-        anc_allele_file str: Name of the file containing ancestral allele information.
-        output str: Name of the output file.
-        win_len int: Length of sliding windows.
-        win_step int: Step size of sliding windows.
-        thread int: Number of threads.
-        match_bonus int: Bonus for matching genotypes of two different variants.
-        max_mismatch int: Maximum genotype distance allowed.
-        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
-        is_phased bool: If True, flatten haplotypes; else convert to dosages.
+    Parameters
+    ----------
+    vcf : str
+        Path to the VCF file containing genotype data.
+    ref_ind_file : str
+        Path to the file containing reference individual IDs.
+    tgt_ind_file : str
+        Path to the file containing target individual IDs.
+    anc_allele_file : str or None
+        Path to the ancestral allele file. If None, ancestral allele information is not used.
+    output : str
+        Path to the output score file.
+    win_len : int
+        Length of sliding windows.
+    win_step : int
+        Step size of sliding windows.
+    thread : int
+        Number of worker processes.
+    match_bonus : int
+        Bonus for matching genotypes between two variants.
+    max_mismatch : int
+        Maximum genotype distance allowed before a pair is discarded.
+    mismatch_penalty : int
+        Penalty for mismatching genotypes between two variants.
+    is_phased : bool, optional
+        If True, calculate scores on phased haplotypes; otherwise calculate scores on dosages. Default: `False`.
     """
 
     # --- Load data in 3D GenotypeArray form (V x N x ploidy) -----------------
@@ -112,33 +125,45 @@ def cal_s_star(
 
 # @profile
 def _cal_score(
-    ref_data,
-    tgt_data,
-    samples,
-    win_len,
-    win_step,
-    output,
-    thread,
-    match_bonus,
-    max_mismatch,
-    mismatch_penalty,
+    ref_data: dict,
+    tgt_data: dict,
+    samples: list,
+    win_len: int,
+    win_step: int,
+    output: str,
+    thread: int,
+    match_bonus: int,
+    max_mismatch: int,
+    mismatch_penalty: int,
     is_phased: bool = False,
-):
+) -> None:
     """
-    Description:
-        Helper function to manage worker functions to calculate S* scores with multiprocessing.
+    Manage multiprocessing for S* score calculation.
 
-    Arguments:
-        ref_data dict: Dictionary containing genotype data from the reference population.
-        tgt_data dict: Dictionary containing genotype data from the target population.
-        samples list: Sample information.
-        win_len int: Length of sliding windows.
-        win_step int: Step size of sliding windows.
-        output str: Name of the output file.
-        thread int: Number of threads.
-        match_bonus int: Bonus for matching genotypes of two different variants.
-        max_mismatch int: Maximum genotype distance allowed.
-        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
+    Parameters
+    ----------
+    ref_data : dict
+        Reference genotype data by chromosome.
+    tgt_data : dict
+        Target genotype data by chromosome.
+    samples : list
+        Target sample IDs.
+    win_len : int
+        Length of sliding windows.
+    win_step : int
+        Step size of sliding windows.
+    output : str
+        Path to the output score file.
+    thread : int
+        Number of worker processes.
+    match_bonus : int
+        Bonus for matching genotypes between two variants.
+    max_mismatch : int
+        Maximum genotype distance allowed before a pair is discarded.
+    mismatch_penalty : int
+        Penalty for mismatching genotypes between two variants.
+    is_phased : bool, optional
+        If True, process each haplotype separately; otherwise process each individual as dosages. Default: `False`.
     """
 
     try:
@@ -214,31 +239,42 @@ def _cal_score(
 
 # @profile
 def _cal_score_worker(
-    in_queue,
-    out_queue,
-    ref_data,
-    tgt_data,
-    win_len,
-    win_step,
-    match_bonus,
-    max_mismatch,
-    mismatch_penalty,
+    in_queue: Queue,
+    out_queue: Queue,
+    ref_data: dict,
+    tgt_data: dict,
+    win_len: int,
+    win_step: int,
+    match_bonus: int,
+    max_mismatch: int,
+    mismatch_penalty: int,
     is_phased: bool = False,
-):
+) -> None:
     """
-    Description:
-        Worker function to calculate S* scores with multiprocessing.
+    Worker process for S* score calculation.
 
-    Arguments:
-        in_queue multiprocessing.Queue: multiprocessing.Queue instance to receive parameters from the manager.
-        out_queue multiprocessing.Queue: multiprocessing.Queue instance to send results back to the manager.
-        ref_data dict: Dictionary containing genotype data from the reference population.
-        tgt_data dict: Dictionary containing genotype data from the target population.
-        win_len int: Length of sliding windows.
-        win_step int: Step size of sliding windows.
-        match_bonus int: Bonus for matching genotypes of two different variants.
-        max_mismatch int: Maximum genotype distance allowed.
-        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
+    Parameters
+    ----------
+    in_queue : multiprocessing.Queue
+        Queue providing target sample or haplotype jobs.
+    out_queue : multiprocessing.Queue
+        Queue receiving formatted S* output.
+    ref_data : dict
+        Reference genotype data by chromosome.
+    tgt_data : dict
+        Target genotype data by chromosome.
+    win_len : int
+        Length of sliding windows.
+    win_step : int
+        Step size of sliding windows.
+    match_bonus : int
+        Bonus for matching genotypes between two variants.
+    max_mismatch : int
+        Maximum genotype distance allowed before a pair is discarded.
+    mismatch_penalty : int
+        Penalty for mismatching genotypes between two variants.
+    is_phased : bool, optional
+        If True, process each haplotype separately; otherwise process each individual as dosages. Default: `False`.
     """
 
     while True:
@@ -278,37 +314,50 @@ def _cal_score_worker(
 
 # @profile
 def _cal_score_ind(
-    chr_name,
-    sample_name,
-    hap_index,
-    ref_pos,
-    tgt_pos,
-    tgt_gt,
-    win_step,
-    win_len,
-    match_bonus,
-    max_mismatch,
-    mismatch_penalty,
-):
+    chr_name: str,
+    sample_name: str,
+    hap_index: str,
+    ref_pos: Union[list, np.ndarray],
+    tgt_pos: Union[list, np.ndarray],
+    tgt_gt: np.ndarray,
+    win_step: int,
+    win_len: int,
+    match_bonus: int,
+    max_mismatch: int,
+    mismatch_penalty: int,
+) -> list:
     """
-    Description:
-        Helper function for calculating S* in a single individual.
+    Calculate S* scores for one target individual or haplotype.
 
-    Arguments:
-        chr_name str: Name of the chromosome.
-        sample_name str: Name shown in score output.
-        hap_index str: Haplotype index, or "NA" for unphased runs.
-        ref_pos list: List of position for variants in reference populations.
-        tgt_pos list: List of position for variants in target populations.
-        tgt_gt: Genotype data (here: 1D array of dosages/haploid alleles) from target populations.
-        win_step int: Length of sliding windows.
-        win_len int: Step size of sliding windows.
-        match_bonus int: Bonus for matching genotypes of two different variants.
-        max_mismatch int: Maximum genotype distance allowed.
-        mismatch_penalty int: Penalty for mismatching genotypes of two different variants.
+    Parameters
+    ----------
+    chr_name : str
+        Chromosome name.
+    sample_name : str
+        Sample ID written to the score output.
+    hap_index : str
+        Haplotype index, or `"NA"` for unphased runs.
+    ref_pos : list or numpy.ndarray
+        Variant positions observed in the reference population.
+    tgt_pos : list or numpy.ndarray
+        Variant positions observed in the target individual or haplotype.
+    tgt_gt : numpy.ndarray
+        One-dimensional target dosages or haploid allele values.
+    win_step : int
+        Step size of sliding windows.
+    win_len : int
+        Length of sliding windows.
+    match_bonus : int
+        Bonus for matching genotypes between two variants.
+    max_mismatch : int
+        Maximum genotype distance allowed before a pair is discarded.
+    mismatch_penalty : int
+        Penalty for mismatching genotypes between two variants.
 
-    Returns:
-        res list: Results of calculated S*
+    Returns
+    -------
+    list
+        Formatted output lines containing S* scores for each window.
     """
     res = []
     if len(tgt_gt) <= 2:

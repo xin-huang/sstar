@@ -17,14 +17,26 @@ import argparse
 import os
 import sys
 import signal
+from typing import Optional, Sequence, Type
 
 
-def _set_sigpipe_handler():
+def _set_sigpipe_handler() -> None:
+    """
+    Install the default SIGPIPE handler on POSIX systems.
+    """
     if os.name == "posix":
         signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 
-def _run_score(args):
+def _run_score(args: argparse.Namespace) -> None:
+    """
+    Run `sstar score` from parsed command-line arguments.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed arguments for the `score` subcommand.
+    """
     from sstar.cal_s_star import cal_s_star
 
     cal_s_star(
@@ -43,7 +55,15 @@ def _run_score(args):
     )
 
 
-def _run_quantile(args):
+def _run_quantile(args: argparse.Namespace) -> None:
+    """
+    Run `sstar quantile` from parsed command-line arguments.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed arguments for the `quantile` subcommand.
+    """
     from sstar.get_quantile import get_quantile
 
     get_quantile(
@@ -68,7 +88,15 @@ def _run_quantile(args):
     )
 
 
-def _run_threshold(args):
+def _run_threshold(args: argparse.Namespace) -> None:
+    """
+    Run `sstar threshold` from parsed command-line arguments.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed arguments for the `threshold` subcommand.
+    """
     from sstar.cal_threshold import cal_threshold
 
     cal_threshold(
@@ -83,7 +111,15 @@ def _run_threshold(args):
     )
 
 
-def _run_match_pct(args):
+def _run_match_pct(args: argparse.Namespace) -> None:
+    """
+    Run `sstar matchrate` from parsed command-line arguments.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed arguments for the `matchrate` subcommand.
+    """
     from sstar.cal_match_rate import cal_match_pct
 
     cal_match_pct(
@@ -100,7 +136,15 @@ def _run_match_pct(args):
     )
 
 
-def _run_tract(args):
+def _run_tract(args: argparse.Namespace) -> None:
+    """
+    Run `sstar tract` from parsed command-line arguments.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed arguments for the `tract` subcommand.
+    """
     from sstar.get_tract import get_tract
 
     get_tract(
@@ -111,58 +155,184 @@ def _run_tract(args):
     )
 
 
-def _add_common_args(parser):
+def _add_common_args(parser: argparse.ArgumentParser) -> None:
+    """
+    Add command-line arguments shared by multiple subcommands.
+
+    Parameters
+    ----------
+    parser : argparse.ArgumentParser
+        Parser to which the shared arguments are added.
+    """
     parser.add_argument(
         "--anc-allele",
         type=str,
         dest="anc_allele",
         default=None,
-        help="name of the BED format file containing ancestral allele information",
+        help="Path to the BED format file containing ancestral allele information.",
     )
     parser.add_argument(
-        "--output", type=str, required=True, help="name of the output file"
+        "--output", type=str, required=True, help="Path to the output file."
     )
     parser.add_argument(
         "--thread",
         type=int,
         default=1,
-        help="number of threads for multiprocessing; default: 1",
+        help="Number of threads for multiprocessing. Default: %(default)s.",
     )
 
 
-def _add_mapped_args(parser):
+def _add_mapped_args(parser: argparse.ArgumentParser) -> None:
+    """
+    Add the mapped-region command-line argument.
+
+    Parameters
+    ----------
+    parser : argparse.ArgumentParser
+        Parser to which the mapped-region argument is added.
+    """
     parser.add_argument(
         "--mapped-region",
         type=str,
         dest="mapped_region_file",
-        help="name of the BED file containing mapped regions",
+        help="Path to the BED file containing mapped regions.",
     )
 
 
-def _add_window_args(parser):
-    parser.add_argument("--win-len", type=int, default=50000)
-    parser.add_argument("--win-step", type=int, default=10000)
+def _add_window_args(parser: argparse.ArgumentParser) -> None:
+    """
+    Add sliding-window command-line arguments.
+
+    Parameters
+    ----------
+    parser : argparse.ArgumentParser
+        Parser to which the window arguments are added.
+    """
+    parser.add_argument(
+        "--win-len",
+        type=int,
+        default=50000,
+        help="Length of sliding windows in base pairs. Default: %(default)s.",
+    )
+    parser.add_argument(
+        "--win-step",
+        type=int,
+        default=10000,
+        help="Step size for sliding windows in base pairs. Default: %(default)s.",
+    )
 
 
-def _add_ref_ind_args(parser):
-    parser.add_argument("--ref", type=str, dest="ref_ind", required=True)
+def _add_ref_ind_args(parser: argparse.ArgumentParser) -> None:
+    """
+    Add the reference-individual command-line argument.
+
+    Parameters
+    ----------
+    parser : argparse.ArgumentParser
+        Parser to which the reference-individual argument is added.
+    """
+    parser.add_argument(
+        "--ref",
+        type=str,
+        dest="ref_ind",
+        required=True,
+        help="Path to the file containing reference individual IDs.",
+    )
 
 
-def _add_tgt_ind_args(parser):
-    parser.add_argument("--tgt", type=str, dest="tgt_ind", required=True)
+def _add_tgt_ind_args(parser: argparse.ArgumentParser) -> None:
+    """
+    Add the target-individual command-line argument.
+
+    Parameters
+    ----------
+    parser : argparse.ArgumentParser
+        Parser to which the target-individual argument is added.
+    """
+    parser.add_argument(
+        "--tgt",
+        type=str,
+        dest="tgt_ind",
+        required=True,
+        help="Path to the file containing target individual IDs.",
+    )
 
 
-def _add_src_ind_args(parser):
-    parser.add_argument("--src", type=str, dest="src_ind", required=True)
+def _add_src_ind_args(parser: argparse.ArgumentParser) -> None:
+    """
+    Add the source-individual command-line argument.
+
+    Parameters
+    ----------
+    parser : argparse.ArgumentParser
+        Parser to which the source-individual argument is added.
+    """
+    parser.add_argument(
+        "--src",
+        type=str,
+        dest="src_ind",
+        required=True,
+        help="Path to the file containing source individual IDs.",
+    )
 
 
-def _add_score_args(parser):
-    parser.add_argument("--score", type=str, dest="score", required=True)
+def _add_score_args(parser: argparse.ArgumentParser) -> None:
+    """
+    Add the S* score-file command-line argument.
+
+    Parameters
+    ----------
+    parser : argparse.ArgumentParser
+        Parser to which the score-file argument is added.
+    """
+    parser.add_argument(
+        "--score",
+        type=str,
+        dest="score",
+        required=True,
+        help="Path to the score file generated by `sstar score`.",
+    )
 
 
-def required_length(nmin, nmax):
+def required_length(nmin: int, nmax: int) -> Type[argparse.Action]:
+    """
+    Create an argparse action that enforces a bounded number of values.
+
+    Parameters
+    ----------
+    nmin : int
+        Minimum allowed number of values.
+    nmax : int
+        Maximum allowed number of values.
+
+    Returns
+    -------
+    type[argparse.Action]
+        Custom argparse action class that validates the number of values.
+    """
+
     class RequiredLength(argparse.Action):
-        def __call__(self, parser, args, values, option_string=None):
+        def __call__(
+            self,
+            parser: argparse.ArgumentParser,
+            args: argparse.Namespace,
+            values: Sequence[str],
+            option_string: Optional[str] = None,
+        ) -> None:
+            """
+            Validate the number of parsed values and store them on the namespace.
+
+            Parameters
+            ----------
+            parser : argparse.ArgumentParser
+                Parser that owns the action.
+            args : argparse.Namespace
+                Namespace where parsed values are stored.
+            values : sequence of str
+                Values parsed for this option.
+            option_string : str, optional
+                Option string used on the command line. Default: `None`.
+            """
             if not nmin <= len(values) <= nmax:
                 raise argparse.ArgumentTypeError(
                     f"argument '{self.dest}' requires between {nmin} and {nmax} arguments"
@@ -172,64 +342,240 @@ def required_length(nmin, nmax):
     return RequiredLength
 
 
-def _s_star_cli_parser():
+def _s_star_cli_parser() -> argparse.ArgumentParser:
+    """
+    Build the top-level S* command-line parser.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Parser configured with all S* subcommands.
+    """
     top_parser = argparse.ArgumentParser()
     subparsers = top_parser.add_subparsers(dest="subcommand")
     subparsers.required = True
 
     # score
     parser = subparsers.add_parser("score")
-    parser.add_argument("--vcf", type=str, required=True)
+    parser.add_argument(
+        "--vcf",
+        type=str,
+        required=True,
+        help="Path to the VCF file containing genotype data.",
+    )
     _add_ref_ind_args(parser)
     _add_tgt_ind_args(parser)
     _add_common_args(parser)
     _add_window_args(parser)
-    parser.add_argument("--match-bonus", type=int, default=5000)
-    parser.add_argument("--max-mismatch", type=int, default=5)
-    parser.add_argument("--mismatch-penalty", type=int, default=-10000)
-    parser.add_argument("--phased", action="store_true")
+    parser.add_argument(
+        "--match-bonus",
+        type=int,
+        default=5000,
+        help="Bonus for matching genotypes between two variants. Default: %(default)s.",
+    )
+    parser.add_argument(
+        "--max-mismatch",
+        type=int,
+        default=5,
+        help="Maximum genotype distance allowed before a pair is discarded. Default: %(default)s.",
+    )
+    parser.add_argument(
+        "--mismatch-penalty",
+        type=int,
+        default=-10000,
+        help="Penalty for mismatching genotypes between two variants. Default: %(default)s.",
+    )
+    parser.add_argument(
+        "--phased",
+        action="store_true",
+        help="Calculate scores on phased haplotypes instead of genotype dosages.",
+    )
     parser.set_defaults(runner=_run_score)
 
     # quantile
     parser = subparsers.add_parser("quantile")
-    parser.add_argument("--phased", action="store_true")
-    parser.add_argument("--model", type=str, required=True)
-    parser.add_argument("--ms-dir", type=str, dest="ms_dir", required=True)
-    parser.add_argument("--N0", type=int, required=True)
-    parser.add_argument("--nsamp", type=int, required=True)
-    parser.add_argument("--nreps", type=int, required=True)
-    parser.add_argument("--seeds", type=int, nargs=3, default=None)
-    parser.add_argument("--ref-pop", type=str, dest="ref_pop", required=True)
-    parser.add_argument("--ref-size", type=int, dest="ref_size", required=True)
-    parser.add_argument("--tgt-pop", type=str, dest="tgt_pop", required=True)
-    parser.add_argument("--tgt-size", type=int, dest="tgt_size", required=True)
-    parser.add_argument("--mut-rate", type=float, dest="mut_rate", required=True)
-    parser.add_argument("--rec-rate", type=float, dest="rec_rate", required=True)
-    parser.add_argument("--seq-len", type=int, dest="seq_len", required=True)
     parser.add_argument(
-        "--snp-num-range", type=int, nargs=3, dest="snp_num_range", required=True
+        "--phased",
+        action="store_true",
+        help="Run `sstar score` on phased haplotypes during simulation scoring.",
     )
-    parser.add_argument("--output-dir", type=str, dest="output_dir", required=True)
-    parser.add_argument("--thread", type=int, default=1)
-    parser.add_argument("--keep-simulated-data", action="store_true")
+    parser.add_argument(
+        "--model",
+        type=str,
+        required=True,
+        help="Path to the demographic model file used for simulation.",
+    )
+    parser.add_argument(
+        "--ms-dir",
+        type=str,
+        dest="ms_dir",
+        required=True,
+        help="Path to the directory containing the `ms` executable.",
+    )
+    parser.add_argument(
+        "--N0",
+        type=int,
+        required=True,
+        help="Reference effective population size used for ms parameter scaling.",
+    )
+    parser.add_argument(
+        "--nsamp",
+        type=int,
+        required=True,
+        help="Haploid sample size used in ms simulation.",
+    )
+    parser.add_argument(
+        "--nreps",
+        type=int,
+        required=True,
+        help="Number of simulation replicates.",
+    )
+    parser.add_argument(
+        "--seeds",
+        type=int,
+        nargs=3,
+        default=None,
+        help="Three random seed numbers passed to ms with `-seeds`.",
+    )
+    parser.add_argument(
+        "--ref-pop",
+        type=str,
+        dest="ref_pop",
+        required=True,
+        help="Name of the reference population in the demographic model.",
+    )
+    parser.add_argument(
+        "--ref-size",
+        type=int,
+        dest="ref_size",
+        required=True,
+        help="Haploid sample size of the reference population.",
+    )
+    parser.add_argument(
+        "--tgt-pop",
+        type=str,
+        dest="tgt_pop",
+        required=True,
+        help="Name of the target population in the demographic model.",
+    )
+    parser.add_argument(
+        "--tgt-size",
+        type=int,
+        dest="tgt_size",
+        required=True,
+        help="Haploid sample size of the target population.",
+    )
+    parser.add_argument(
+        "--mut-rate",
+        type=float,
+        dest="mut_rate",
+        required=True,
+        help="Mutation rate per site per generation.",
+    )
+    parser.add_argument(
+        "--rec-rate",
+        type=float,
+        dest="rec_rate",
+        required=True,
+        help="Recombination rate per site per generation.",
+    )
+    parser.add_argument(
+        "--seq-len",
+        type=int,
+        dest="seq_len",
+        required=True,
+        help="Length of the simulated sequence.",
+    )
+    parser.add_argument(
+        "--snp-num-range",
+        type=int,
+        nargs=3,
+        dest="snp_num_range",
+        required=True,
+        help="Minimum SNP count, maximum SNP count, and step size used for ms simulations.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        dest="output_dir",
+        required=True,
+        help="Path to the output directory.",
+    )
+    parser.add_argument(
+        "--thread",
+        type=int,
+        default=1,
+        help="Number of threads for multiprocessing. Default: %(default)s.",
+    )
+    parser.add_argument(
+        "--keep-simulated-data",
+        action="store_true",
+        help="Keep intermediate simulation directories instead of deleting them after summarizing results.",
+    )
     parser.set_defaults(runner=_run_quantile)
 
     # threshold
     parser = subparsers.add_parser("threshold")
-    parser.add_argument("--phased", action="store_true")
+    parser.add_argument(
+        "--phased",
+        action="store_true",
+        help="Expect phased score rows with non-NA haplotype indices.",
+    )
     _add_score_args(parser)
-    parser.add_argument("--sim-data", type=str, dest="sim_data", required=True)
-    parser.add_argument("--recomb-rate", type=float, dest="recomb_rate", default=1e-8)
-    parser.add_argument("--recomb-map", type=str, dest="recomb_map", default=None)
-    parser.add_argument("--quantile", type=float, required=True)
-    parser.add_argument("--output", type=str, required=True)
-    parser.add_argument("--k", type=int, default=8)
+    parser.add_argument(
+        "--sim-data",
+        type=str,
+        dest="sim_data",
+        required=True,
+        help="Path to the simulated quantile summary file.",
+    )
+    parser.add_argument(
+        "--recomb-rate",
+        type=float,
+        dest="recomb_rate",
+        default=1e-8,
+        help="Uniform recombination rate used when no recombination map is provided. Default: %(default)s.",
+    )
+    parser.add_argument(
+        "--recomb-map",
+        type=str,
+        dest="recomb_map",
+        default=None,
+        help="Path to the recombination-map file. If omitted, `--recomb-rate` is used.",
+    )
+    parser.add_argument(
+        "--quantile",
+        type=float,
+        required=True,
+        help="Quantile used to estimate significant S* scores.",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        required=True,
+        help="Path to the output threshold file.",
+    )
+    parser.add_argument(
+        "--k",
+        type=int,
+        default=8,
+        help="Basis dimension passed to the MGCV smooth term. Default: %(default)s.",
+    )
     parser.set_defaults(runner=_run_threshold)
 
     # matchrate
     parser = subparsers.add_parser("matchrate")
-    parser.add_argument("--phased", action="store_true")
-    parser.add_argument("--vcf", type=str, required=True)
+    parser.add_argument(
+        "--phased",
+        action="store_true",
+        help="Use haplotype-based source matching instead of dosage-based matching.",
+    )
+    parser.add_argument(
+        "--vcf",
+        type=str,
+        required=True,
+        help="Path to the VCF file containing genotype data.",
+    )
     _add_ref_ind_args(parser)
     _add_tgt_ind_args(parser)
     _add_src_ind_args(parser)
@@ -240,22 +586,50 @@ def _s_star_cli_parser():
 
     # tract
     parser = subparsers.add_parser("tract")
-    parser.add_argument("--threshold", type=str, required=True)
+    parser.add_argument(
+        "--threshold",
+        type=str,
+        required=True,
+        help="Path to the threshold file generated by `sstar threshold`.",
+    )
     parser.add_argument(
         "--match-rate",
         type=str,
         nargs="+",
         dest="match_pct",
         action=required_length(1, 2),
+        help="One or two source match-rate files generated by `sstar matchrate`.",
     )
-    parser.add_argument("--output-prefix", type=str, dest="output", required=True)
-    parser.add_argument("--diff", type=float, default=0)
+    parser.add_argument(
+        "--output-prefix",
+        type=str,
+        dest="output",
+        required=True,
+        help="Prefix for output BED files.",
+    )
+    parser.add_argument(
+        "--diff",
+        type=float,
+        default=0,
+        help=(
+            "Difference cutoff used to assign tracts when two source match-rate "
+            "files are provided. Default: %(default)s."
+        ),
+    )
     parser.set_defaults(runner=_run_tract)
 
     return top_parser
 
 
-def main(arg_list=None):
+def main(arg_list: Optional[Sequence[str]] = None) -> None:
+    """
+    Run the S* command-line interface.
+
+    Parameters
+    ----------
+    arg_list : sequence of str, optional
+        Command-line arguments to parse instead of `sys.argv`. Default: `None`.
+    """
     _set_sigpipe_handler()
     parser = _s_star_cli_parser()
     args = parser.parse_args(arg_list)
