@@ -17,24 +17,28 @@ import allel
 import numpy as np
 import os
 from multiprocessing import Process, Queue
+from typing import Any, Dict, List, Optional, Sequence
 from sstar.utils import read_data
+
+
+GenoData = Dict[str, Dict[str, Any]]
 
 
 # @profile
 def cal_s_star(
-    vcf,
-    ref_ind_file,
-    tgt_ind_file,
-    anc_allele_file,
-    output,
-    win_len,
-    win_step,
-    thread,
-    match_bonus,
-    max_mismatch,
-    mismatch_penalty,
+    vcf: str,
+    ref_ind_file: str,
+    tgt_ind_file: str,
+    anc_allele_file: Optional[str],
+    output: str,
+    win_len: int,
+    win_step: int,
+    thread: int,
+    match_bonus: int,
+    max_mismatch: int,
+    mismatch_penalty: int,
     is_phased: bool = False,
-):
+) -> None:
     """
     Description:
         Calculate S* scores.
@@ -112,18 +116,18 @@ def cal_s_star(
 
 # @profile
 def _cal_score(
-    ref_data,
-    tgt_data,
-    samples,
-    win_len,
-    win_step,
-    output,
-    thread,
-    match_bonus,
-    max_mismatch,
-    mismatch_penalty,
+    ref_data: GenoData,
+    tgt_data: GenoData,
+    samples: Sequence[str],
+    win_len: int,
+    win_step: int,
+    output: str,
+    thread: int,
+    match_bonus: int,
+    max_mismatch: int,
+    mismatch_penalty: int,
     is_phased: bool = False,
-):
+) -> None:
     """
     Description:
         Helper function to manage worker functions to calculate S* scores with multiprocessing.
@@ -214,17 +218,17 @@ def _cal_score(
 
 # @profile
 def _cal_score_worker(
-    in_queue,
-    out_queue,
-    ref_data,
-    tgt_data,
-    win_len,
-    win_step,
-    match_bonus,
-    max_mismatch,
-    mismatch_penalty,
+    in_queue: Any,
+    out_queue: Any,
+    ref_data: GenoData,
+    tgt_data: GenoData,
+    win_len: int,
+    win_step: int,
+    match_bonus: int,
+    max_mismatch: int,
+    mismatch_penalty: int,
     is_phased: bool = False,
-):
+) -> None:
     """
     Description:
         Worker function to calculate S* scores with multiprocessing.
@@ -278,18 +282,18 @@ def _cal_score_worker(
 
 # @profile
 def _cal_score_ind(
-    chr_name,
-    sample_name,
-    hap_index,
-    ref_pos,
-    tgt_pos,
-    tgt_gt,
-    win_step,
-    win_len,
-    match_bonus,
-    max_mismatch,
-    mismatch_penalty,
-):
+    chr_name: str,
+    sample_name: str,
+    hap_index: str,
+    ref_pos: np.ndarray,
+    tgt_pos: np.ndarray,
+    tgt_gt: np.ndarray,
+    win_step: int,
+    win_len: int,
+    match_bonus: int,
+    max_mismatch: int,
+    mismatch_penalty: int,
+) -> List[str]:
     """
     Description:
         Helper function for calculating S* in a single individual.

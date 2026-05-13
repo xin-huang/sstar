@@ -14,9 +14,15 @@
 # limitations under the License.
 
 import pandas as pd
+from typing import Optional, Sequence
 
 
-def get_tract(threshold_file, match_pct_files, output_prefix, diff):
+def get_tract(
+    threshold_file: str,
+    match_pct_files: Optional[Sequence[str]],
+    output_prefix: str,
+    diff: float,
+) -> None:
     """
     Description:
         Gets candidate introgressed fragments.
@@ -54,7 +60,7 @@ def get_tract(threshold_file, match_pct_files, output_prefix, diff):
         _output_bed(src2_df, output_prefix + ".src2.bed", col="match_rate_y")
 
 
-def _output_bed(df, output, col=None):
+def _output_bed(df: pd.DataFrame, output: str, col: Optional[str] = None) -> None:
     """
     Description:
         Helper fuction for outputing candidate introgressed fragments in BED format.

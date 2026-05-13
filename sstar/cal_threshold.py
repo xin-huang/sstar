@@ -17,21 +17,22 @@ import numpy as np
 import pandas as pd
 import re
 import rpy2.robjects as ro
+from typing import Any, Dict, List, Optional, Tuple
 from rpy2.robjects import FloatVector, Formula, pandas2ri
 from rpy2.robjects.packages import importr
 from rpy2.robjects.conversion import localconverter
 
 
 def cal_threshold(
-    simulated_data,
-    score_file,
-    recomb_rate,
-    recomb_map,
-    quantile,
-    output,
-    k,
-    phased=False,
-):
+    simulated_data: str,
+    score_file: str,
+    recomb_rate: float,
+    recomb_map: Optional[str],
+    quantile: float,
+    output: str,
+    k: int,
+    phased: bool = False,
+) -> None:
     """
     Description:
         Calculate significant S* scores from simulated data.
@@ -71,7 +72,7 @@ def cal_threshold(
         o.write("\n".join(res) + "\n")
 
 
-def _build_gam_model(simulated_data, k, fit_lr):
+def _build_gam_model(simulated_data: str, k: int, fit_lr: bool) -> Any:
     """
     Description:
         Helper function for building a generalized additive model with R package MGCV.
@@ -113,7 +114,15 @@ def _build_gam_model(simulated_data, k, fit_lr):
     return gam
 
 
-def _predict_res(gam, score_file, recomb_rate, recomb_map, quantile, fit_lr, phased):
+def _predict_res(
+    gam: Any,
+    score_file: str,
+    recomb_rate: float,
+    recomb_map: Optional[str],
+    quantile: float,
+    fit_lr: bool,
+    phased: bool,
+) -> List[str]:
     """
     Description:
         Helper function to predict significant S* scores.
@@ -166,7 +175,14 @@ def _predict_res(gam, score_file, recomb_rate, recomb_map, quantile, fit_lr, pha
     return res
 
 
-def _read_score_file(score_file, recomb_rate, recomb_map, quantile, fit_lr, phased):
+def _read_score_file(
+    score_file: str,
+    recomb_rate: float,
+    recomb_map: Optional[Dict[str, float]],
+    quantile: float,
+    fit_lr: bool,
+    phased: bool,
+) -> Tuple[Dict[str, Dict[str, List[float]]], Dict[str, List[List[str]]]]:
     """
     Description:
         Helper function for reading files from `sstar score`.
@@ -242,7 +258,7 @@ def _read_score_file(score_file, recomb_rate, recomb_map, quantile, fit_lr, phas
     return data, meta_data
 
 
-def _read_recomb_map(recomb_map_file):
+def _read_recomb_map(recomb_map_file: str) -> Dict[str, float]:
     """
     Description:
         Helper function for reading recombination maps from files.
