@@ -8,3 +8,9 @@
 [![Documentation Status](https://readthedocs.org/projects/sstar/badge/?version=latest)](https://sstar.readthedocs.io/en/latest/?badge=latest)
 
 The manual can be found [here](https://xin-huang.github.io/sstar).
+
+## Installation notes
+
+`r-base` and `r-essentials` are external runtime requirements for environments that use `rpy2`.
+They should be installed via Conda or system package managers (as in `build-env.yml`), not via `pip` dependencies.
+
