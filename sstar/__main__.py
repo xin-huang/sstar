@@ -196,7 +196,7 @@ def _add_mapped_args(parser: argparse.ArgumentParser) -> None:
         "--mapped-region",
         type=str,
         dest="mapped_region_file",
-        help="Path to the BED file containing mapped regions.",
+        help="Path to the BED file containing mapped regions. If not provided, the full window is treated as mapped.",
     )
 
 
@@ -396,11 +396,6 @@ def _s_star_cli_parser() -> argparse.ArgumentParser:
     # quantile
     parser = subparsers.add_parser("quantile")
     parser.add_argument(
-        "--phased",
-        action="store_true",
-        help="Run `sstar score` on phased haplotypes during simulation scoring.",
-    )
-    parser.add_argument(
         "--model",
         type=str,
         required=True,
@@ -423,7 +418,7 @@ def _s_star_cli_parser() -> argparse.ArgumentParser:
         "--nsamp",
         type=int,
         required=True,
-        help="Haploid sample size used in ms simulation.",
+        help="Haploid sample size used in ms simulation. Should be equal to the sum of `--ref-size` and `--tgt-size`.",
     )
     parser.add_argument(
         "--nreps",
@@ -523,15 +518,15 @@ def _s_star_cli_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Keep intermediate simulation directories instead of deleting them after summarizing results.",
     )
+    parser.add_argument(
+        "--phased",
+        action="store_true",
+        help="Run `sstar score` on phased haplotypes during simulation scoring.",
+    )
     parser.set_defaults(runner=_run_quantile)
 
     # threshold
     parser = subparsers.add_parser("threshold")
-    parser.add_argument(
-        "--phased",
-        action="store_true",
-        help="Expect phased score rows where sample names carry haplotype suffixes (for example sample_1).",
-    )
     _add_score_args(parser)
     parser.add_argument(
         "--sim-data",
@@ -552,7 +547,7 @@ def _s_star_cli_parser() -> argparse.ArgumentParser:
         type=str,
         dest="recomb_map",
         default=None,
-        help="Path to the recombination-map file. If omitted, `--recomb-rate` is used.",
+        help="Path to the recombination-map file. Windows missing from the recombination map are skipped. If omitted, `--recomb-rate` is used.",
     )
     parser.add_argument(
         "--quantile",
@@ -572,15 +567,15 @@ def _s_star_cli_parser() -> argparse.ArgumentParser:
         default=8,
         help="Basis dimension passed to the MGCV smooth term. Default: %(default)s.",
     )
+    parser.add_argument(
+        "--phased",
+        action="store_true",
+        help="Expect phased score rows where sample names carry haplotype suffixes (for example, `sample_1`).",
+    )
     parser.set_defaults(runner=_run_threshold)
 
     # matchrate
     parser = subparsers.add_parser("matchrate")
-    parser.add_argument(
-        "--phased",
-        action="store_true",
-        help="Use haplotype-based source matching instead of dosage-based matching.",
-    )
     parser.add_argument(
         "--vcf",
         type=str,
@@ -593,6 +588,11 @@ def _s_star_cli_parser() -> argparse.ArgumentParser:
     _add_common_args(parser)
     _add_mapped_args(parser)
     _add_score_args(parser)
+    parser.add_argument(
+        "--phased",
+        action="store_true",
+        help="Report match rates for each haplotype.",
+    )
     parser.set_defaults(runner=_run_match_pct)
 
     # tract

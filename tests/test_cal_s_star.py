@@ -26,8 +26,8 @@ def data():
     pytest.tgt_ind_list = "./tests/data/test.tgt.ind.list"
     pytest.vcf = "./tests/data/test.score.data.vcf"
     pytest.anc_allele = "./tests/data/test.anc.allele"
-    pytest.exp_unphased_output = "./tests/results/test.score.unphased.exp.results"
-    pytest.exp_phased_output = "./tests/results/test.score.phased.exp.results"
+    pytest.exp_unphased_output = "./tests/results/test.score.unphased.exp.results.tsv"
+    pytest.exp_phased_output = "./tests/results/test.score.phased.exp.results.tsv"
 
 
 def test_cal_s_star_with_unphased_data(data, tmp_path):

@@ -39,7 +39,7 @@ from sstar.get_quantile import (
 @pytest.fixture
 def data():
     pytest.model = "./examples/models/BonoboGhost_4K19_no_introgression.yaml"
-    pytest.exp_quantile = "./tests/results/test.quantile.exp.summary"
+    pytest.exp_quantile = "./tests/results/test.quantile.exp.summary.tsv"
 
 
 def test_get_quantile(data, tmp_path):

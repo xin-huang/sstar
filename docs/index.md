@@ -1,20 +1,20 @@
 # sstar
 
-`sstar` is a Python package for detecting archaic introgression from population genetic data with S\* scores (Plagnol and Wall 2006), which can be used for detecting introgression not only in humans, but also in other species, e.g. Kulhwilm et al. (2019).
+`sstar` is a Python package for detecting archaic introgression from population genetic data with S\* scores (Plagnol and Wall 2006), which can be used for detecting introgression not only in humans, but also in other species.
 
 ### Requirements
 
-`sstar` works on UNIX/LINUX operating systems and tested with the following:
+`sstar` works on Unix/Linux operating systems and tested with the following:
 
-- Python 3.8/3.9
+- Python 3.8.19
 - R 4.1
 - Python packages:
-	- demes
-	- numpy
-	- pandas
-	- rpy2
-	- scikit-allel
-	- scipy
+	- demes=0.2.3
+	- numpy=1.24.4
+	- pandas=2.0.3
+	- rpy2=3.5.11
+	- scikit-allel=1.3.7
+	- scipy=1.10.1
 - R packages:
 	- MASS
 	- mgcv
@@ -30,10 +30,9 @@ Then users can install `sstar` with `pip`.
 
 	pip install sstar
 
-Users can also use `conda` to create a virtual environment and install `sstar` with this [conda-env.yml](https://github.com/xin-huang/sstar/blob/main/conda-env.yml) or this [environment.yml](https://github.com/admixVIE/sstar-analysis/blob/main/environment.yml) in [sstar-analysis](https://github.com/admixVIE/sstar-analysis). To install `conda`, please follow the [instruction](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). We recommend users use [mamba](https://github.com/mamba-org/mamba) to create the virtual environment, because `mamba` is much faster than `conda`. Then users can use the following commands:
+Users can also use [mamba](https://github.com/mamba-org/mamba) to create a virtual environment and install `sstar` with this [build-env.yaml](https://github.com/xin-huang/sstar/blob/main/build-env.yaml).
 
-	conda install mamba -n base -c conda-forge
-	mamba env create -f conda-env.yml
+	mamba env create -f build-env.yaml
 	conda activate sstar
 	export R_LIBS=$CONDA_PREFIX/lib/R/library
 
