@@ -23,18 +23,20 @@ import pandas as pd
 from multiprocessing import Process, Queue
 from scipy.stats import norm
 from scipy.stats import nbinom
-from typing import List
+from typing import Optional, Sequence
 
 
 # ------------------------------------------------------------------
 # SAFE SUBPROCESS WRAPPER FOR "sstar score"
 # ------------------------------------------------------------------
-def _safe_sstar_score(cmd: List[str]) -> None:
+def _safe_sstar_score(cmd: list) -> None:
     """
-    Allow-listed subprocess invocation for: sstar score ...
+    Run an allow-listed `sstar score` subprocess command.
 
-    This satisfies static analyzers by validating the command structure and flags
-    before executing.
+    Parameters
+    ----------
+    cmd : list
+        Command tokens for an `sstar score` invocation.
     """
     if not isinstance(cmd, list) or len(cmd) < 2:
         raise ValueError(f"Unexpected subprocess invocation: {cmd}")
@@ -72,49 +74,66 @@ def _safe_sstar_score(cmd: List[str]) -> None:
 
 
 def get_quantile(
-    model,
-    ms_dir,
-    N0,
-    nsamp,
-    nreps,
-    ref_pop,
-    ref_size,
-    tgt_pop,
-    tgt_size,
-    mut_rate,
-    rec_rate,
-    seq_len,
-    snp_num_range,
-    output_dir,
-    thread,
-    seeds,
+    model: str,
+    ms_dir: str,
+    N0: int,
+    nsamp: int,
+    nreps: int,
+    ref_pop: str,
+    ref_size: int,
+    tgt_pop: str,
+    tgt_size: int,
+    mut_rate: float,
+    rec_rate: float,
+    seq_len: int,
+    snp_num_range: Sequence[int],
+    output_dir: str,
+    thread: int,
+    seeds: Optional[list],
     is_phased: bool = False,
     keep_simulated_data: bool = False,
-):
+) -> None:
     """
-    Description:
-        Calculates quantiles of expected S*.
+    Calculate quantiles of expected S* scores from ms simulations.
 
-    Arguments:
-        model str: Name of file containing the demographic model for simulation.
-        ms_dir str: Name of the directory containing the ms program.
-        N0 int: N0 used in ms simulation.
-        nsamp int: Sample size (haploid) used in ms simulation.
-        nreps int: Number of replicates used in ms simulation.
-        ref_pop str: Name of the reference population in the demographic model.
-        ref_size int: Sample size (haploid) of the reference population.
-        tgt_pop str: Name of the target population in the demographic model.
-        tgt_size int: Sample size (haploid) of the target population.
-        mut_rate float: Mutation rate.
-        rec_rate float: Recombination rate.
-        seq_len int: Length of simulated sequence.
-        snp_num_range list: Range of SNP numbers in ms simulation; the first parameter is the minimum SNP number,
-                            the second parameter is the maximum SNP number, the third parameter is the step size.
-        output_dir str: Name of the output directory.
-        thread int: Number of threads.
-        seeds: list: Three random seed numbers used in ms simulation.
-        is_phased bool: Whether to run sstar score with --phased.
-        keep_simulated_data bool: Whether to keep intermediate simulation files.
+    Parameters
+    ----------
+    model : str
+        Path to the demographic model file used for simulation.
+    ms_dir : str
+        Path to the directory containing the `ms` executable.
+    N0 : int
+        Reference effective population size used for ms parameter scaling.
+    nsamp : int
+        Haploid sample size used in ms simulation.
+    nreps : int
+        Number of simulation replicates.
+    ref_pop : str
+        Name of the reference population in the demographic model.
+    ref_size : int
+        Haploid sample size of the reference population.
+    tgt_pop : str
+        Name of the target population in the demographic model.
+    tgt_size : int
+        Haploid sample size of the target population.
+    mut_rate : float
+        Mutation rate per site per generation.
+    rec_rate : float
+        Recombination rate per site per generation.
+    seq_len : int
+        Length of the simulated sequence.
+    snp_num_range : sequence of int
+        Three values specifying minimum SNP count, maximum SNP count, and step size.
+    output_dir : str
+        Path to the output directory.
+    thread : int
+        Number of worker processes.
+    seeds : list or None
+        Three random seed numbers used in ms simulation. If None, ms uses its default seeding behavior.
+    is_phased : bool, optional
+        If True, run `sstar score` with `--phased`. Default: `False`.
+    keep_simulated_data : bool, optional
+        If True, keep intermediate simulation directories. Default: `False`.
     """
     if seeds is not None:
         np.random.seed(np.sum(seeds))
@@ -144,18 +163,26 @@ def get_quantile(
         _cleanup_simulated_data(output_dir, simulated_snp_dirs)
 
 
-def _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output_dir):
+def _generate_mut_rec_combination(
+    N0: int, nreps: int, mut_rate: float, rec_rate: float, seq_len: int, output_dir: str
+) -> None:
     """
-    Description:
-        Helper function to create different combination of mutation rates and recombination rates.
+    Generate scaled mutation-rate and recombination-rate combinations for ms.
 
-    Arguments:
-        N0 int: N0 used in ms simulation.
-        nreps int: Number of replicates used in ms simulation.
-        mut_rate float: Mutation rate.
-        rec_rate float: Recombination rate.
-        seq_len int: Length of simulated sequence.
-        output_dir str: Name of the output directory.
+    Parameters
+    ----------
+    N0 : int
+        Reference effective population size used for ms parameter scaling.
+    nreps : int
+        Number of simulation replicates.
+    mut_rate : float
+        Mutation rate per site per generation.
+    rec_rate : float
+        Recombination rate per site per generation.
+    seq_len : int
+        Length of the simulated sequence.
+    output_dir : str
+        Path to the output directory.
     """
     scaled_mut_rate = 4 * N0 * mut_rate * seq_len
     scaled_rec_rate = 4 * N0 * rec_rate * seq_len
@@ -173,8 +200,10 @@ def _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output
             r = rec_rate_list[i]
             o.write(f"{m}\t{r}\n")
 
+
 def _get_pop_index(graph: demes.Graph, pop_name: str) -> int:
-    """Get 1-based index of a deme name from a demes graph.
+    """
+    Get the 1-based index of a deme in a demes graph.
 
     Parameters
     ----------
@@ -196,44 +225,64 @@ def _get_pop_index(graph: demes.Graph, pop_name: str) -> int:
         )
     return names.index(pop_name) + 1
 
-def _run_ms_simulation(
-    model,
-    ms_dir,
-    N0,
-    nsamp,
-    nreps,
-    ref_pop,
-    ref_size,
-    tgt_pop,
-    tgt_size,
-    seq_len,
-    snp_num_range,
-    output_dir,
-    thread,
-    seeds,
-    is_phased=False,
-):
-    """
-    Description:
-        Helper function for running ms simulation.
 
-    Arguments:
-        model str: Name of file containing the demographic model for simulation.
-        ms_dir str: Name of the directory containing the ms program.
-        N0 int: N0 used in ms simulation.
-        nsamp int: Sample size (haploid) used in ms simulation.
-        nreps int: Number of replicates used in ms simulation.
-        ref_pop str: Name of the reference population in the demographic model.
-        ref_size int: Sample size (haploid) of the reference population.
-        tgt_pop str: Name of the target population in the demographic model.
-        tgt_size int: Sample size (haploid) of the target population.
-        seq_len int: Length of simulated sequence.
-        snp_num_range list: Range of SNP numbers in ms simulation; the first parameter is the minimum SNP number,
-                            the second parameter is the maximum SNP number, the third parameter is the step size.
-        output_dir str: Name of the output directory.
-        thread int: Number of threads.
-        seeds: list: Three random seed numbers used in ms simulation.
-        is_phased bool: Whether to run sstar score with --phased.
+def _run_ms_simulation(
+    model: str,
+    ms_dir: str,
+    N0: int,
+    nsamp: int,
+    nreps: int,
+    ref_pop: str,
+    ref_size: int,
+    tgt_pop: str,
+    tgt_size: int,
+    seq_len: int,
+    snp_num_range: Sequence[int],
+    output_dir: str,
+    thread: int,
+    seeds: Optional[list],
+    is_phased: bool = False,
+) -> list:
+    """
+    Run ms simulations across the requested SNP-count range.
+
+    Parameters
+    ----------
+    model : str
+        Path to the demographic model file used for simulation.
+    ms_dir : str
+        Path to the directory containing the `ms` executable.
+    N0 : int
+        Reference effective population size used for ms parameter scaling.
+    nsamp : int
+        Haploid sample size used in ms simulation.
+    nreps : int
+        Number of simulation replicates.
+    ref_pop : str
+        Name of the reference population in the demographic model.
+    ref_size : int
+        Haploid sample size of the reference population.
+    tgt_pop : str
+        Name of the target population in the demographic model.
+    tgt_size : int
+        Haploid sample size of the target population.
+    seq_len : int
+        Length of the simulated sequence.
+    snp_num_range : sequence of int
+        Three values specifying minimum SNP count, maximum SNP count, and step size.
+    output_dir : str
+        Path to the output directory.
+    thread : int
+        Number of worker processes.
+    seeds : list or None
+        Three random seed numbers used in ms simulation. If None, ms uses its default seeding behavior.
+    is_phased : bool, optional
+        If True, run `sstar score` with `--phased`. Default: `False`.
+
+    Returns
+    -------
+    list
+        SNP-count directory names created by this run.
     """
     graph = demes.load(model)
     ref_index = _get_pop_index(graph, ref_pop)
@@ -321,38 +370,51 @@ def _run_ms_simulation(
 
 
 def _run_ms_simulation_worker(
-    in_queue,
-    out_queue,
-    output_dir,
-    rates,
-    ms_exec,
-    nsamp,
-    nreps,
-    seq_len,
-    ms_params,
-    ref_list,
-    tgt_list,
-    seeds,
-    is_phased=False,
-):
+    in_queue: Queue,
+    out_queue: Queue,
+    output_dir: str,
+    rates: str,
+    ms_exec: str,
+    nsamp: int,
+    nreps: int,
+    seq_len: int,
+    ms_params: str,
+    ref_list: str,
+    tgt_list: str,
+    seeds: Optional[list],
+    is_phased: bool = False,
+) -> None:
     """
-    Description:
-        Worker function for running ms simulation.
+    Worker process for running ms simulations and score quantile calculation.
 
-    Arguments:
-        in_queue Queue: Input queue.
-        out_queue Queue: Output queue.
-        output_dir str: Name of the output directory.
-        rates str: Name of file containing the combination of mutation rates and recombination rates.
-        ms_exec str: Name of file containing the ms program.
-        nsamp int: Sample size (haploid) used in ms simulation.
-        nreps int: Number of replicates used in ms simulation.
-        seq_len int: Length of simulated sequence.
-        ms_params str: Command line options for running ms simulation.
-        ref_list str: Name of file containing the simulated reference individuals.
-        tgt_list str: Name of file containing the simulated target individuals.
-        seeds: list: Three random seed numbers used in ms simulation.
-        is_phased bool: Whether to run sstar score with --phased.
+    Parameters
+    ----------
+    in_queue : multiprocessing.Queue
+        Queue providing SNP counts to simulate.
+    out_queue : multiprocessing.Queue
+        Queue receiving completion messages.
+    output_dir : str
+        Path to the output directory.
+    rates : str
+        Path to the file containing scaled mutation and recombination rates.
+    ms_exec : str
+        Path to the `ms` executable.
+    nsamp : int
+        Haploid sample size used in ms simulation.
+    nreps : int
+        Number of simulation replicates.
+    seq_len : int
+        Length of the simulated sequence.
+    ms_params : str
+        Command-line options generated from the demographic model for ms.
+    ref_list : str
+        Path to the file containing simulated reference individual IDs.
+    tgt_list : str
+        Path to the file containing simulated target individual IDs.
+    seeds : list or None
+        Three random seed numbers used in ms simulation. If None, ms uses its default seeding behavior.
+    is_phased : bool, optional
+        If True, run `sstar score` with `--phased`. Default: `False`.
     """
     while True:
         snp_num = in_queue.get()
@@ -443,17 +505,24 @@ def _run_ms_simulation_worker(
         out_queue.put("Finished")
 
 
-def _ms2vcf(ms_file, vcf_file, nsamp, seq_len, ploidy=2):
+def _ms2vcf(
+    ms_file: str, vcf_file: str, nsamp: int, seq_len: int, ploidy: int = 2
+) -> None:
     """
-    Description:
-        Converts ms output files into the VCF format.
+    Convert ms output into VCF format.
 
-    Arguments:
-        ms_file str: Name of file containing the ms output.
-        vcf_file str: Name of file containing the VCF output.
-        nsamp int: Sample size (haploid) used in ms simulation.
-        seq_len int: Length of simulated sequence.
-        ploidy int: Ploidy number.
+    Parameters
+    ----------
+    ms_file : str
+        Path to the ms output file.
+    vcf_file : str
+        Path to the output VCF file.
+    nsamp : int
+        Haploid sample size used in ms simulation.
+    seq_len : int
+        Length of the simulated sequence.
+    ploidy : int, optional
+        Ploidy used to combine haplotypes into genotype strings. Default: `2`.
     """
     data = []
     i = -1
@@ -496,17 +565,26 @@ def _ms2vcf(ms_file, vcf_file, nsamp, seq_len, ploidy=2):
             shift += seq_len
 
 
-def _cal_quantile(in_file, out_file, snp_num):
+def _cal_quantile(in_file: str, out_file: str, snp_num: int) -> None:
     """
-    Description:
-        Helper function for calculating quantiles of expected S* with a given SNP number.
+    Calculate quantiles of expected S* for one simulated SNP count.
 
-    Arguments:
-        in_file str: Name of file containing the S* scores.
-        out_file str: Name of file containing the quantiles of expected S*.
-        snp_num int: SNP number used in ms simulation.
+    Parameters
+    ----------
+    in_file : str
+        Path to the simulated S* score file.
+    out_file : str
+        Path to the output quantile file.
+    snp_num : int
+        SNP count used in the ms simulation.
     """
-    df = pd.read_csv(in_file, sep="\t").dropna()
+    df = pd.read_csv(in_file, sep="\t")
+    df["S*_score"] = pd.to_numeric(df["S*_score"], errors="coerce")
+    df = df.dropna(subset=["S*_score"])
+
+    if df.empty:
+        raise RuntimeError(f"No valid S* scores found in {in_file}")
+
     quantiles = np.arange(0.5, 1, 0.005)
     mean_df = (
         df.groupby(["chrom", "start", "end"], as_index=False)["S*_score"]
@@ -520,14 +598,16 @@ def _cal_quantile(in_file, out_file, snp_num):
             o.write(f"{scores[i]}\t{snp_num}\t{quantiles[i]}\n")
 
 
-def _summary(output_dir, rec_rate):
+def _summary(output_dir: str, rec_rate: float) -> None:
     """
-    Description:
-        Helper function for summarize quantiles of expected S* from different SNP numbers.
+    Summarize expected S* quantiles across simulated SNP counts.
 
-    Arguments:
-        output_dir str: Name of the output directory.
-        rec_rate float: Recombination rate.
+    Parameters
+    ----------
+    output_dir : str
+        Path to the output directory containing per-SNP-count quantile files.
+    rec_rate : float
+        Recombination rate written to the summary as `log(local_recomb_rate)`.
     """
     all_files = glob.glob(f"{output_dir}/*/*.quantile")
     li = []
@@ -542,14 +622,16 @@ def _summary(output_dir, rec_rate):
     )
 
 
-def _cleanup_simulated_data(output_dir, simulated_snp_dirs):
+def _cleanup_simulated_data(output_dir: str, simulated_snp_dirs: list) -> None:
     """
-    Description:
-        Remove intermediate files generated during ms simulations.
+    Remove intermediate files generated during ms simulations.
 
-    Arguments:
-        output_dir str: Name of the output directory.
-        simulated_snp_dirs list[str]: SNP-number directories created by this run.
+    Parameters
+    ----------
+    output_dir : str
+        Path to the output directory.
+    simulated_snp_dirs : list
+        SNP-count directories created by this run.
     """
     generated_files = {"rates.combination", "sim.ref.list", "sim.tgt.list"}
     simulated_dir_required_files = {

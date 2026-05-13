@@ -16,24 +16,27 @@
 import allel
 import math
 import numpy as np
+from typing import Optional, Tuple, Union
 
 
 # @profile
-def parse_ind_file(filename):
+def parse_ind_file(filename: str) -> list:
     """
-    Description:
-        Helper function to read sample information from files.
+    Read individual IDs from a text file.
 
-    Arguments:
-        filename str: Name of the file containing sample information.
+    Parameters
+    ----------
+    filename : str
+        Path to the file containing one individual ID per line.
 
-    Returns:
-        samples list: Sample information.
+    Returns
+    -------
+    list
+        Individual IDs read from the file.
     """
 
-    f = open(filename, "r")
-    samples = [l.rstrip() for l in f.readlines()]
-    f.close()
+    with open(filename, "r") as f:
+        samples = [l.rstrip() for l in f.readlines()]
 
     if len(samples) == 0:
         raise Exception(f"No sample is found in {filename}! Please check your data.")
@@ -42,19 +45,30 @@ def parse_ind_file(filename):
 
 
 # @profile
-def read_geno_data(vcf, ind, anc_allele_file, filter_missing):
+def read_geno_data(
+    vcf: str,
+    ind: list,
+    anc_allele_file: Optional[str],
+    filter_missing: bool,
+) -> dict:
     """
-    Description:
-        Helper function to read genotype data from VCF files.
+    Read genotype data for selected individuals from a VCF file.
 
-    Arguments:
-        vcf str: Name of the VCF file containing genotype data.
-        ind list: List containing names of samples.
-        anc_allele_file str: Name of the BED file containing ancestral allele information.
-        filter_missing bool: Indicating whether filtering missing data or not.
+    Parameters
+    ----------
+    vcf : str
+        Path to the VCF file containing genotype data.
+    ind : list
+        Individual IDs to read from the VCF file.
+    anc_allele_file : str or None
+        Path to the ancestral allele file. If None, ancestral allele filtering is not applied.
+    filter_missing : bool
+        If True, remove variants that are missing in all selected individuals.
 
-    Returns:
-        data dict: Genotype data.
+    Returns
+    -------
+    dict
+        Genotype data grouped by chromosome.
     """
 
     vcf = allel.read_vcf(vcf, alt_number=1, samples=ind)
@@ -88,18 +102,23 @@ def read_geno_data(vcf, ind, anc_allele_file, filter_missing):
 
 
 # @profile
-def filter_data(data, c, index):
+def filter_data(data: dict, c: str, index: np.ndarray) -> dict:
     """
-    Description:
-        Helper function to filter genotype data.
+    Filter genotype data for one chromosome by variant index.
 
-    Arguments:
-        data dict: Genotype data for filtering.
-            c str: Names of chromosomes.
-        index numpy.ndarray: A boolean array determines variants to be removed.
+    Parameters
+    ----------
+    data : dict
+        Genotype data grouped by chromosome.
+    c : str
+        Chromosome name to filter.
+    index : numpy.ndarray
+        Boolean or integer index selecting variants to keep.
 
-    Returns:
-        data dict: Genotype data after filtering.
+    Returns
+    -------
+    dict
+        Filtered genotype data.
     """
 
     data[c]["POS"] = data[c]["POS"][index]
@@ -112,27 +131,42 @@ def filter_data(data, c, index):
 
 # @profile
 def read_data(
-    vcf_file, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file, is_phased=None
-):
+    vcf_file: str,
+    ref_ind_file: Optional[str],
+    tgt_ind_file: Optional[str],
+    src_ind_file: Optional[str],
+    anc_allele_file: Optional[str],
+    is_phased: Optional[bool] = None,
+) -> Tuple[
+    Optional[dict],
+    Optional[list],
+    Optional[dict],
+    Optional[list],
+    Optional[dict],
+    Optional[list],
+]:
     """
-    Description:
-        Helper function for reading data from reference and target populations.
+    Read and harmonize reference, target, and source genotype data.
 
-    Arguments:
-        vcf str: Name of the VCF file containing genotype data from reference, target, and source populations.
-        ref_ind_file str: Name of the file containing sample information from reference populations.
-        tgt_ind_file str: Name of the file containing sample information from target populations.
-        src_ind_file str: Name of the file containing sample information from source populations.
-        anc_allele_file str: Name of the file containing ancestral allele information.
-        is_phased bool: If True, flatten haplotypes; else convert to dosages.
+    Parameters
+    ----------
+    vcf_file : str
+        Path to the VCF file containing genotype data.
+    ref_ind_file : str or None
+        Path to the file containing reference individual IDs. If None, reference data is not loaded.
+    tgt_ind_file : str or None
+        Path to the file containing target individual IDs. If None, target data is not loaded.
+    src_ind_file : str or None
+        Path to the file containing source individual IDs. If None, source data is not loaded.
+    anc_allele_file : str or None
+        Path to the ancestral allele file. If None, ancestral allele filtering is not applied.
+    is_phased : bool or None, optional
+        Placeholder flag for phased or dosage processing. Default: `None`.
 
-    Returns:
-        ref_data dict: Genotype data from reference populations.
-        ref_samples list: Sample information from reference populations.
-        tgt_data dict: Genotype data from target populations.
-        tgt_samples list: Sample information from target populations.
-        src_data dict: Genotype data from source populations.
-        src_samples list: Sample information from source populations.
+    Returns
+    -------
+    tuple
+        Tuple containing reference data, reference samples, target data, target samples, source data, and source samples.
     """
     # --- Initialize group structure and containers ----------------------------
     # Each group defines its individual file and whether data is read as phased.
@@ -197,19 +231,27 @@ def read_data(
 
 
 # @profile
-def get_ref_alt_allele(ref, alt, pos):
+def get_ref_alt_allele(
+    ref: Union[list, np.ndarray],
+    alt: Union[list, np.ndarray],
+    pos: Union[list, np.ndarray],
+) -> Tuple[dict, dict]:
     """
-    Description:
-        Helper function to index REF and ALT alleles with genomic positions.
+    Index REF and ALT alleles by genomic position.
 
-    Arguments:
-        ref list: REF alleles.
-        alt list: ALT alleles.
-        pos list: Genomic positions.
+    Parameters
+    ----------
+    ref : list or numpy.ndarray
+        REF alleles.
+    alt : list or numpy.ndarray
+        ALT alleles.
+    pos : list or numpy.ndarray
+        Genomic positions corresponding to `ref` and `alt`.
 
-    Returns:
-        ref_allele dict: REF alleles.
-        alt_allele dict: ALT alleles.
+    Returns
+    -------
+    tuple
+        Tuple containing REF alleles and ALT alleles keyed by position.
     """
 
     ref_allele = dict()
@@ -226,16 +268,19 @@ def get_ref_alt_allele(ref, alt, pos):
 
 
 # @profile
-def read_anc_allele(anc_allele_file):
+def read_anc_allele(anc_allele_file: str) -> dict:
     """
-    Description:
-        Helper function to read ancestral allele information from files.
+    Read ancestral allele information from a BED-like file.
 
-    Arguments:
-        anc_allele_file str: Name of the BED file containing ancestral allele information.
+    Parameters
+    ----------
+    anc_allele_file : str
+        Path to the file containing ancestral allele information.
 
-    Returns:
-        anc_allele dict: Ancestral allele information.
+    Returns
+    -------
+    dict
+        Ancestral alleles keyed by chromosome and position.
     """
 
     anc_allele = dict()
@@ -253,21 +298,25 @@ def read_anc_allele(anc_allele_file):
 
 
 # @profile
-def check_anc_allele(data, anc_allele, c):
+def check_anc_allele(data: dict, anc_allele: dict, c: str) -> dict:
     """
-    Description:
-        Helper function to check whether the REF or ALT allele is the ancestral allele.
-        If the ALT allele is the ancestral allele, then the genotypes in this position will be flipped.
-        If neither the REF nor ALT allele is the ancestral allele, then this position will be removed.
-        If a position has no the ancestral allele information, the this position will be removed.
+    Filter and polarize genotype data using ancestral allele information.
 
-    Arguments:
-        data dict: Genotype data for checking ancestral allele information.
-        anc_allele dict: Ancestral allele information for checking.
-        c str: Name of the chromosome.
+    Variants are retained only when the ancestral allele matches either the REF or ALT allele. Variants whose ALT allele is ancestral are flipped.
 
-    Returns:
-        data dict: Genotype data after checking.
+    Parameters
+    ----------
+    data : dict
+        Genotype data grouped by chromosome.
+    anc_allele : dict
+        Ancestral alleles keyed by chromosome and position.
+    c : str
+        Chromosome name to process.
+
+    Returns
+    -------
+    dict
+        Filtered and polarized genotype data.
     """
 
     ref_allele, alt_allele = get_ref_alt_allele(
@@ -303,16 +352,19 @@ def check_anc_allele(data, anc_allele, c):
 
 
 # @profile
-def read_mapped_region_file(mapped_region):
+def read_mapped_region_file(mapped_region: Optional[str]) -> Optional[dict]:
     """
-    Description:
-        Helper function for reading mapped regions from a BED file.
+    Read mapped genomic regions from a BED file.
 
-    Arguments:
-        mapped_region str: BED file containing mapped regions.
+    Parameters
+    ----------
+    mapped_region : str or None
+        Path to the BED file containing mapped regions. If None, no mapped-region intervals are loaded.
 
-    Returns:
-        mapped_intervals dict: Dictionary of tuples containing mapped regions.
+    Returns
+    -------
+    dict or None
+        Mapped-region intervals by chromosome, or None if `mapped_region` is None.
     """
 
     if mapped_region != None:
@@ -333,35 +385,47 @@ def read_mapped_region_file(mapped_region):
 
 # @profile
 def cal_matchpct(
-    chr_name,
-    mapped_intervals,
-    data,
-    src_data,
-    tgt_ind_index,
-    src_ind_index,
-    hap_index,
-    win_start,
-    win_end,
-    sample_size,
-):
+    chr_name: str,
+    mapped_intervals: Optional[dict],
+    data: dict,
+    src_data: dict,
+    tgt_ind_index: int,
+    src_ind_index: int,
+    hap_index: int,
+    win_start: Union[int, str],
+    win_end: Union[int, str],
+    sample_size: int,
+) -> list:
     """
-    Description:
-        Helper function to calculate match percents in a given individual.
+    Calculate haplotype source-match statistics for one target-source pair.
 
-    Arguments:
-        chr_name str: Name of the chromosomes.
-        mapped_intervals: Dictionary of tuples containing mapped regions across the genome.
-        data dict: Genotype data from individuals to be calculated match percents.
-        src_data dict: Genotype data from source populations.
-        tgt_ind_index int: Index of the target individual for calculating match percent.
-        src_ind_index int: Index of the source individual for calculating match percent.
-        hap_index int: Index of the haplotype for calculating match percent.
-        win_start int: Start position of the window for calculating match percent.
-        win_end int: End position of the window for calculating match percent.
-        sample_size int: Number of individuals analyzed.
+    Parameters
+    ----------
+    chr_name : str
+        Chromosome name.
+    mapped_intervals : dict or None
+        Mapped-region intervals by chromosome. If None, full windows are treated as mapped.
+    data : dict
+        Target genotype data by chromosome.
+    src_data : dict
+        Source genotype data by chromosome.
+    tgt_ind_index : int
+        Index of the target individual.
+    src_ind_index : int
+        Index of the source individual.
+    hap_index : int
+        Index of the target haplotype.
+    win_start : int or str
+        Start position of the window, or `"NA"` when no window is available.
+    win_end : int or str
+        End position of the window, or `"NA"` when no window is available.
+    sample_size : int
+        Number of target individuals analyzed.
 
-    Returns:
-        res list: List containing statistics for the given haplotype.
+    Returns
+    -------
+    list
+        Haplotype statistics for the target-source pair.
     """
 
     if (win_start == "NA") and (win_end == "NA"):
@@ -415,19 +479,27 @@ def cal_matchpct(
 
 
 # @profile
-def _cal_mapped_len(mapped_intervals, chr_name, win_start, win_end):
+def _cal_mapped_len(
+    mapped_intervals: Optional[dict], chr_name: str, win_start: int, win_end: int
+) -> int:
     """
-    Description:
-        Helper function for calculating length of mapped region in a given window.
+    Calculate mapped length within a genomic window.
 
-    Arguments:
-        mapped_intervals dict: Dictionary of tuples containing mapped regions across the genome.
-        chr_name str: Name of the chromosome for calculating the length of the mapped region.
-        win_start int: Start position of a window.
-        win_end int: End position of a window.
+    Parameters
+    ----------
+    mapped_intervals : dict or None
+        Mapped-region intervals by chromosome. If None, the full window length is used.
+    chr_name : str
+        Chromosome name.
+    win_start : int
+        Start position of the window.
+    win_end : int
+        End position of the window.
 
-    Returns:
-        mapped_len int: Length of the mapped region.
+    Returns
+    -------
+    int
+        Mapped length rounded down to the nearest kilobase.
     """
 
     if mapped_intervals is None or chr_name not in mapped_intervals.keys():
@@ -458,28 +530,38 @@ def _cal_mapped_len(mapped_intervals, chr_name, win_start, win_end):
 
 # @profile
 def _cal_hap_stats(
-    gt, hap, pos, src_variants, src_hom_variants, src_het_variants, sample_size
-):
+    gt: allel.GenotypeArray,
+    hap: Optional[allel.GenotypeVector],
+    pos: Union[list, np.ndarray],
+    src_variants: Union[list, np.ndarray],
+    src_hom_variants: Union[list, np.ndarray],
+    src_het_variants: Union[list, np.ndarray],
+    sample_size: int,
+) -> tuple:
     """
-    Description:
-        Helper function for calculating statistics for a haplotype.
+    Calculate summary statistics for one haplotype in a window.
 
-    Arguments:
-        gt allel.GenotypeArray: Genotype data for all the haplotypes within the same window of the haplotype to be analyzed.
-        hap allel.GenotypeVector: Genotype data for the haplotype to be analyzed.
-        pos list: List containing positions of variants on the haplotype.
-        src_variants list: List containing positions of variants on the individual from the source population.
-        src_hom_variants list: List containing positions of homozygous variants on the individual from the source population.
-        src_het_variants list: List containing positions of heterozygous variants on the individual from the source population.
-        sample_size int: Number of individuals analyzed.
+    Parameters
+    ----------
+    gt : allel.GenotypeArray
+        Genotype data for all haplotypes in the window.
+    hap : allel.GenotypeVector or None
+        Haplotype to summarize. If None, all returned values are `"NA"`.
+    pos : list or numpy.ndarray
+        Variant positions in the window.
+    src_variants : list or numpy.ndarray
+        Variant positions observed in the source individual.
+    src_hom_variants : list or numpy.ndarray
+        Homozygous ALT variant positions observed in the source individual.
+    src_het_variants : list or numpy.ndarray
+        Heterozygous variant positions observed in the source individual.
+    sample_size : int
+        Number of target individuals analyzed.
 
-    Returns:
-        hap_variants_num int: Number of SNPs with derived alleles on the haplotype.
-        hap_site_num int: Number of SNPs with derived alleles either on the haplotype or the source genomes.
-        hap_match_src_allele_num int: Number of SNPs with derived alleles both on the haplotype and the source genomes.
-        hap_sfs int: Average number of derived variants per site per haplotype.
-        hap_match_pct float: Match percent of the haplotype.
-        sample_size int: Number of individuals analyzed.
+    Returns
+    -------
+    tuple
+        Haplotype variant count, site count, source-matching allele count, SFS summary, and match percent.
     """
 
     if hap is None:
@@ -527,7 +609,22 @@ def _cal_hap_stats(
     )
 
 
-def py2round(x, d=0):
+def py2round(x: float, d: int = 0) -> float:
+    """
+    Round a number using Python 2 half-away-from-zero behavior.
+
+    Parameters
+    ----------
+    x : float
+        Value to round.
+    d : int, optional
+        Number of decimal places. Default: `0`.
+
+    Returns
+    -------
+    float
+        Rounded value.
+    """
     p = 10**d
     if x > 0:
         return float(math.floor((x * p) + 0.5)) / p

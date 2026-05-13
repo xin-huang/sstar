@@ -256,9 +256,7 @@ def test_run_ms_simulation_raises_if_pop_not_in_model(tmp_path, data):
     output_dir = tmp_path / "ms_sim_invalid_pop"
     output_dir.mkdir()
 
-    with pytest.raises(
-        ValueError, match="Population 'MissingPop' not found in model"
-    ):
+    with pytest.raises(ValueError, match="Population 'MissingPop' not found in model"):
         _run_ms_simulation(
             model=pytest.model,
             ms_dir="./ext/msdir",
