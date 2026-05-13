@@ -23,7 +23,7 @@ import pandas as pd
 from multiprocessing import Process, Queue
 from scipy.stats import norm
 from scipy.stats import nbinom
-from typing import Any, List, Optional, Sequence
+from typing import List
 
 
 # ------------------------------------------------------------------
@@ -72,25 +72,25 @@ def _safe_sstar_score(cmd: List[str]) -> None:
 
 
 def get_quantile(
-    model: str,
-    ms_dir: str,
-    N0: int,
-    nsamp: int,
-    nreps: int,
-    ref_pop: str,
-    ref_size: int,
-    tgt_pop: str,
-    tgt_size: int,
-    mut_rate: float,
-    rec_rate: float,
-    seq_len: int,
-    snp_num_range: Sequence[int],
-    output_dir: str,
-    thread: int,
-    seeds: Optional[Sequence[int]],
+    model,
+    ms_dir,
+    N0,
+    nsamp,
+    nreps,
+    ref_pop,
+    ref_size,
+    tgt_pop,
+    tgt_size,
+    mut_rate,
+    rec_rate,
+    seq_len,
+    snp_num_range,
+    output_dir,
+    thread,
+    seeds,
     is_phased: bool = False,
     keep_simulated_data: bool = False,
-) -> None:
+):
     """
     Description:
         Calculates quantiles of expected S*.
@@ -144,9 +144,7 @@ def get_quantile(
         _cleanup_simulated_data(output_dir, simulated_snp_dirs)
 
 
-def _generate_mut_rec_combination(
-    N0: int, nreps: int, mut_rate: float, rec_rate: float, seq_len: int, output_dir: str
-) -> None:
+def _generate_mut_rec_combination(N0, nreps, mut_rate, rec_rate, seq_len, output_dir):
     """
     Description:
         Helper function to create different combination of mutation rates and recombination rates.
@@ -199,22 +197,22 @@ def _get_pop_index(graph: demes.Graph, pop_name: str) -> int:
     return names.index(pop_name) + 1
 
 def _run_ms_simulation(
-    model: str,
-    ms_dir: str,
-    N0: int,
-    nsamp: int,
-    nreps: int,
-    ref_pop: str,
-    ref_size: int,
-    tgt_pop: str,
-    tgt_size: int,
-    seq_len: int,
-    snp_num_range: Sequence[int],
-    output_dir: str,
-    thread: int,
-    seeds: Optional[Sequence[int]],
-    is_phased: bool = False,
-) -> List[str]:
+    model,
+    ms_dir,
+    N0,
+    nsamp,
+    nreps,
+    ref_pop,
+    ref_size,
+    tgt_pop,
+    tgt_size,
+    seq_len,
+    snp_num_range,
+    output_dir,
+    thread,
+    seeds,
+    is_phased=False,
+):
     """
     Description:
         Helper function for running ms simulation.
@@ -323,20 +321,20 @@ def _run_ms_simulation(
 
 
 def _run_ms_simulation_worker(
-    in_queue: Any,
-    out_queue: Any,
-    output_dir: str,
-    rates: str,
-    ms_exec: str,
-    nsamp: int,
-    nreps: int,
-    seq_len: int,
-    ms_params: str,
-    ref_list: str,
-    tgt_list: str,
-    seeds: Optional[Sequence[int]],
-    is_phased: bool = False,
-) -> None:
+    in_queue,
+    out_queue,
+    output_dir,
+    rates,
+    ms_exec,
+    nsamp,
+    nreps,
+    seq_len,
+    ms_params,
+    ref_list,
+    tgt_list,
+    seeds,
+    is_phased=False,
+):
     """
     Description:
         Worker function for running ms simulation.
@@ -445,9 +443,7 @@ def _run_ms_simulation_worker(
         out_queue.put("Finished")
 
 
-def _ms2vcf(
-    ms_file: str, vcf_file: str, nsamp: int, seq_len: int, ploidy: int = 2
-) -> None:
+def _ms2vcf(ms_file, vcf_file, nsamp, seq_len, ploidy=2):
     """
     Description:
         Converts ms output files into the VCF format.
@@ -500,7 +496,7 @@ def _ms2vcf(
             shift += seq_len
 
 
-def _cal_quantile(in_file: str, out_file: str, snp_num: int) -> None:
+def _cal_quantile(in_file, out_file, snp_num):
     """
     Description:
         Helper function for calculating quantiles of expected S* with a given SNP number.
@@ -524,7 +520,7 @@ def _cal_quantile(in_file: str, out_file: str, snp_num: int) -> None:
             o.write(f"{scores[i]}\t{snp_num}\t{quantiles[i]}\n")
 
 
-def _summary(output_dir: str, rec_rate: float) -> None:
+def _summary(output_dir, rec_rate):
     """
     Description:
         Helper function for summarize quantiles of expected S* from different SNP numbers.
@@ -546,7 +542,7 @@ def _summary(output_dir: str, rec_rate: float) -> None:
     )
 
 
-def _cleanup_simulated_data(output_dir: str, simulated_snp_dirs: Sequence[str]) -> None:
+def _cleanup_simulated_data(output_dir, simulated_snp_dirs):
     """
     Description:
         Remove intermediate files generated during ms simulations.

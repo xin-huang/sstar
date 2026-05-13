@@ -17,15 +17,14 @@ import argparse
 import os
 import sys
 import signal
-from typing import Any, Optional, Sequence, Type
 
 
-def _set_sigpipe_handler() -> None:
+def _set_sigpipe_handler():
     if os.name == "posix":
         signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 
-def _run_score(args: argparse.Namespace) -> None:
+def _run_score(args):
     from sstar.cal_s_star import cal_s_star
 
     cal_s_star(
@@ -44,7 +43,7 @@ def _run_score(args: argparse.Namespace) -> None:
     )
 
 
-def _run_quantile(args: argparse.Namespace) -> None:
+def _run_quantile(args):
     from sstar.get_quantile import get_quantile
 
     get_quantile(
@@ -69,7 +68,7 @@ def _run_quantile(args: argparse.Namespace) -> None:
     )
 
 
-def _run_threshold(args: argparse.Namespace) -> None:
+def _run_threshold(args):
     from sstar.cal_threshold import cal_threshold
 
     cal_threshold(
@@ -84,7 +83,7 @@ def _run_threshold(args: argparse.Namespace) -> None:
     )
 
 
-def _run_match_pct(args: argparse.Namespace) -> None:
+def _run_match_pct(args):
     from sstar.cal_match_rate import cal_match_pct
 
     cal_match_pct(
@@ -101,7 +100,7 @@ def _run_match_pct(args: argparse.Namespace) -> None:
     )
 
 
-def _run_tract(args: argparse.Namespace) -> None:
+def _run_tract(args):
     from sstar.get_tract import get_tract
 
     get_tract(
@@ -112,7 +111,7 @@ def _run_tract(args: argparse.Namespace) -> None:
     )
 
 
-def _add_common_args(parser: argparse.ArgumentParser) -> None:
+def _add_common_args(parser):
     parser.add_argument(
         "--anc-allele",
         type=str,
@@ -131,7 +130,7 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def _add_mapped_args(parser: argparse.ArgumentParser) -> None:
+def _add_mapped_args(parser):
     parser.add_argument(
         "--mapped-region",
         type=str,
@@ -140,36 +139,30 @@ def _add_mapped_args(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def _add_window_args(parser: argparse.ArgumentParser) -> None:
+def _add_window_args(parser):
     parser.add_argument("--win-len", type=int, default=50000)
     parser.add_argument("--win-step", type=int, default=10000)
 
 
-def _add_ref_ind_args(parser: argparse.ArgumentParser) -> None:
+def _add_ref_ind_args(parser):
     parser.add_argument("--ref", type=str, dest="ref_ind", required=True)
 
 
-def _add_tgt_ind_args(parser: argparse.ArgumentParser) -> None:
+def _add_tgt_ind_args(parser):
     parser.add_argument("--tgt", type=str, dest="tgt_ind", required=True)
 
 
-def _add_src_ind_args(parser: argparse.ArgumentParser) -> None:
+def _add_src_ind_args(parser):
     parser.add_argument("--src", type=str, dest="src_ind", required=True)
 
 
-def _add_score_args(parser: argparse.ArgumentParser) -> None:
+def _add_score_args(parser):
     parser.add_argument("--score", type=str, dest="score", required=True)
 
 
-def required_length(nmin: int, nmax: int) -> Type[argparse.Action]:
+def required_length(nmin, nmax):
     class RequiredLength(argparse.Action):
-        def __call__(
-            self,
-            parser: argparse.ArgumentParser,
-            args: argparse.Namespace,
-            values: Sequence[Any],
-            option_string: Optional[str] = None,
-        ) -> None:
+        def __call__(self, parser, args, values, option_string=None):
             if not nmin <= len(values) <= nmax:
                 raise argparse.ArgumentTypeError(
                     f"argument '{self.dest}' requires between {nmin} and {nmax} arguments"
@@ -179,7 +172,7 @@ def required_length(nmin: int, nmax: int) -> Type[argparse.Action]:
     return RequiredLength
 
 
-def _s_star_cli_parser() -> argparse.ArgumentParser:
+def _s_star_cli_parser():
     top_parser = argparse.ArgumentParser()
     subparsers = top_parser.add_subparsers(dest="subcommand")
     subparsers.required = True
@@ -262,7 +255,7 @@ def _s_star_cli_parser() -> argparse.ArgumentParser:
     return top_parser
 
 
-def main(arg_list: Optional[Sequence[str]] = None) -> None:
+def main(arg_list=None):
     _set_sigpipe_handler()
     parser = _s_star_cli_parser()
     args = parser.parse_args(arg_list)

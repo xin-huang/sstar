@@ -16,16 +16,10 @@
 import allel
 import math
 import numpy as np
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
-
-
-GenoData = Dict[str, Dict[str, Any]]
-MappedIntervals = Optional[Dict[str, List[Tuple[int, int]]]]
-MatchPctValue = Union[int, float, str]
 
 
 # @profile
-def parse_ind_file(filename: str) -> List[str]:
+def parse_ind_file(filename):
     """
     Description:
         Helper function to read sample information from files.
@@ -48,12 +42,7 @@ def parse_ind_file(filename: str) -> List[str]:
 
 
 # @profile
-def read_geno_data(
-    vcf: str,
-    ind: Sequence[str],
-    anc_allele_file: Optional[str],
-    filter_missing: bool,
-) -> GenoData:
+def read_geno_data(vcf, ind, anc_allele_file, filter_missing):
     """
     Description:
         Helper function to read genotype data from VCF files.
@@ -99,7 +88,7 @@ def read_geno_data(
 
 
 # @profile
-def filter_data(data: GenoData, c: str, index: Any) -> GenoData:
+def filter_data(data, c, index):
     """
     Description:
         Helper function to filter genotype data.
@@ -123,20 +112,8 @@ def filter_data(data: GenoData, c: str, index: Any) -> GenoData:
 
 # @profile
 def read_data(
-    vcf_file: str,
-    ref_ind_file: Optional[str],
-    tgt_ind_file: Optional[str],
-    src_ind_file: Optional[str],
-    anc_allele_file: Optional[str],
-    is_phased: Optional[bool] = None,
-) -> Tuple[
-    Optional[GenoData],
-    Optional[List[str]],
-    Optional[GenoData],
-    Optional[List[str]],
-    Optional[GenoData],
-    Optional[List[str]],
-]:
+    vcf_file, ref_ind_file, tgt_ind_file, src_ind_file, anc_allele_file, is_phased=None
+):
     """
     Description:
         Helper function for reading data from reference and target populations.
@@ -220,9 +197,7 @@ def read_data(
 
 
 # @profile
-def get_ref_alt_allele(
-    ref: Sequence[str], alt: Sequence[str], pos: Sequence[int]
-) -> Tuple[Dict[int, str], Dict[int, str]]:
+def get_ref_alt_allele(ref, alt, pos):
     """
     Description:
         Helper function to index REF and ALT alleles with genomic positions.
@@ -251,7 +226,7 @@ def get_ref_alt_allele(
 
 
 # @profile
-def read_anc_allele(anc_allele_file: str) -> Dict[str, Dict[int, str]]:
+def read_anc_allele(anc_allele_file):
     """
     Description:
         Helper function to read ancestral allele information from files.
@@ -278,9 +253,7 @@ def read_anc_allele(anc_allele_file: str) -> Dict[str, Dict[int, str]]:
 
 
 # @profile
-def check_anc_allele(
-    data: GenoData, anc_allele: Dict[str, Dict[int, str]], c: str
-) -> GenoData:
+def check_anc_allele(data, anc_allele, c):
     """
     Description:
         Helper function to check whether the REF or ALT allele is the ancestral allele.
@@ -330,7 +303,7 @@ def check_anc_allele(
 
 
 # @profile
-def read_mapped_region_file(mapped_region: Optional[str]) -> MappedIntervals:
+def read_mapped_region_file(mapped_region):
     """
     Description:
         Helper function for reading mapped regions from a BED file.
@@ -360,17 +333,17 @@ def read_mapped_region_file(mapped_region: Optional[str]) -> MappedIntervals:
 
 # @profile
 def cal_matchpct(
-    chr_name: str,
-    mapped_intervals: MappedIntervals,
-    data: GenoData,
-    src_data: GenoData,
-    tgt_ind_index: int,
-    src_ind_index: int,
-    hap_index: int,
-    win_start: Union[int, str],
-    win_end: Union[int, str],
-    sample_size: int,
-) -> List[MatchPctValue]:
+    chr_name,
+    mapped_intervals,
+    data,
+    src_data,
+    tgt_ind_index,
+    src_ind_index,
+    hap_index,
+    win_start,
+    win_end,
+    sample_size,
+):
     """
     Description:
         Helper function to calculate match percents in a given individual.
@@ -442,9 +415,7 @@ def cal_matchpct(
 
 
 # @profile
-def _cal_mapped_len(
-    mapped_intervals: MappedIntervals, chr_name: str, win_start: int, win_end: int
-) -> int:
+def _cal_mapped_len(mapped_intervals, chr_name, win_start, win_end):
     """
     Description:
         Helper function for calculating length of mapped region in a given window.
@@ -487,14 +458,8 @@ def _cal_mapped_len(
 
 # @profile
 def _cal_hap_stats(
-    gt: Any,
-    hap: Optional[Any],
-    pos: np.ndarray,
-    src_variants: np.ndarray,
-    src_hom_variants: np.ndarray,
-    src_het_variants: np.ndarray,
-    sample_size: int,
-) -> Tuple[MatchPctValue, MatchPctValue, MatchPctValue, MatchPctValue, MatchPctValue]:
+    gt, hap, pos, src_variants, src_hom_variants, src_het_variants, sample_size
+):
     """
     Description:
         Helper function for calculating statistics for a haplotype.
@@ -562,7 +527,7 @@ def _cal_hap_stats(
     )
 
 
-def py2round(x: float, d: int = 0) -> float:
+def py2round(x, d=0):
     p = 10**d
     if x > 0:
         return float(math.floor((x * p) + 0.5)) / p
