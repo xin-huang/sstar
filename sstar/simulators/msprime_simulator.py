@@ -17,13 +17,12 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-import demes, msprime, os, tskit
-import pyranges as pr
+import demes, msprime, os
 
 
 class MsprimeSimulator:
     """
-    Simulates genetic data using the msprime package.
+    Simulate genetic data using the msprime package.
 
     This class is a concrete simulator implementation. Callers construct it
     with simulation parameters and then call :meth:`run` to generate output
@@ -35,7 +34,6 @@ class MsprimeSimulator:
       `rec_rate`, `output_prefix`, `output_dir`, and `is_phased`
     - `run(rep=None, seed=None)`, which returns a list containing one mapping
       of output artifact paths
-
     """
 
     def __init__(
@@ -55,7 +53,7 @@ class MsprimeSimulator:
         is_phased: bool,
     ):
         """
-        Initializes a new instance of MsprimeSimulator with specific parameters for msprime simulations.
+        Initialize a new instance of MsprimeSimulator with specific parameters for msprime simulations.
 
         Parameters
         ----------
@@ -91,7 +89,6 @@ class MsprimeSimulator:
         This class no longer inherits simulator state from a generic base.
         All simulator state used by :meth:`run` is initialized directly in this
         constructor.
-
         """
         self.demo_model_file = demo_model_file
         self.nref = nref
@@ -110,7 +107,7 @@ class MsprimeSimulator:
 
     def run(self, rep: int = None, seed: int = None) -> list[dict[str, str]]:
         """
-        Executes the simulation with optional runtime arguments.
+        Execute the simulation with optional runtime arguments.
 
         Outputs multiple files including simulation results and metadata.
 
@@ -129,7 +126,6 @@ class MsprimeSimulator:
         -------
         list[dict[str, str]]
             A list of a dictionary containing file paths for the simulated data.
-
         """
         output_dir = (
             self.output_dir if rep is None else os.path.join(self.output_dir, str(rep))
@@ -141,7 +137,6 @@ class MsprimeSimulator:
         os.makedirs(output_dir, exist_ok=True)
         ts_file = os.path.join(output_dir, f"{output_prefix}.ts")
         vcf_file = os.path.join(output_dir, f"{output_prefix}.vcf")
-        bed_file = os.path.join(output_dir, f"{output_prefix}.true.tracts.bed")
         ref_ind_file = os.path.join(output_dir, f"{output_prefix}.ref.ind.list")
         tgt_ind_file = os.path.join(output_dir, f"{output_prefix}.tgt.ind.list")
         seed_file = os.path.join(output_dir, f"{output_prefix}.seedmsprime")
@@ -149,7 +144,6 @@ class MsprimeSimulator:
         file_paths = {
             "ts_file": ts_file,
             "vcf_file": vcf_file,
-            "bed_file": bed_file,
             "ref_ind_file": ref_ind_file,
             "tgt_ind_file": tgt_ind_file,
             "seed_file": seed_file,
@@ -171,7 +165,6 @@ class MsprimeSimulator:
             sequence_length=self.seq_len,
             samples=samples,
             demography=demography,
-            record_migrations=True,
             random_seed=seed,
         )
         ts = msprime.sim_mutations(
@@ -188,16 +181,6 @@ class MsprimeSimulator:
             with open(seed_file, "w") as o:
                 o.write(f"{seed}\n")
 
-        true_tracts = self._get_true_tracts(
-            ts, self.tgt_id, self.src_id, self.ploidy, self.is_phased
-        )
-        true_tracts = pr.from_string(true_tracts).merge(by="Sample")
-
-        if true_tracts.empty:
-            open(bed_file, "w").close()
-        else:
-            true_tracts.to_csv(bed_file, sep="\t", header=False)
-
         return [file_paths]
 
     def _create_ref_tgt_file(
@@ -209,7 +192,7 @@ class MsprimeSimulator:
         identifier: str = "tsk_",
     ) -> None:
         """
-        Creates files listing reference and target individual identifiers.
+        Create files listing reference and target individual identifiers.
 
         Parameters
         ----------
@@ -223,7 +206,6 @@ class MsprimeSimulator:
             Path to the output file for target individuals.
         identifier : str, optional
             Prefix for individual identifiers (default is "tsk_").
-
         """
         with open(ref_ind_file, "w") as f:
             for i in range(nref):
@@ -232,82 +214,3 @@ class MsprimeSimulator:
         with open(tgt_ind_file, "w") as f:
             for i in range(nref, nref + ntgt):
                 f.write(identifier + str(i) + "\n")
-
-    def _get_true_tracts(
-        self,
-        ts: tskit.TreeSequence,
-        tgt_id: str,
-        src_id: str,
-        ploidy: int,
-        is_phased: bool,
-    ) -> str:
-        """
-        Generates a string representing the true migration tracts between specified source and target populations within a given tskit.TreeSequence.
-
-        Parameters
-        ----------
-        ts : tskit.TreeSequence
-            The tree sequence object containing the simulation data.
-        tgt_id : str
-            The identifier for the target population.
-        src_id : str
-            The identifier for the source population.
-        ploidy : int
-            The ploidy of the genome.
-        is_phased : bool
-            Indicates whether the data is phased.
-
-        Returns
-        -------
-        tracts : str
-            A string containing the tracts information in BED format.
-            The columns include chromosome (fixed to '1' in this implementation), start, end, and sample identifier.
-
-        Raises
-        ------
-        ValueError
-            If `src_id` or `tgt_id` is not found.
-
-        """
-        tracts = "Chromosome\tStart\tEnd\tSample\n"
-
-        try:
-            src_id = [p.id for p in ts.populations() if p.metadata["name"] == src_id][0]
-        except IndexError:
-            raise ValueError(f"Population {src_id} is not found.")
-
-        try:
-            tgt_id = [p.id for p in ts.populations() if p.metadata["name"] == tgt_id][0]
-        except IndexError:
-            raise ValueError(f"Population {tgt_id} is not found.")
-
-        for m in ts.migrations():
-            if (m.dest == src_id) and (m.source == tgt_id):
-                # For simulations with a long sequence, large sample size, and/or deep generation time
-                # This function may become slow
-                # Use new arguments from https://github.com/tskit-dev/tskit/pull/2762
-                # for t in ts.trees(left=m.left, right=m.right):
-                for t in ts.trees():
-                    if m.left >= t.interval.right:
-                        continue
-                    if m.right <= t.interval.left:
-                        break  # [l, r)
-                    for n in ts.samples(tgt_id):
-                        if t.is_descendant(n, m.node):
-                            left = (
-                                m.left if m.left > t.interval.left else t.interval.left
-                            )
-                            right = (
-                                m.right
-                                if m.right < t.interval.right
-                                else t.interval.right
-                            )
-                            if is_phased:
-                                sample_id = (
-                                    f"tsk_{ts.node(n).individual}_{int(n%ploidy+1)}"
-                                )
-                            else:
-                                sample_id = f"tsk_{ts.node(n).individual}"
-                            tracts += f"1\t{int(left)}\t{int(right)}\t{sample_id}\n"
-
-        return tracts
