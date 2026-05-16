@@ -25,7 +25,16 @@ class MsprimeSimulator:
     """
     Simulates genetic data using the msprime package.
 
-    This class specifies simulation parameters for msprime.
+    This class is a concrete simulator implementation. Callers construct it
+    with simulation parameters and then call :meth:`run` to generate output
+    files for one replicate.
+
+    Callers can rely on:
+    - initialization-time attributes such as `demo_model_file`, `nref`,
+      `ntgt`, `ref_id`, `tgt_id`, `src_id`, `ploidy`, `seq_len`, `mut_rate`,
+      `rec_rate`, `output_prefix`, `output_dir`, and `is_phased`
+    - `run(rep=None, seed=None)`, which returns a list containing one mapping
+      of output artifact paths
 
     """
 
@@ -77,16 +86,11 @@ class MsprimeSimulator:
         is_phased : bool
             Indicates whether the true tracts should be considered as unphased.
 
-        Attributes
-        ----------
-        test_tgt_id : str
-            Used to store the identifier for the target population that is subject to
-            introgression analysis, initialized based on the `tgt_id` parameter. Its purpose is
-            to identify the specific subset of individuals within the target population being
-            analyzed for introgression. This distinction becomes crucial when the study focuses
-            on a selected subset from the larger group identified by `tgt_id`. If the analysis
-            shifts to a different subset or the definition of the target population changes,
-            `test_tgt_id` should be updated to accurately reflect the group under investigation.
+        Notes
+        -----
+        This class no longer inherits simulator state from a generic base.
+        All simulator state used by :meth:`run` is initialized directly in this
+        constructor.
 
         """
         self.demo_model_file = demo_model_file
