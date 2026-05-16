@@ -20,12 +20,9 @@
 import numpy as np
 from typing import Dict, Any, List
 from scipy.spatial import distance_matrix
-from sstar.registries.stat_registry import STAT_REGISTRY
-from sstar.stats import GenericStatistic
 
 
-@STAT_REGISTRY.register("sstar")
-class Sstar(GenericStatistic):
+class Sstar:
     """
     S* (Sstar) statistic.
 
@@ -34,6 +31,13 @@ class Sstar(GenericStatistic):
     builds a physical-distance matrix and a genotype-distance matrix (L1),
     then performs dynamic programming to find the best-scoring chain.
     """
+
+    @staticmethod
+    def _require(kwargs: Dict[str, Any], *names: str) -> tuple[Any, ...]:
+        missing = [n for n in names if n not in kwargs]
+        if missing:
+            raise ValueError(f"Missing required arguments: {missing}")
+        return tuple(kwargs[n] for n in names)
 
     @staticmethod
     def compute(
@@ -66,7 +70,7 @@ class Sstar(GenericStatistic):
         ValueError
             If any required key is missing.
         """
-        ref_gts, tgt_gts, pos = Sstar.require(kwargs, "ref_gts", "tgt_gts", "pos")
+        ref_gts, tgt_gts, pos = Sstar._require(kwargs, "ref_gts", "tgt_gts", "pos")
         match_bonus = kwargs.get("match_bonus", 5000)
         max_mismatch = kwargs.get("max_mismatch", 5)
         mismatch_penalty = kwargs.get("mismatch_penalty", -10000)

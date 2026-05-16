@@ -17,7 +17,6 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-from .generic_simulator import GenericSimulator  # noqa: F401
 from .msprime_simulator import MsprimeSimulator  # noqa: F401
 from .feature_vector_simulator import FeatureVectorSimulator  # noqa: F401
 from .genotype_matrix_simulator import GenotypeMatrixSimulator  # noqa: F401

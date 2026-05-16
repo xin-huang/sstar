@@ -19,21 +19,26 @@
 
 import os
 from typing import Any
-from sstar.simulators import GenericSimulator
 from sstar.simulators import MsprimeSimulator
 from sstar.generators import WindowDataGenerator
 from sstar.labelers import BinaryWindowLabeler
 from sstar.preprocessors import FeatureVectorPreprocessor
 
 
-class FeatureVectorSimulator(GenericSimulator):
+class FeatureVectorSimulator:
     """
     A simulator class that integrates simulation, labeling, and feature vector generation
     to prepare data for training.
 
-    This class automates the process of simulating genomic data, labeling the simulated data
-    based on introgression, generating genomic features, and merging labels with features to
-    create a comprehensive dataset ready for machine learning model training.
+    This class composes concrete components (simulator, labeler, and
+    preprocessor) to automate simulation, labeling, feature generation, and
+    feature/label merge for training data preparation.
+
+    Callers can rely on:
+    - `simulator` (`MsprimeSimulator`) and `labeler`
+      (`BinaryWindowLabeler`) being initialized in `__init__`
+    - `run(rep=None, seed=None)` returning merged per-sample feature/label
+      dictionaries
     """
 
     def __init__(
@@ -56,7 +61,8 @@ class FeatureVectorSimulator(GenericSimulator):
         feature_config_file: str,
     ):
         """
-        Initializes a new instance of LRTrainingDataSimulator with specific parameters.
+        Initializes a new instance of FeatureVectorSimulator with specific
+        parameters.
 
         Parameters
         ----------

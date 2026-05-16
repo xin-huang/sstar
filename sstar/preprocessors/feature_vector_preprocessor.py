@@ -21,12 +21,15 @@ import yaml
 import numpy as np
 from typing import Any
 from sstar.configs import FeatureConfig
-from sstar.preprocessors import GenericPreprocessor
-from sstar.registries.stat_registry import STAT_REGISTRY
+from sstar.stats import Sstar
 from sstar.utils import parse_ind_file
 
+STAT_METHODS: dict[str, type] = {
+    "sstar": Sstar,
+}
 
-class FeatureVectorPreprocessor(GenericPreprocessor):
+
+class FeatureVectorPreprocessor:
     """
     A preprocessor subclass for generating feature vectors from genomic data.
 
@@ -130,7 +133,9 @@ class FeatureVectorPreprocessor(GenericPreprocessor):
         for stat_name in self.feature_config.root.keys():
             if not self.feature_config.root[stat_name]:
                 continue
-            stat_cls = STAT_REGISTRY.get(stat_name)
+            stat_cls = STAT_METHODS.get(stat_name)
+            if stat_cls is None:
+                raise ValueError(f"Unsupported statistic: {stat_name}")
             stat_params = {}
             stat_params.update(**params)
             if isinstance(self.feature_config.root[stat_name], dict):

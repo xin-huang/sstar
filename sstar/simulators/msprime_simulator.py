@@ -19,15 +19,22 @@
 
 import demes, msprime, os, tskit
 import pyranges as pr
-from sstar.simulators import GenericSimulator
 
 
-class MsprimeSimulator(GenericSimulator):
+class MsprimeSimulator:
     """
-    MsprimeSimulator extends GenericSimulator to simulate genetic data using the msprime package.
+    Simulates genetic data using the msprime package.
 
-    This subclass specifies simulation parameters for msprime and inherits additional
-    simulation configuration from the DataSimulator class.
+    This class is a concrete simulator implementation. Callers construct it
+    with simulation parameters and then call :meth:`run` to generate output
+    files for one replicate.
+
+    Callers can rely on:
+    - initialization-time attributes such as `demo_model_file`, `nref`,
+      `ntgt`, `ref_id`, `tgt_id`, `src_id`, `ploidy`, `seq_len`, `mut_rate`,
+      `rec_rate`, `output_prefix`, `output_dir`, and `is_phased`
+    - `run(rep=None, seed=None)`, which returns a list containing one mapping
+      of output artifact paths
 
     """
 
@@ -79,32 +86,25 @@ class MsprimeSimulator(GenericSimulator):
         is_phased : bool
             Indicates whether the true tracts should be considered as unphased.
 
-        Attributes
-        ----------
-        test_tgt_id : str
-            Used to store the identifier for the target population that is subject to
-            introgression analysis, initialized based on the `tgt_id` parameter. Its purpose is
-            to identify the specific subset of individuals within the target population being
-            analyzed for introgression. This distinction becomes crucial when the study focuses
-            on a selected subset from the larger group identified by `tgt_id`. If the analysis
-            shifts to a different subset or the definition of the target population changes,
-            `test_tgt_id` should be updated to accurately reflect the group under investigation.
+        Notes
+        -----
+        This class no longer inherits simulator state from a generic base.
+        All simulator state used by :meth:`run` is initialized directly in this
+        constructor.
 
         """
-        super().__init__(
-            demo_model_file=demo_model_file,
-            nref=nref,
-            ntgt=ntgt,
-            ref_id=ref_id,
-            tgt_id=tgt_id,
-            src_id=src_id,
-            ploidy=ploidy,
-            seq_len=seq_len,
-            mut_rate=mut_rate,
-            rec_rate=rec_rate,
-            output_prefix=output_prefix,
-            output_dir=output_dir,
-        )
+        self.demo_model_file = demo_model_file
+        self.nref = nref
+        self.ntgt = ntgt
+        self.ref_id = ref_id
+        self.tgt_id = tgt_id
+        self.src_id = src_id
+        self.ploidy = ploidy
+        self.seq_len = seq_len
+        self.mut_rate = mut_rate
+        self.rec_rate = rec_rate
+        self.output_prefix = output_prefix
+        self.output_dir = output_dir
         self.test_tgt_id = self.tgt_id
         self.is_phased = is_phased
 
