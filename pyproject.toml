@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sstar"
 version = "2.0.0"
-description = "A Python package for S*-based archaic introgression with machine learning"
+description = "A Python Package for S*-based Archaic Introgression Detection with Machine Learning"
 readme = "README.md"
 requires-python = "==3.12.13"
 license = {text = "GPLv3"}
@@ -32,7 +32,7 @@ dependencies = [
 Homepage = "https://github.com/xin-huang/sstar"
 
 [project.scripts]
-sstar = "sstar.__main__:main"
+sstar2 = "sstar.__main__:main"
 
 [tool.setuptools]
 packages = ["sstar"]
