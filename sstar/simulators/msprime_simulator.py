@@ -25,8 +25,7 @@ class MsprimeSimulator:
     """
     Simulates genetic data using the msprime package.
 
-    This subclass specifies simulation parameters for msprime and inherits additional
-    simulation configuration from the DataSimulator class.
+    This class specifies simulation parameters for msprime.
 
     """
 
@@ -90,20 +89,18 @@ class MsprimeSimulator:
             `test_tgt_id` should be updated to accurately reflect the group under investigation.
 
         """
-        super().__init__(
-            demo_model_file=demo_model_file,
-            nref=nref,
-            ntgt=ntgt,
-            ref_id=ref_id,
-            tgt_id=tgt_id,
-            src_id=src_id,
-            ploidy=ploidy,
-            seq_len=seq_len,
-            mut_rate=mut_rate,
-            rec_rate=rec_rate,
-            output_prefix=output_prefix,
-            output_dir=output_dir,
-        )
+        self.demo_model_file = demo_model_file
+        self.nref = nref
+        self.ntgt = ntgt
+        self.ref_id = ref_id
+        self.tgt_id = tgt_id
+        self.src_id = src_id
+        self.ploidy = ploidy
+        self.seq_len = seq_len
+        self.mut_rate = mut_rate
+        self.rec_rate = rec_rate
+        self.output_prefix = output_prefix
+        self.output_dir = output_dir
         self.test_tgt_id = self.tgt_id
         self.is_phased = is_phased
 
