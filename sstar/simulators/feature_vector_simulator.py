@@ -19,11 +19,11 @@
 
 import os
 from typing import Any
-from gaishi.simulators import GenericSimulator
-from gaishi.simulators import MsprimeSimulator
-from gaishi.generators import WindowDataGenerator
-from gaishi.labelers import BinaryWindowLabeler
-from gaishi.preprocessors import FeatureVectorPreprocessor
+from sstar.simulators import GenericSimulator
+from sstar.simulators import MsprimeSimulator
+from sstar.generators import WindowDataGenerator
+from sstar.labelers import BinaryWindowLabeler
+from sstar.preprocessors import FeatureVectorPreprocessor
 
 
 class FeatureVectorSimulator(GenericSimulator):

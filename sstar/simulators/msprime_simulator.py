@@ -19,7 +19,7 @@
 
 import demes, msprime, os, tskit
 import pyranges as pr
-from gaishi.simulators import GenericSimulator
+from sstar.simulators import GenericSimulator
 
 
 class MsprimeSimulator(GenericSimulator):

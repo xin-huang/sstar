@@ -19,7 +19,7 @@
 
 import multiprocessing, queue, time
 import numpy as np
-from gaishi.generators import GenericGenerator
+from sstar.generators import GenericGenerator
 from multiprocessing import current_process, Manager, Process, Queue
 from threading import Thread
 

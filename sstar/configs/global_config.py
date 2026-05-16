@@ -19,14 +19,19 @@
 
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Annotated, Union
-from gaishi.configs import ModelConfig
-from gaishi.configs import FeatureVectorSimulationConfig
-from gaishi.configs import GenotypeMatrixSimulationConfig
-from gaishi.configs import FeatureVectorPreprocessConfig
-from gaishi.configs import GenotypeMatrixPreprocessConfig
+from sstar.configs import ModelConfig
+from sstar.configs import FeatureVectorSimulationConfig
+from sstar.configs import GenotypeMatrixSimulationConfig
+from sstar.configs import FeatureVectorPreprocessConfig
+from sstar.configs import GenotypeMatrixPreprocessConfig
 
 SimulationConfigUnion = Annotated[
     Union[FeatureVectorSimulationConfig, GenotypeMatrixSimulationConfig],
+]
+
+class GlobalConfig(BaseModel):
+    """
+    Top-level config for running sstar
     Field(discriminator="sim_type"),
 ]
 
@@ -38,7 +43,7 @@ PreprocessConfigUnion = Annotated[
 
 class GlobalConfig(BaseModel):
     """
-    Top-level config for runing gaishi
+    Top-level config for runing sstar
 
     - training: simulation + model details.
     - infer: preprocess + model details.

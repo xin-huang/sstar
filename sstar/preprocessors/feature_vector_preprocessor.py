@@ -20,10 +20,10 @@
 import yaml
 import numpy as np
 from typing import Any
-from gaishi.configs import FeatureConfig
-from gaishi.preprocessors import GenericPreprocessor
-from gaishi.registries.stat_registry import STAT_REGISTRY
-from gaishi.utils import parse_ind_file
+from sstar.configs import FeatureConfig
+from sstar.preprocessors import GenericPreprocessor
+from sstar.registries.stat_registry import STAT_REGISTRY
+from sstar.utils import parse_ind_file
 
 
 class FeatureVectorPreprocessor(GenericPreprocessor):
