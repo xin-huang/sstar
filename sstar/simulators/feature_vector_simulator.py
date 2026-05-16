@@ -19,14 +19,13 @@
 
 import os
 from typing import Any
-from sstar.simulators import GenericSimulator
 from sstar.simulators import MsprimeSimulator
 from sstar.generators import WindowDataGenerator
 from sstar.labelers import BinaryWindowLabeler
 from sstar.preprocessors import FeatureVectorPreprocessor
 
 
-class FeatureVectorSimulator(GenericSimulator):
+class FeatureVectorSimulator:
     """
     A simulator class that integrates simulation, labeling, and feature vector generation
     to prepare data for training.

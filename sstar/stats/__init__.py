@@ -17,7 +17,6 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-from .generic_statistic import GenericStatistic  # noqa: F401
 from .spectrum import Spectrum  # noqa: F401
 from .distance import Distance, RefDistance, TgtDistance  # noqa: F401
 from .private_mutation import PrivateMutation  # noqa: F401

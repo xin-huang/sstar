@@ -19,12 +19,11 @@
 
 import demes, msprime, os, tskit
 import pyranges as pr
-from sstar.simulators import GenericSimulator
 
 
-class MsprimeSimulator(GenericSimulator):
+class MsprimeSimulator:
     """
-    MsprimeSimulator extends GenericSimulator to simulate genetic data using the msprime package.
+    Simulates genetic data using the msprime package.
 
     This subclass specifies simulation parameters for msprime and inherits additional
     simulation configuration from the DataSimulator class.
