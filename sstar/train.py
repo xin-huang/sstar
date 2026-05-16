@@ -22,7 +22,7 @@ import yaml
 from typing import Optional
 from sstar.configs import GlobalConfig
 from sstar.registries.model_registry import MODEL_REGISTRY
-from sstar.simulate import simulate_feature_vectors
+from sstar.simulate import simulate
 from sstar.utils import UniqueKeyLoader, filter_model_params_for_method
 
 
@@ -62,9 +62,9 @@ def train(
     if not os.path.exists(data):
         print("Training data is not found. Perform simulation.")
         simulation_params = filter_model_params_for_method(
-            simulate_feature_vectors, global_config.simulation.model_dump()
+            simulate, global_config.simulation.model_dump()
         )
-        simulate_feature_vectors(
+        simulate(
             demo_model_file=demes,
             **simulation_params,
         )

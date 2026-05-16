@@ -17,17 +17,14 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-import os, multiprocessing, yaml
+import os
 import pandas as pd
-from sstar.utils import parse_ind_file, initialize_h5, write_h5
-from sstar.utils import create_sample_name_list
 from sstar.multiprocessing import mp_manager
 from sstar.generators import WindowDataGenerator
-from sstar.generators import PolymorphismDataGenerator
 from sstar.preprocessors import FeatureVectorPreprocessor
 
 
-def preprocess_feature_vectors(
+def preprocess(
     vcf_file: str,
     chr_name: str,
     ref_ind_file: str,

@@ -20,7 +20,7 @@
 import yaml
 from sstar.configs import GlobalConfig
 from sstar.registries.model_registry import MODEL_REGISTRY
-from sstar.preprocess import preprocess_feature_vectors
+from sstar.preprocess import preprocess
 from sstar.utils import UniqueKeyLoader, filter_model_params_for_method
 
 
@@ -50,7 +50,7 @@ def infer(
         raise ValueError(f"Error parsing YAML configuration file '{config}': {e}")
 
     global_config = GlobalConfig(**config_dict)
-    preprocess_feature_vectors(
+    preprocess(
         **global_config.preprocess.model_dump(),
     )
     data = f"{global_config.preprocess.output_dir}/{global_config.preprocess.output_prefix}.features"

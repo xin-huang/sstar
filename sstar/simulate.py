@@ -25,7 +25,7 @@ from sstar.generators import RandomNumberGenerator
 from sstar.simulators import MsprimeSimulator
 
 
-def simulate_feature_vectors(
+def simulate(
     demo_model_file: str,
     nrep: int,
     nref: int,
