@@ -17,7 +17,13 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-import demes, msprime, os
+import os
+
+import demes
+import msprime
+
+from sstar.generators import WindowDataGenerator
+from sstar.preprocessors import FeatureVectorPreprocessor
 
 
 class MsprimeSimulator:
@@ -51,6 +57,7 @@ class MsprimeSimulator:
         output_prefix: str,
         output_dir: str,
         is_phased: bool,
+        feature_config_file: str,
     ):
         """
         Initialize a new instance of MsprimeSimulator with specific parameters for msprime simulations.
@@ -104,8 +111,9 @@ class MsprimeSimulator:
         self.output_dir = output_dir
         self.test_tgt_id = self.tgt_id
         self.is_phased = is_phased
+        self.feature_config_file = feature_config_file
 
-    def run(self, rep: int = None, seed: int = None) -> list[dict[str, str]]:
+    def run(self, rep: int = None, seed: int = None) -> list[dict[str, object]]:
         """
         Execute the simulation with optional runtime arguments.
 
@@ -124,8 +132,8 @@ class MsprimeSimulator:
 
         Returns
         -------
-        list[dict[str, str]]
-            A list of a dictionary containing file paths for the simulated data.
+        list[dict[str, object]]
+            A list of per-sample feature dictionaries generated from the simulated VCF.
         """
         output_dir = (
             self.output_dir if rep is None else os.path.join(self.output_dir, str(rep))
@@ -140,14 +148,6 @@ class MsprimeSimulator:
         ref_ind_file = os.path.join(output_dir, f"{output_prefix}.ref.ind.list")
         tgt_ind_file = os.path.join(output_dir, f"{output_prefix}.tgt.ind.list")
         seed_file = os.path.join(output_dir, f"{output_prefix}.seedmsprime")
-
-        file_paths = {
-            "ts_file": ts_file,
-            "vcf_file": vcf_file,
-            "ref_ind_file": ref_ind_file,
-            "tgt_ind_file": tgt_ind_file,
-            "seed_file": seed_file,
-        }
 
         self._create_ref_tgt_file(self.nref, self.ntgt, ref_ind_file, tgt_ind_file)
 
@@ -181,7 +181,31 @@ class MsprimeSimulator:
             with open(seed_file, "w") as o:
                 o.write(f"{seed}\n")
 
-        return [file_paths]
+
+
+        window_data_generator = WindowDataGenerator(
+            vcf_file=vcf_file,
+            ref_ind_file=ref_ind_file,
+            tgt_ind_file=tgt_ind_file,
+            chr_name="1",
+            win_len=self.seq_len,
+            win_step=self.seq_len,
+            ploidy=self.ploidy,
+            is_phased=self.is_phased,
+        )
+
+        preprocessor = FeatureVectorPreprocessor(
+            ref_ind_file=ref_ind_file,
+            tgt_ind_file=tgt_ind_file,
+            feature_config_file=self.feature_config_file,
+        )
+
+        features = preprocessor.run(**list(window_data_generator.get())[0])
+
+        for item in features:
+            item["Replicate"] = rep
+
+        return features
 
     def _create_ref_tgt_file(
         self,

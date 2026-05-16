@@ -84,13 +84,6 @@ class FeatureVectorSimulationConfig(SimulationConfig):
         ..., description="Path to feature config YAML/JSON"
     )
 
-    intro_prop: float = Field(
-        ..., ge=0.0, le=1.0, description="Fraction of introgressed windows"
-    )
-    non_intro_prop: float = Field(
-        ..., ge=0.0, le=1.0, description="Fraction of non-introgressed windows"
-    )
-
     is_shuffled: bool = Field(
         True,
         description="Whether to shuffle feature rows (e.g. before saving/training)",
@@ -98,13 +91,6 @@ class FeatureVectorSimulationConfig(SimulationConfig):
 
     # Features
     nfeature: int = Field(..., gt=0, description="Number of features to sample/output")
-
-    # @field_validator("intro_prop", "non_intro_prop")
-    # @classmethod
-    # def _check_props_range(cls, v: float) -> float:
-    #    if not (0.0 <= v <= 1.0):
-    #        raise ValueError("intro_prop and non_intro_prop must be in [0, 1].")
-    #    return v
 
 
 class GenotypeMatrixSimulationConfig(SimulationConfig):
