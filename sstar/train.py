@@ -20,11 +20,11 @@
 import os
 import yaml
 from typing import Optional
-from gaishi.configs import GlobalConfig
-from gaishi.registries.model_registry import MODEL_REGISTRY
-from gaishi.simulate import simulate_feature_vectors
-from gaishi.simulate import simulate_genotype_matrices
-from gaishi.utils import UniqueKeyLoader, filter_model_params_for_method
+from sstar.configs import GlobalConfig
+from sstar.registries.model_registry import MODEL_REGISTRY
+from sstar.simulate import simulate_feature_vectors
+from sstar.simulate import simulate_genotype_matrices
+from sstar.utils import UniqueKeyLoader, filter_model_params_for_method
 
 
 def train(
@@ -41,7 +41,7 @@ def train(
     demes : str
         Path to the demography (demes) YAML file used for simulation.
     config : str
-        Path to the gaishi configuration YAML file.
+        Path to the sstar configuration YAML file.
     output : str, optional
         Output path or directory passed to the model's `train` method, used
         to store the trained model. Required when `only_simulation=False`.

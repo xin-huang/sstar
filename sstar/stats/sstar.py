@@ -20,8 +20,8 @@
 import numpy as np
 from typing import Dict, Any, List
 from scipy.spatial import distance_matrix
-from gaishi.registries.stat_registry import STAT_REGISTRY
-from gaishi.stats import GenericStatistic
+from sstar.registries.stat_registry import STAT_REGISTRY
+from sstar.stats import GenericStatistic
 
 
 @STAT_REGISTRY.register("sstar")

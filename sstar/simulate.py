@@ -20,10 +20,10 @@
 import os, random, shutil
 import pandas as pd
 from multiprocessing import Lock, Value
-from gaishi.multiprocessing import mp_manager
-from gaishi.generators import RandomNumberGenerator
-from gaishi.simulators import FeatureVectorSimulator
-from gaishi.simulators import GenotypeMatrixSimulator
+from sstar.multiprocessing import mp_manager
+from sstar.generators import RandomNumberGenerator
+from sstar.simulators import FeatureVectorSimulator
+from sstar.simulators import GenotypeMatrixSimulator
 
 
 def simulate_feature_vectors(

@@ -38,7 +38,7 @@ class LrParams(BaseModel):
     @model_validator(mode="after")
     def validate_known_keys(self) -> "LrParams":
         """
-        Validate keys against LogisticRegression signature plus gaishi-specific keys.
+        Validate keys against LogisticRegression signature plus sstar-specific keys.
         """
         allowed_keys = set(inspect.signature(LogisticRegression).parameters)
         allowed_keys.add("is_scaled")
@@ -61,7 +61,7 @@ class EtcParams(BaseModel):
     @model_validator(mode="after")
     def validate_known_keys(self) -> "EtcParams":
         """
-        Validate keys against ExtraTreesClassifier signature plus gaishi-specific keys.
+        Validate keys against ExtraTreesClassifier signature plus sstar-specific keys.
         """
         allowed_keys = set(inspect.signature(ExtraTreesClassifier).parameters)
         allowed_keys.add("is_scaled")

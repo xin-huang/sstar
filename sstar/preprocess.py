@@ -19,13 +19,13 @@
 
 import os, multiprocessing, yaml
 import pandas as pd
-from gaishi.utils import parse_ind_file, initialize_h5, write_h5
-from gaishi.utils import create_sample_name_list
-from gaishi.multiprocessing import mp_manager
-from gaishi.generators import WindowDataGenerator
-from gaishi.generators import PolymorphismDataGenerator
-from gaishi.preprocessors import FeatureVectorPreprocessor
-from gaishi.preprocessors import GenotypeMatrixPreprocessor
+from sstar.utils import parse_ind_file, initialize_h5, write_h5
+from sstar.utils import create_sample_name_list
+from sstar.multiprocessing import mp_manager
+from sstar.generators import WindowDataGenerator
+from sstar.generators import PolymorphismDataGenerator
+from sstar.preprocessors import FeatureVectorPreprocessor
+from sstar.preprocessors import GenotypeMatrixPreprocessor
 
 
 def preprocess_feature_vectors(

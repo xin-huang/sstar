@@ -18,11 +18,11 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 import yaml
-from gaishi.configs import GlobalConfig
-from gaishi.registries.model_registry import MODEL_REGISTRY
-from gaishi.preprocess import preprocess_feature_vectors
-from gaishi.preprocess import preprocess_genotype_matrices
-from gaishi.utils import UniqueKeyLoader, filter_model_params_for_method
+from sstar.configs import GlobalConfig
+from sstar.registries.model_registry import MODEL_REGISTRY
+from sstar.preprocess import preprocess_feature_vectors
+from sstar.preprocess import preprocess_genotype_matrices
+from sstar.utils import UniqueKeyLoader, filter_model_params_for_method
 
 
 def infer(
