@@ -21,7 +21,6 @@ import yaml
 from sstar.configs import GlobalConfig
 from sstar.registries.model_registry import MODEL_REGISTRY
 from sstar.preprocess import preprocess_feature_vectors
-from sstar.preprocess import preprocess_genotype_matrices
 from sstar.utils import UniqueKeyLoader, filter_model_params_for_method
 
 
@@ -51,20 +50,10 @@ def infer(
         raise ValueError(f"Error parsing YAML configuration file '{config}': {e}")
 
     global_config = GlobalConfig(**config_dict)
-    if global_config.preprocess.process_type == "feature_vector":
-        preprocess_feature_vectors(
-            **global_config.preprocess.model_dump(),
-        )
-
-        data = f"{global_config.preprocess.output_dir}/{global_config.preprocess.output_prefix}.features"
-    elif global_config.preprocess.process_type == "genotype_matrix":
-        preprocess_genotype_matrices(
-            **global_config.preprocess.model_dump(),
-        )
-
-        data = f"{global_config.preprocess.output_dir}/{global_config.preprocess.output_prefix}.h5"
-    else:
-        raise ValueError("")
+    preprocess_feature_vectors(
+        **global_config.preprocess.model_dump(),
+    )
+    data = f"{global_config.preprocess.output_dir}/{global_config.preprocess.output_prefix}.features"
 
     model_name = global_config.model.name
     model_params = global_config.model.params

@@ -19,8 +19,6 @@
 
 from .feature_config import FeatureConfig  # noqa: F401
 from .model_config import ModelConfig  # noqa: F401
-from .preprocess_config import FeatureVectorPreprocessConfig  # noqa: F401
-from .preprocess_config import GenotypeMatrixPreprocessConfig  # noqa: F401
-from .simulation_config import FeatureVectorSimulationConfig  # noqa: F401
-from .simulation_config import GenotypeMatrixSimulationConfig  # noqa: F401
+from .preprocess_config import PreprocessConfig  # noqa: F401
+from .simulation_config import SimulationConfig  # noqa: F401
 from .global_config import GlobalConfig  # noqa: F401

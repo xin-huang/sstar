@@ -20,7 +20,6 @@
 from pathlib import Path
 from pydantic import BaseModel, ConfigDict
 from pydantic import Field, field_validator
-from typing import Literal
 
 
 class SimulationConfig(BaseModel):
@@ -68,18 +67,6 @@ class SimulationConfig(BaseModel):
     # Randomness
     seed: int = Field(..., description="Base random seed")
 
-    @field_validator("output_dir")
-    @classmethod
-    def _ensure_output_dir(cls, p: Path) -> Path:
-        # Do not create here; just normalize path
-        return p.expanduser().resolve()
-
-
-class FeatureVectorSimulationConfig(SimulationConfig):
-    """Configuration for simulating feature vectors."""
-
-    sim_type: Literal["feature_vector"] = Field("feature_vector", exclude=True)
-
     feature_config_file: Path = Field(
         ..., description="Path to feature config YAML/JSON"
     )
@@ -92,14 +79,8 @@ class FeatureVectorSimulationConfig(SimulationConfig):
     # Features
     nfeature: int = Field(..., gt=0, description="Number of features to sample/output")
 
-
-class GenotypeMatrixSimulationConfig(SimulationConfig):
-    """Configuration for simulating genotype matrices."""
-
-    sim_type: Literal["genotype_matrix"] = Field("genotype_matrix", exclude=True)
-
-    num_polymorphisms: int = Field(..., gt=0, description="")
-
-    num_genotype_matrices: int = Field(
-        ..., gt=0, description="Number of genotype matrices"
-    )
+    @field_validator("output_dir")
+    @classmethod
+    def _ensure_output_dir(cls, p: Path) -> Path:
+        # Do not create here; just normalize path
+        return p.expanduser().resolve()
