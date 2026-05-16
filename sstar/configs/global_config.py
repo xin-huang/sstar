@@ -27,6 +27,11 @@ from sstar.configs import GenotypeMatrixPreprocessConfig
 
 SimulationConfigUnion = Annotated[
     Union[FeatureVectorSimulationConfig, GenotypeMatrixSimulationConfig],
+]
+
+class GlobalConfig(BaseModel):
+    """
+    Top-level config for running sstar
     Field(discriminator="sim_type"),
 ]
 
