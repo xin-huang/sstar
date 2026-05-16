@@ -1,0 +1,34 @@
+simulation:
+  nrep: 100
+  nref: 50
+  ntgt: 50
+  ref_id: "Reference"
+  tgt_id: "Target"
+  seq_len: 50000
+  mut_rate: 1.25e-8
+  rec_rate: 1e-8
+  ploidy: 2
+  is_phased: True
+  nfeature: 100
+  is_shuffled: False
+  nprocess: 2
+  seed: 12345
+
+preprocessing:
+  vcf_file: "tests/data/test.vcf"
+  chr_name: "21"
+  ref_ind_file: "tests/data/test.ref.ind.list"
+  tgt_ind_file: "tests/data/test.tgt.ind.list"
+  win_len: 50000
+  win_step: 50000
+  is_phased: True
+  nprocess: 2
+  ploidy: 2
+
+model:
+  params:
+    loss: "quantile"
+    alpha: 0.9
+    n_estimators: 200
+    max_depth: 3
+    random_state: 12345

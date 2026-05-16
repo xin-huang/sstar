@@ -17,9 +17,27 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-from importlib.metadata import version, PackageNotFoundError
+from pydantic import BaseModel, ConfigDict
+from sstar.configs import ModelConfig
+from sstar.configs import SimulationConfig
+from sstar.configs import PreprocessingConfig
 
-try:
-    __version__ = version("sstar")
-except PackageNotFoundError:
-    __version__ = "0.0.0+dev"
+
+class GlobalConfig(BaseModel):
+    """
+    Top-level config for runing sstar
+
+    - training: simulation + model details.
+    - infer: preprocess + model details.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    # Simulation block
+    simulation: SimulationConfig
+
+    # Preprocess block
+    preprocessing: PreprocessingConfig
+
+    # Model choice
+    model: ModelConfig
