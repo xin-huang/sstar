@@ -18,4 +18,3 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 from .feature_vector_preprocessor import FeatureVectorPreprocessor  # noqa: F401
-from .genotype_matrix_preprocessor import GenotypeMatrixPreprocessor  # noqa: F401

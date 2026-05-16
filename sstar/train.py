@@ -23,7 +23,6 @@ from typing import Optional
 from sstar.configs import GlobalConfig
 from sstar.registries.model_registry import MODEL_REGISTRY
 from sstar.simulate import simulate_feature_vectors
-from sstar.simulate import simulate_genotype_matrices
 from sstar.utils import UniqueKeyLoader, filter_model_params_for_method
 
 
@@ -59,28 +58,16 @@ def train(
         raise ValueError(f"Error parsing YAML configuration file '{config}': {e}")
 
     global_config = GlobalConfig(**config_dict)
-    if global_config.simulation.sim_type == "feature_vector":
-        data = f"{global_config.simulation.output_dir}/{global_config.simulation.output_prefix}.tsv"
-        if not os.path.exists(data):
-            print("Training data is not found. Perform simulation.")
-            simulation_params = filter_model_params_for_method(
-                simulate_feature_vectors, global_config.simulation.model_dump()
-            )
-            simulate_feature_vectors(
-                demo_model_file=demes,
-                **simulation_params,
-            )
-    elif global_config.simulation.sim_type == "genotype_matrix":
-        data = f"{global_config.simulation.output_dir}/{global_config.simulation.output_prefix}.h5"
-        if not os.path.exists(data):
-            print("Training data is not found. Perform simulation.")
-            simulation_params = filter_model_params_for_method(
-                simulate_genotype_matrices, global_config.simulation.model_dump()
-            )
-            simulate_genotype_matrices(
-                demo_model_file=demes,
-                **simulation_params,
-            )
+    data = f"{global_config.simulation.output_dir}/{global_config.simulation.output_prefix}.tsv"
+    if not os.path.exists(data):
+        print("Training data is not found. Perform simulation.")
+        simulation_params = filter_model_params_for_method(
+            simulate_feature_vectors, global_config.simulation.model_dump()
+        )
+        simulate_feature_vectors(
+            demo_model_file=demes,
+            **simulation_params,
+        )
 
     if only_simulation:
         return

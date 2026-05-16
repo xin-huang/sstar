@@ -17,28 +17,10 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Annotated, Union
+from pydantic import BaseModel, ConfigDict
 from sstar.configs import ModelConfig
-from sstar.configs import FeatureVectorSimulationConfig
-from sstar.configs import GenotypeMatrixSimulationConfig
-from sstar.configs import FeatureVectorPreprocessConfig
-from sstar.configs import GenotypeMatrixPreprocessConfig
-
-SimulationConfigUnion = Annotated[
-    Union[FeatureVectorSimulationConfig, GenotypeMatrixSimulationConfig],
-]
-
-class GlobalConfig(BaseModel):
-    """
-    Top-level config for running sstar
-    Field(discriminator="sim_type"),
-]
-
-PreprocessConfigUnion = Annotated[
-    Union[FeatureVectorPreprocessConfig, GenotypeMatrixPreprocessConfig],
-    Field(discriminator="process_type"),
-]
+from sstar.configs import SimulationConfig
+from sstar.configs import PreprocessConfig
 
 
 class GlobalConfig(BaseModel):
@@ -52,10 +34,10 @@ class GlobalConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     # Simulation block
-    simulation: SimulationConfigUnion
+    simulation: SimulationConfig
 
     # Preprocess block
-    preprocess: PreprocessConfigUnion
+    preprocess: PreprocessConfig
 
     # Model choice
     model: ModelConfig

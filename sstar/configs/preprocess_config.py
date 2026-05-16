@@ -18,7 +18,7 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -58,18 +58,6 @@ class PreprocessConfig(BaseModel):
         description="Optional path to ancestral allele file (if available)",
     )
 
-    @field_validator("output_dir")
-    @classmethod
-    def _ensure_output_dir(cls, p: Path) -> Path:
-        """Normalize output_dir to an absolute path without creating it."""
-        return p.expanduser().resolve()
-
-
-class FeatureVectorPreprocessConfig(PreprocessConfig):
-    """Configuration for preprocessing feature vectors."""
-
-    process_type: Literal["feature_vector"] = Field("feature_vector", exclude=True)
-
     # Windowing
     win_len: int = Field(..., gt=0, description="Window length in bp")
     win_step: int = Field(..., gt=0, description="Window step size in bp")
@@ -79,12 +67,8 @@ class FeatureVectorPreprocessConfig(PreprocessConfig):
         ..., description="Path to feature configuration YAML/JSON"
     )
 
-
-class GenotypeMatrixPreprocessConfig(PreprocessConfig):
-    """Configuration for preprocessing genotype matrices."""
-
-    process_type: Literal["genotype_matrix"] = Field("genotype_matrix", exclude=True)
-
-    num_polymorphisms: int = Field(..., gt=0, description="")
-
-    step_size: int = Field(..., gt=0, description="")
+    @field_validator("output_dir")
+    @classmethod
+    def _ensure_output_dir(cls, p: Path) -> Path:
+        """Normalize output_dir to an absolute path without creating it."""
+        return p.expanduser().resolve()
