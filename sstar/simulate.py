@@ -20,9 +20,9 @@
 import os, random, shutil
 
 import pandas as pd
-from sstar.multiprocessing import mp_manager
+from sstar import mp_manager
 from sstar.generators import RandomNumberGenerator
-from sstar.simulators import MsprimeSimulator
+from sstar.msprime_simulator import MsprimeSimulator
 
 
 def simulate(

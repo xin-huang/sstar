@@ -19,9 +19,9 @@
 
 import os
 import pandas as pd
-from sstar.multiprocessing import mp_manager
+from sstar import mp_manager
 from sstar.generators import WindowDataGenerator
-from sstar.preprocessors import FeatureVectorPreprocessor
+from sstar.feature_vector_preprocessor import FeatureVectorPreprocessor
 
 
 def preprocess(

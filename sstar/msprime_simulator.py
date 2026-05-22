@@ -23,7 +23,7 @@ import demes
 import msprime
 
 from sstar.generators import WindowDataGenerator
-from sstar.preprocessors import FeatureVectorPreprocessor
+from sstar.feature_vector_preprocessor import FeatureVectorPreprocessor
 
 
 class MsprimeSimulator:

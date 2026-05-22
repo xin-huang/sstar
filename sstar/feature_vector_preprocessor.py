@@ -21,7 +21,7 @@ import yaml
 import numpy as np
 from typing import Any
 from sstar.configs import FeatureConfig
-from sstar.stats import Sstar
+from sstar.sstar import Sstar
 from sstar.utils import parse_ind_file
 
 STAT_METHODS: dict[str, type] = {
