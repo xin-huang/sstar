@@ -21,22 +21,7 @@ from typing import Dict, Union, Set
 from pydantic import RootModel, field_validator
 
 SUPPORTED_FEATURES: Set[str] = {
-    "ref_dist",
-    "tgt_dist",
-    "spectrum",
-    "private_mutation",
     "sstar",
-}
-
-SUPPORTED_DIST_STATS: Set[str] = {
-    "all",
-    "minimum",
-    "maximum",
-    "mean",
-    "median",
-    "variance",
-    "skew",
-    "kurtosis",
 }
 
 SUPPORTED_SSTAR_PARAMS: Set[str] = {
@@ -64,11 +49,6 @@ class FeatureConfig(
 
     Structure
     ---------
-    - `ref_dist` / `tgt_dist` : dict
-        Mapping from distance statistic names to booleans. Allowed stats
-        are in `SUPPORTED_DIST_STATS`. At least one must be `True`.
-    - `spectrum` / `num_private` : bool
-        Feature toggles.
     - `sstar` : dict
         Mapping from S* parameter names to integer values. Allowed params
         are in `SUPPORTED_SSTAR_PARAMS`.
@@ -112,58 +92,12 @@ class FeatureConfig(
                     f"Allowed: {sorted(SUPPORTED_FEATURES)}"
                 )
 
-            if feat_name in {"ref_dist", "tgt_dist"}:
-                if not isinstance(params, dict):
-                    raise ValueError(
-                        f"{feat_name} must be a mapping of stats to bools."
-                    )
-                cls.valid_dist(feat_name, params)
-
-            elif feat_name in {"spectrum", "private_mutation"}:
-                if not isinstance(params, bool):
-                    raise ValueError(f"{feat_name} must be a boolean.")
-
-            elif feat_name == "sstar":
+            if feat_name == "sstar":
                 if not isinstance(params, dict):
                     raise ValueError("sstar must be a mapping of params to integers.")
                 cls.valid_sstar(feat_name, params)
 
         return v
-
-    @staticmethod
-    def valid_dist(feat_name: str, params: Dict[str, Union[bool, int]]):
-        """
-        Validates distance-statistics options for `ref_dist`/`tgt_dist`.
-
-        Parameters
-        ----------
-        feat_name : str
-            The feature name being validated (`"ref_dist"` or `"tgt_dist"`).
-        params : dict
-            Mapping from statistic names to booleans.
-
-        Raises
-        ------
-        ValueError
-            If unknown statistic keys are present, if any value is not a bool,
-            if no statistic is enabled, or if `all=True` conflicts with other
-            enabled statistics.
-        """
-        keys = set(params.keys())
-        if unknown := keys - SUPPORTED_DIST_STATS:
-            raise ValueError(
-                f"{feat_name}: unknown dist stats {sorted(unknown)}. "
-                f"Allowed: {sorted(SUPPORTED_DIST_STATS)}"
-            )
-
-        for k, v in params.items():
-            if not isinstance(v, bool):
-                raise ValueError(
-                    f"{feat_name}: value for '{k}' must be bool, got {type(v).__name__}."
-                )
-
-        if not any(bool(x) for x in params.values()):
-            raise ValueError(f"{feat_name}: at least one stat must be True.")
 
     @staticmethod
     def valid_sstar(feat_name: str, params: Dict[str, Union[bool, int]]):
