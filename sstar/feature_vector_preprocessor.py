@@ -24,10 +24,6 @@ from sstar.configs import FeatureConfig
 from sstar.sstar import Sstar
 from sstar.utils import parse_ind_file
 
-STAT_METHODS: dict[str, type] = {
-    "sstar": Sstar,
-}
-
 
 class FeatureVectorPreprocessor:
     """
@@ -120,27 +116,21 @@ class FeatureVectorPreprocessor:
         params = {
             "ref_gts": ref_gts,
             "tgt_gts": tgt_gts,
-            "is_phased": is_phased,
-            "ploidy": ploidy,
             "pos": pos,
         }
 
-        items = dict()
-        items["chr_name"] = chr_name
-        items["start"] = start
-        items["end"] = end
+        items = {
+            "chr_name": chr_name,
+            "start": start,
+            "end": end,
+        }
 
-        for stat_name in self.feature_config.root.keys():
-            if not self.feature_config.root[stat_name]:
-                continue
-            stat_cls = STAT_METHODS.get(stat_name)
-            if stat_cls is None:
-                raise ValueError(f"Unsupported statistic: {stat_name}")
-            stat_params = {}
-            stat_params.update(**params)
-            if isinstance(self.feature_config.root[stat_name], dict):
-                stat_params.update(**self.feature_config.root[stat_name])
-            items.update(stat_cls.compute(**stat_params))
+        stat_params = {}
+        stat_params.update(**params)
+        if isinstance(self.feature_config.root.get("sstar"), dict):
+            stat_params.update(**self.feature_config.root["sstar"])
+        sstar_res = Sstar.compute(**stat_params)
+        items.update(sstar_res)
 
         fmtted_res = self._fmt_res(
             res=items,
@@ -192,83 +182,6 @@ class FeatureVectorPreprocessor:
                 else self.samples["tgt"][i]
             )
             sample_dict["Sample"] = sample
-
-            if "sstar" in res.keys():
-                sample_dict["Sstar"] = res["sstar"][i]
-            if "private_mutation" in res.keys():
-                sample_dict["Private_mutation"] = res["private_mutation"][i]
-            if "spectrum" in res.keys():
-                for j, value in enumerate(res["spectrum"][i]):
-                    sample_dict[f"{j}_ton"] = value
-
-            for pop in ["ref", "tgt"]:
-                if f"{pop}_dist" in self.feature_config.root.keys():
-                    sample_dict.update(
-                        self._fmt_dist_res(
-                            row=res,
-                            idx=i,
-                            is_phased=is_phased,
-                            ploidy=ploidy,
-                            pop=pop,
-                        )
-                    )
+            sample_dict["Sstar"] = res["sstar"][i]
 
         return sample_dicts
-
-    def _fmt_dist_res(
-        self,
-        row: dict[str, Any],
-        idx: int,
-        is_phased: bool,
-        ploidy: int,
-        pop: str,
-    ) -> dict[str, float]:
-        """
-        Formats distance-related results for a single sample and population (reference or target).
-
-        Parameters
-        ----------
-        row : dict[str, Any]
-            A dictionary containing results for a genomic window.
-        idx : int
-            The index of the sample in the target list.
-        is_phased : bool
-            Indicates whether the genomic data is phased.
-        ploidy : int
-            The ploidy of the samples being processed.
-        pop : str
-            Indicates the population type ('Ref' or 'Tgt') for which distances are being formatted.
-
-        Returns
-        -------
-        dict[str, float]
-            A dictionary with keys for each distance-related feature and values for the current sample.
-
-        """
-        items = dict()
-
-        for feature in [
-            "Minimum",
-            "Maximum",
-            "Mean",
-            "Median",
-            "Variance",
-            "Skew",
-            "Kurtosis",
-        ]:
-            if f"{feature}_{pop}_dist" in row.keys():
-                items[f"{feature}_{pop}_dist"] = row[f"{feature}_{pop}_dist"][idx]
-
-        if f"All_{pop}_dist" in row.keys():
-            if is_phased:
-                for j in range(len(row[f"All_{pop}_dist"][idx])):
-                    sample = self.samples[pop][int(j / ploidy)]
-                    items[f"{pop}_dist_{sample}_{j%ploidy+1}"] = row[f"All_{pop}_dist"][
-                        idx
-                    ][j]
-            else:
-                for j in range(len(row[f"All_{pop}_dist"][idx])):
-                    sample = self.samples[pop][j]
-                    items[f"{pop}_dist_{sample}"] = row[f"All_{pop}_dist"][idx][j]
-
-        return items
