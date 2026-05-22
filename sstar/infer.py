@@ -53,7 +53,7 @@ def infer(
     preprocess(
         **global_config.preprocess.model_dump(),
     )
-    data = f"{global_config.preprocess.output_dir}/{global_config.preprocess.output_prefix}.features"
+    data = str(global_config.preprocess.output_file)
 
     model_name = global_config.model.name
     model_params = global_config.model.params
