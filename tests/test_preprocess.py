@@ -22,8 +22,8 @@ import pandas as pd
 from sstar.preprocess import preprocess
 
 
-def test_preprocess(tmp_path):
-    output_file = tmp_path / "check.sstar.tsv"
+def test_preprocess_unphased(tmp_path):
+    output_file = tmp_path / "check.sstar.unphased.tsv"
 
     preprocess(
         vcf_file="tests/data/test.vcf",
@@ -39,7 +39,9 @@ def test_preprocess(tmp_path):
     )
 
     df = pd.read_csv(output_file, sep="\t")
-    df_expected = pd.read_csv("tests/data/test.sstar.expected.tsv", sep="\t")
+    df_expected = pd.read_csv(
+        "tests/results/test.sstar.unphased.expected.tsv", sep="\t"
+    )
 
     pd.testing.assert_frame_equal(
         df,
@@ -47,5 +49,34 @@ def test_preprocess(tmp_path):
         check_dtype=False,
         check_exact=False,
         rtol=1e-6,
-        atol=1e-8, 
+        atol=1e-8,
+    )
+
+
+def test_preprocess_phased(tmp_path):
+    output_file = tmp_path / "check.sstar.phased.tsv"
+
+    preprocess(
+        vcf_file="tests/data/test.vcf",
+        chr_name="21",
+        ref_ind_file="tests/data/test.ref.ind.list",
+        tgt_ind_file="tests/data/test.tgt.ind.list",
+        win_len=50000,
+        win_step=10000,
+        feature_config_file="tests/data/sstar.yaml",
+        output_file=output_file,
+        nprocess=1,
+        is_phased=True,
+    )
+
+    df = pd.read_csv(output_file, sep="\t")
+    df_expected = pd.read_csv("tests/results/test.sstar.phased.expected.tsv", sep="\t")
+
+    pd.testing.assert_frame_equal(
+        df,
+        df_expected,
+        check_dtype=False,
+        check_exact=False,
+        rtol=1e-6,
+        atol=1e-8,
     )

@@ -46,7 +46,7 @@ def test_run_calls_sstar_compute_and_formats_output(tmp_path, monkeypatch):
 
     def fake_compute(**kwargs):
         captured.update(kwargs)
-        return {"sstar": np.array([42.0])}
+        return {"sstar": np.array([42.0]), "region_ind_SNP_number": np.array([1000])}
 
     monkeypatch.setattr("sstar.feature_vector_preprocessor.Sstar.compute", fake_compute)
 
@@ -76,5 +76,6 @@ def test_run_calls_sstar_compute_and_formats_output(tmp_path, monkeypatch):
             "End": 20,
             "Sample": "tgt1",
             "Sstar": 42.0,
+            "Region_ind_SNP_number": 1000,
         }
     ]

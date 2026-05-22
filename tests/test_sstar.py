@@ -28,20 +28,21 @@ def test_sstar_all_zero_returns_zero():
     pos = np.array([10, 50, 100], dtype=int)
 
     out = Sstar.compute(ref_gts=ref, tgt_gts=tgt, pos=pos)["sstar"]
-    assert out == [0.0, 0.0]
+    assert out == [np.nan, np.nan]
 
 
 def test_sstar_two_matching_loci_far_apart_gives_bonus_plus_distance():
-    ref = np.zeros((2, 2), dtype=int)
+    ref = np.zeros((3, 2), dtype=int)
     tgt = np.array(
         [
             [1, 1],  # site 0
-            [1, 1],  # site 1
+            [2, 0],  # site 1
+            [1, 1],  # site 2
         ],
         dtype=int,
     )  # shape (n_sites=2, n_samples=2)
 
-    pos = np.array([0, 100], dtype=int)
+    pos = np.array([0, 50, 100], dtype=int)
     match_bonus = 5000
     expected = 100 + match_bonus
 
@@ -50,34 +51,50 @@ def test_sstar_two_matching_loci_far_apart_gives_bonus_plus_distance():
     ]
     assert len(out) == 2
     assert out[0] == expected
-    assert out[1] == expected
+    assert np.isnan(out[1])
 
 
-def test_sstar_close_positions_or_singletons_yield_zero():
-    ref = np.zeros((2, 2), dtype=int)
+def test_sstar_close_positions_or_too_few_loci_yield_nan():
+    ref = np.zeros((3, 2), dtype=int)
+
     tgt_close = np.array(
         [
             [1, 1],
             [1, 1],
+            [1, 1],
         ],
         dtype=int,
     )
-    pos_close = np.array([0, 5], dtype=int)  # < 10
-    out_close = Sstar.compute(ref_gts=ref, tgt_gts=tgt_close, pos=pos_close)["sstar"]
-    assert out_close == [0.0, 0.0]
+    pos_close = np.array([0, 5, 8], dtype=int)  # all pair distances < 10
 
-    tgt_singletons = np.array(
+    out_close = Sstar.compute(
+        ref_gts=ref,
+        tgt_gts=tgt_close,
+        pos=pos_close,
+    )["sstar"]
+
+    assert len(out_close) == 2
+    assert np.all(np.isnan(out_close))
+
+    ref = np.zeros((2, 2), dtype=int)
+
+    tgt_too_few = np.array(
         [
-            [1, 0],  # site 0
-            [0, 1],  # site 1
+            [1, 0],
+            [0, 1],
         ],
         dtype=int,
     )
     pos_any = np.array([0, 100], dtype=int)
-    out_single = Sstar.compute(ref_gts=ref, tgt_gts=tgt_singletons, pos=pos_any)[
-        "sstar"
-    ]
-    assert out_single == [0.0, 0.0]
+
+    out_too_few = Sstar.compute(
+        ref_gts=ref,
+        tgt_gts=tgt_too_few,
+        pos=pos_any,
+    )["sstar"]
+
+    assert len(out_too_few) == 2
+    assert np.all(np.isnan(out_too_few))
 
 
 def test_sstar_missing_params():
