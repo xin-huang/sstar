@@ -20,7 +20,7 @@
 import os, random, shutil
 
 import pandas as pd
-from sstar import mp_manager
+from sstar.mp_manager import mp_manager
 from sstar.generators import RandomNumberGenerator
 from sstar.msprime_simulator import MsprimeSimulator
 

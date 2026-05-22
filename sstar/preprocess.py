@@ -19,7 +19,7 @@
 
 import os
 import pandas as pd
-from sstar import mp_manager
+from sstar.mp_manager import mp_manager
 from sstar.generators import WindowDataGenerator
 from sstar.feature_vector_preprocessor import FeatureVectorPreprocessor
 
