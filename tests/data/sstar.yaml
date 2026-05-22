@@ -1,0 +1,4 @@
+sstar:
+  match_bonus: 5000
+  max_mismatch: 5
+  mismatch_penalty: -10000

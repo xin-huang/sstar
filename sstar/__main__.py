@@ -18,8 +18,9 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 import argparse
-#import sstar.models
-#import sstar.stats
+
+# import sstar.models
+# import sstar.stats
 from sstar import __version__
 from sstar.parsers.train_parser import add_train_parser
 from sstar.parsers.infer_parser import add_infer_parser

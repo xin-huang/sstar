@@ -181,8 +181,6 @@ class MsprimeSimulator:
             with open(seed_file, "w") as o:
                 o.write(f"{seed}\n")
 
-
-
         window_data_generator = WindowDataGenerator(
             vcf_file=vcf_file,
             ref_ind_file=ref_ind_file,

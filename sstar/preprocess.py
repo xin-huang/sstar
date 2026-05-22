@@ -107,4 +107,4 @@ def preprocess(
     output_dir = os.path.dirname(output_file)
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
-    pd.DataFrame(res).to_csv(output_file, sep="\t", index=False)
+    pd.DataFrame(res).to_csv(output_file, sep="\t", index=False, na_rep="NA")

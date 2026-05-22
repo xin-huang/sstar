@@ -19,7 +19,8 @@
 
 import argparse
 from sstar.parsers.argument_validation import existed_file
-#from sstar.infer import infer
+
+# from sstar.infer import infer
 
 
 def _run_infer(args: argparse.Namespace) -> None:
@@ -32,11 +33,11 @@ def _run_infer(args: argparse.Namespace) -> None:
         A namespace object obtained from argparse, containing specified parameters.
     """
     pass
-    #infer(
+    # infer(
     #    model=args.model,
     #    config=args.config,
     #    output=args.output,
-    #)
+    # )
 
 
 def add_infer_parser(subparsers: argparse.ArgumentParser) -> None:

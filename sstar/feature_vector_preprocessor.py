@@ -183,5 +183,6 @@ class FeatureVectorPreprocessor:
             )
             sample_dict["Sample"] = sample
             sample_dict["Sstar"] = res["sstar"][i]
+            sample_dict["Region_ind_SNP_number"] = res["region_ind_SNP_number"][i]
 
         return sample_dicts

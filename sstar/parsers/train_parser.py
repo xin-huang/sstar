@@ -19,7 +19,8 @@
 
 import argparse
 from sstar.parsers.argument_validation import existed_file
-#from sstar.train import train
+
+# from sstar.train import train
 
 
 def _run_train(args: argparse.Namespace) -> None:
@@ -32,15 +33,15 @@ def _run_train(args: argparse.Namespace) -> None:
         A namespace object obtained from argparse, containing specified parameters.
     """
     pass
-    #if not args.only_simulation and args.output is None:
+    # if not args.only_simulation and args.output is None:
     #    raise ValueError("`--output` is required unless `--only-simulation` is set.")
-    
-    #train(
+
+    # train(
     #    demes=args.demes,
     #    config=args.config,
     #    output=args.output,
     #    only_simulation=args.only_simulation,
-    #)
+    # )
 
 
 def add_train_parser(subparsers: argparse.ArgumentParser) -> None:
