@@ -24,10 +24,6 @@ from sstar.configs import FeatureConfig
 from sstar.sstar import Sstar
 from sstar.utils import parse_ind_file
 
-STAT_METHODS: dict[str, type] = {
-    "sstar": Sstar,
-}
-
 
 class FeatureVectorPreprocessor:
     """
@@ -120,27 +116,21 @@ class FeatureVectorPreprocessor:
         params = {
             "ref_gts": ref_gts,
             "tgt_gts": tgt_gts,
-            "is_phased": is_phased,
-            "ploidy": ploidy,
             "pos": pos,
         }
 
-        items = dict()
-        items["chr_name"] = chr_name
-        items["start"] = start
-        items["end"] = end
+        items = {
+            "chr_name": chr_name,
+            "start": start,
+            "end": end,
+        }
 
-        for stat_name in self.feature_config.root.keys():
-            if not self.feature_config.root[stat_name]:
-                continue
-            stat_cls = STAT_METHODS.get(stat_name)
-            if stat_cls is None:
-                raise ValueError(f"Unsupported statistic: {stat_name}")
-            stat_params = {}
-            stat_params.update(**params)
-            if isinstance(self.feature_config.root[stat_name], dict):
-                stat_params.update(**self.feature_config.root[stat_name])
-            items.update(stat_cls.compute(**stat_params))
+        stat_params = {}
+        stat_params.update(**params)
+        if isinstance(self.feature_config.root.get("sstar"), dict):
+            stat_params.update(**self.feature_config.root["sstar"])
+        sstar_res = Sstar.compute(**stat_params)
+        items.update(sstar_res)
 
         fmtted_res = self._fmt_res(
             res=items,
