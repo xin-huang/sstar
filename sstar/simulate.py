@@ -38,8 +38,7 @@ def simulate(
     mut_rate: float,
     rec_rate: float,
     feature_config_file: str,
-    output_prefix: str,
-    output_dir: str,
+    output_file: str,
     nfeature: int,
     is_phased: bool,
     is_shuffled: bool,
@@ -78,10 +77,8 @@ def simulate(
         Recombination rate per base pair per generation.
     feature_config_file : str
         Path to the YAML configuration file specifying features to compute.
-    output_prefix : str
-        Prefix for output files.
-    output_dir : str
-        Directory to save output files.
+    output_file : str
+        Output TSV file path for simulated features.
     nfeature : int
         Total number of features to generate.
     is_phased : bool
@@ -112,8 +109,10 @@ def simulate(
     if nfeature <= 0:
         raise ValueError("nfeature must be positive.")
 
-    os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, f"{output_prefix}.tsv")
+    output_dir = os.path.dirname(output_file)
+    output_prefix = os.path.splitext(os.path.basename(output_file))[0]
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
 
     simulator = MsprimeSimulator(
         demo_model_file=demo_model_file,
