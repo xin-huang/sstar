@@ -17,15 +17,14 @@ simulation:
   seed: 12345
 
 preprocessing:
-  vcf_file: "tests/expected_results/simulators/MsprimeSimulator/0/test.0.vcf"
-  chr_name: "1"
-  ref_ind_file: "tests/expected_results/simulators/MsprimeSimulator/0/test.0.ref.ind.list"
-  tgt_ind_file: "tests/expected_results/simulators/MsprimeSimulator/0/test.0.tgt.ind.list"
+  vcf_file: "tests/data/test.vcf"
+  chr_name: "21"
+  ref_ind_file: "tests/data/test.ref.ind.list"
+  tgt_ind_file: "tests/data/test.tgt.ind.list"
   win_len: 50000
   win_step: 50000
   is_phased: True
   feature_config_file: "tests/data/sstar.yaml"
-  output_file: "check/sstar2.qr.pred.tsv"
   nprocess: 2
   ploidy: 2
 

@@ -19,6 +19,7 @@
 
 
 import inspect, joblib, os
+import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingRegressor
 
@@ -48,6 +49,26 @@ def infer(
     data: str,
     model: str,
     output: str,
-    **model_params,
+    bed_file: str,
 ) -> None:
-    pass
+    """ """
+    df = pd.read_csv(data, sep="\t")
+    mask = df["Region_ind_SNP_number"].notna()
+    df["Predicted_S*_score"] = np.nan
+    model = joblib.load(model)
+    df.loc[mask, "Predicted_S*_score"] = model.predict(
+        df.loc[mask, ["Region_ind_SNP_number"]]
+    )
+
+    df.sort_values(by=["Sample", "Chromosome", "Start", "End"]).to_csv(
+        output, sep="\t", index=False, na_rep="NA"
+    )
+
+    bed = df.loc[
+        df["S*_score"] > df["Predicted_S*_score"],
+        ["Chromosome", "Start", "End", "Sample"],
+    ].copy()
+
+    bed["Start"] = bed["Start"] - 1
+
+    bed.to_csv(bed_file, sep="\t", index=False, header=False)

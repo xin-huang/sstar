@@ -17,17 +17,21 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
+
+import os
 import yaml
+import sstar.quantile_regression as qr
 from sstar.configs import GlobalConfig
-from sstar.registries.model_registry import MODEL_REGISTRY
 from sstar.preprocess import preprocess
-from sstar.utils import UniqueKeyLoader, filter_model_params_for_method
+from sstar.utils import UniqueKeyLoader
 
 
 def infer(
     model: str,
     config: str,
-    output: str,
+    feat_file: str,
+    pred_file: str,
+    tract_file: str,
 ) -> None:
     """
     Run feature preprocessing and model-based inference from a YAML configuration.
@@ -50,18 +54,15 @@ def infer(
         raise ValueError(f"Error parsing YAML configuration file '{config}': {e}")
 
     global_config = GlobalConfig(**config_dict)
-    preprocess(
-        **global_config.preprocess.model_dump(),
-    )
-    data = str(global_config.preprocess.output_file)
 
-    model_name = global_config.model.name
-    model_params = global_config.model.params
-    model_cls = MODEL_REGISTRY.get(model_name)
-    model_params = filter_model_params_for_method(model_cls.infer, model_params)
-    model_cls.infer(
-        data=data,
+    preprocess(
+        output_file=feat_file,
+        **global_config.preprocessing.model_dump(),
+    )
+
+    qr.infer(
+        data=feat_file,
         model=model,
-        output=output,
-        **model_params,
+        output=pred_file,
+        bed_file=tract_file,
     )

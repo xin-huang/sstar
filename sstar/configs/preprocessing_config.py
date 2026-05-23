@@ -33,9 +33,6 @@ class PreprocessingConfig(BaseModel):
     ref_ind_file: Path = Field(..., description="Path to reference individual ID list")
     tgt_ind_file: Path = Field(..., description="Path to target individual ID list")
 
-    # Output
-    output_file: Path = Field(..., description="Path to output feature file")
-
     # Parallelization / data properties
     nprocess: int = Field(
         1,
@@ -62,9 +59,3 @@ class PreprocessingConfig(BaseModel):
     feature_config_file: Path = Field(
         ..., description="Path to feature configuration YAML/JSON"
     )
-
-    @field_validator("output_file")
-    @classmethod
-    def _ensure_output_file(cls, p: Path) -> Path:
-        """Normalize output_file to an absolute path without creating parent dir."""
-        return p.expanduser().resolve()
