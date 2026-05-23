@@ -29,8 +29,7 @@ from sstar.utils import UniqueKeyLoader
 def train(
     demes: str,
     config: str,
-    output: str | None,
-    only_simulation: bool = False,
+    output: str,
 ) -> None:
     """
     Run simulation and model training from YAML configuration.
@@ -41,13 +40,9 @@ def train(
         Path to the demography (demes) YAML file used for simulation.
     config : str
         Path to the sstar configuration YAML file.
-    output : str, optional
-        Output path or directory passed to the model's `train` method, used
-        to store the trained model. Required when `only_simulation=False`.
-        Default: None.
-    only_simulation : bool, optional
-        If True, run simulation checks/simulation only and skip model
-        training. Default: False.
+    output : str
+        Output path passed to the model's `train` method, used to store
+        the trained model and derive simulation feature outputs.
     """
     try:
         with open(config, "r") as f:
@@ -58,11 +53,6 @@ def train(
         raise ValueError(f"Error parsing YAML configuration file '{config}': {e}")
 
     global_config = GlobalConfig(**config_dict)
-
-    if output is None:
-        if only_simulation:
-            return
-        raise ValueError("`output` is required unless `only_simulation=True`.")
 
     output_dir = os.path.dirname(str(output))
     output_prefix = os.path.splitext(os.path.basename(str(output)))[0]
@@ -79,9 +69,6 @@ def train(
             output_prefix=output_prefix,
             **global_config.simulation.model_dump(),
         )
-
-    if only_simulation:
-        return
 
     qr.train(
         data=data,

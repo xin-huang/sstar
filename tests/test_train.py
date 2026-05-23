@@ -18,7 +18,6 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 
-import pytest
 import pandas as pd
 from sstar.train import train
 
@@ -50,11 +49,3 @@ def test_train(tmp_path):
     assert output_file.exists(), f"{output_file} was not created"
     assert output_file.is_file(), f"{output_file} is not a file"
 
-
-def test_train_only_simulation_without_output():
-    train(
-        demes="tests/data/ArchIE_3D19_wo_intro.yaml",
-        config="tests/data/test.config.yaml",
-        output=None,
-        only_simulation=True,
-    )
