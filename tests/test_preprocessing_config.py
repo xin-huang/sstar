@@ -17,27 +17,23 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-from pydantic import BaseModel, ConfigDict
-from sstar.configs import ModelConfig
-from sstar.configs import SimulationConfig
-from sstar.configs import PreprocessingConfig
+
+from pathlib import Path
+
+from sstar.configs.preprocessing_config import PreprocessingConfig
 
 
-class GlobalConfig(BaseModel):
-    """
-    Top-level config for runing sstar
+def test_preprocess_config_normalizes_output_file(tmp_path):
+    rel_out = tmp_path / "nested" / "sample.features"
+    cfg = PreprocessingConfig(
+        vcf_file=tmp_path / "input.vcf",
+        chr_name="chr1",
+        ref_ind_file=tmp_path / "ref.txt",
+        tgt_ind_file=tmp_path / "tgt.txt",
+        output_file=rel_out,
+        win_len=1000,
+        win_step=500,
+        feature_config_file=tmp_path / "feature.yml",
+    )
 
-    - training: simulation + model details.
-    - infer: preprocess + model details.
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    # Simulation block
-    simulation: SimulationConfig
-
-    # Preprocess block
-    preprocessing: PreprocessingConfig
-
-    # Model choice
-    model: ModelConfig
+    assert cfg.output_file == Path(rel_out).expanduser().resolve()

@@ -35,7 +35,6 @@ class SimulationConfig(BaseModel):
     # Population IDs
     ref_id: str = Field(..., description="Reference population label")
     tgt_id: str = Field(..., description="Target population label")
-    src_id: str = Field(..., description="Source population label")
 
     # Genomic parameters
     ploidy: int = Field(..., gt=0, description="Ploidy of samples")

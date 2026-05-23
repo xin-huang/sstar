@@ -18,13 +18,34 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 
+import inspect, joblib, os
 import pandas as pd
 from sklearn.ensemble import GradientBoostingRegressor
 
 
-def train():
-    pass
+def train(
+    data: str,
+    output: str,
+    **model_params,
+) -> None:
+    """ """
+    is_allowed = inspect.signature(GradientBoostingRegressor).parameters
+    clean_params = {k: v for k, v in model_params.items() if k in is_allowed}
+
+    df = pd.read_csv(data, sep="\t").dropna(subset=["S*_score"])
+    x = df["Region_ind_SNP_number"].copy()
+    y = df["S*_score"].copy()
+
+    model = GradientBoostingRegressor(**clean_params)
+    model.fit(x, y)
+
+    joblib.dump(model, output)
 
 
-def infer():
+def infer(
+    data: str,
+    model: str,
+    output: str,
+    **model_params,
+) -> None:
     pass

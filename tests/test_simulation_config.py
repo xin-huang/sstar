@@ -30,7 +30,6 @@ def test_simulation_config_normalizes_output_file(tmp_path):
         ntgt=2,
         ref_id="REF",
         tgt_id="TGT",
-        src_id="SRC",
         ploidy=2,
         is_phased=True,
         seq_len=1000,

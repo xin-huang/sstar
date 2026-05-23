@@ -22,7 +22,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class PreprocessConfig(BaseModel):
+class PreprocessingConfig(BaseModel):
     """Configuration for preprocessing data."""
 
     model_config = ConfigDict(extra="forbid")

@@ -17,19 +17,19 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
+
 import os
 import yaml
-from typing import Optional
 from sstar.configs import GlobalConfig
-from sstar.registries.model_registry import MODEL_REGISTRY
+from sstar.quantile_regression import train
 from sstar.simulate import simulate
-from sstar.utils import UniqueKeyLoader, filter_model_params_for_method
+from sstar.utils import UniqueKeyLoader
 
 
 def train(
     demes: str,
     config: str,
-    output: Optional[str] = None,
+    output: str | None,
     only_simulation: bool = False,
 ) -> None:
     """
@@ -60,13 +60,10 @@ def train(
     global_config = GlobalConfig(**config_dict)
     data = str(global_config.simulation.output_file)
     if not os.path.exists(data):
-        print("Training data is not found. Perform simulation.")
-        simulation_params = filter_model_params_for_method(
-            simulate, global_config.simulation.model_dump()
-        )
+        print("Training data is not found. Performing simulation ...")
         simulate(
             demo_model_file=demes,
-            **simulation_params,
+            **global_config.simulation.model_dump(),
         )
 
     if only_simulation:
@@ -74,12 +71,8 @@ def train(
     if output is None:
         raise ValueError("`output` is required unless `only_simulation=True`.")
 
-    model_name = global_config.model.name
-    model_params = global_config.model.params
-    model_cls = MODEL_REGISTRY.get(model_name)
-    model_params = filter_model_params_for_method(model_cls.train, model_params)
-    model_cls.train(
+    train(
         data=data,
         output=output,
-        **model_params,
+        **global_config.model.params,
     )
