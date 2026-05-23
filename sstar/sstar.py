@@ -17,9 +17,9 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
+
 import numpy as np
 from typing import Any
-from scipy.spatial import distance_matrix
 
 
 class Sstar:

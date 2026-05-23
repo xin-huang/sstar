@@ -17,10 +17,10 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
+
 import multiprocessing, queue, time
-import numpy as np
 from sstar.generators import GenericGenerator
-from multiprocessing import current_process, Manager, Process, Queue
+from multiprocessing import current_process, Manager, Process
 from threading import Thread
 
 

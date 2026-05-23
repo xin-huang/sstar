@@ -18,7 +18,7 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 
-import inspect, joblib, os
+import inspect, joblib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingRegressor

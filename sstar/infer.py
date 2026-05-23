@@ -18,7 +18,6 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 
-import os
 import yaml
 import sstar.quantile_regression as qr
 from sstar.configs import GlobalConfig

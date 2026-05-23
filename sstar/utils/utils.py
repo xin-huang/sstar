@@ -37,7 +37,7 @@ def parse_ind_file(filename: str) -> list[str]:
         Sample information read from the file.
     """
     f = open(filename, "r")
-    samples = [l.rstrip() for l in f.readlines()]
+    samples = [line.rstrip() for line in f.readlines()]
     f.close()
 
     if len(samples) == 0:
@@ -79,7 +79,7 @@ def read_geno_data(
     ref = vcf["variants/REF"]
     alt = vcf["variants/ALT"]
 
-    if anc_allele_file != None:
+    if anc_allele_file is not None:
         anc_allele = read_anc_allele(anc_allele_file)
     data = dict()
     for c in chr_names:
@@ -95,7 +95,7 @@ def read_geno_data(
         if filter_missing:
             index = data[c]["GT"].count_missing(axis=1) == len(samples)
             data = filter_data(data, c, ~index)
-        if anc_allele_file != None:
+        if anc_allele_file is not None:
             data = check_anc_allele(data, anc_allele, c)
 
     return data
@@ -184,7 +184,6 @@ def read_data(
             )
             fixed_index = np.logical_and(ref_fixed_variants, tgt_fixed_variants)
             index = np.logical_not(fixed_index)
-            fixed_pos = ref_data[c]["POS"][fixed_index]
             ref_data = filter_data(ref_data, c, index)
             tgt_data = filter_data(tgt_data, c, index)
 
@@ -253,7 +252,7 @@ def read_anc_allele(anc_allele_file):
             anc_allele[e[0]][int(e[2])] = e[3]
 
     if not anc_allele:
-        raise Exception(f"No ancestral allele is found! Please check your data.")
+        raise Exception("No ancestral allele is found! Please check your data.")
 
     return anc_allele
 

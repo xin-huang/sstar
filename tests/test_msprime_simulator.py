@@ -18,7 +18,6 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 
-import pytest
 import pandas as pd
 from sstar.msprime_simulator import MsprimeSimulator
 

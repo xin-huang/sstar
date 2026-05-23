@@ -17,9 +17,8 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-import pytest, queue, time
+
 import numpy as np
-from multiprocessing import current_process, Queue
 from sstar.mp_manager import mp_manager
 from sstar.generators import RandomNumberGenerator
 
@@ -37,7 +36,7 @@ class FailureJob:
         self.item = item
 
     def run(self, rep, seed):
-        raise Exception(f"Simulating failure by stopping.")
+        raise Exception("Simulating failure by stopping.")
 
 
 def test_mp_manager():
@@ -89,7 +88,7 @@ def test_mp_manager_failure(capfd):
     generator = RandomNumberGenerator(nrep=5)
 
     job = FailureJob("Hello")
-    results = mp_manager(job=job, data_generator=generator, nprocess=nprocess)
+    mp_manager(job=job, data_generator=generator, nprocess=nprocess)
 
     # Use capfd to capture stdout and stderr
     captured = capfd.readouterr()

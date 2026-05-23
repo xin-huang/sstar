@@ -170,7 +170,7 @@ class FeatureVectorPreprocessor:
         sample_dicts = [base_dict.copy() for _ in range(num_samples)]
         for i, sample_dict in enumerate(sample_dicts):
             sample = (
-                f'{self.samples["tgt"][i//ploidy]}_{i%ploidy+1}'
+                f'{self.samples["tgt"][i//ploidy]}_{i % ploidy+1}'
                 if is_phased
                 else self.samples["tgt"][i]
             )

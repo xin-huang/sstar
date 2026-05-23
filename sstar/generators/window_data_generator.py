@@ -17,7 +17,7 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-import numpy as np
+
 from sstar.utils import read_data, split_genome
 from sstar.generators import GenericGenerator
 
