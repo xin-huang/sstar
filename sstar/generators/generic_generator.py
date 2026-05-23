@@ -27,7 +27,6 @@ class GenericGenerator(ABC):
     This class defines a common interface for data generation. Subclasses
     must implement the get method to generate data according to specific
     requirements or configurations provided via keyword arguments.
-
     """
 
     @abstractmethod
@@ -45,6 +44,5 @@ class GenericGenerator(ABC):
         Returns:
         The generated data, the format and type of which are determined by the
         subclass implementation.
-
         """
         pass

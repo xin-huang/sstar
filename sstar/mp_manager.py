@@ -48,7 +48,6 @@ def monitor(shared_dict: dict, workers: list[multiprocessing.Process]) -> None:
     - In case of a worker failure (process is no longer alive but hasn't marked 'Completed'),
       `terminate_all_workers` is called to gracefully shutdown all workers.
     - The function uses a 1-second interval for periodic checks to balance responsiveness with efficiency.
-
     """
     while True:
         # alive_workers = [worker.name for worker in workers if worker.is_alive()]
@@ -89,7 +88,6 @@ def terminate_all_workers(workers: list[multiprocessing.Process]) -> None:
       all work has been completed.
     - It first sends a `terminate` signal to each worker and then waits for each process to join,
       guaranteeing that no worker process is left hanging.
-
     """
     for w in workers:
         w.terminate()
@@ -142,7 +140,6 @@ def mp_manager(
       for task distribution and worker status monitoring.
     - To ensure smooth termination and cleanup, a monitoring thread is used to join all worker
       processes, and `cleanup_on_sigterm` is called to handle sudden terminations gracefully.
-
     """
     try:
         from pytest_cov.embed import cleanup_on_sigterm
@@ -231,7 +228,6 @@ def mp_worker(
       and exits.
     - If an exception occurs, it marks itself as 'Failed' and posts the error to `out_queue`
       before breaking the loop and terminating.
-
     """
     process_name = current_process().name
     shared_dict[process_name] = "Started"
