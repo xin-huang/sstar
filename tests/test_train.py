@@ -29,6 +29,9 @@ def test_train(tmp_path):
         demes="tests/data/ArchIE_3D19_wo_intro.yaml",
         config="tests/data/test.config.yaml",
         output=output_file,
+        match_bonus=5000,
+        max_mismatch=5,
+        mismatch_penalty=-10000,
     )
 
     train_features_file = tmp_path / "check.qr.training.features.tsv"

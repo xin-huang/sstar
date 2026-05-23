@@ -30,9 +30,9 @@ def train(
     demes: str,
     config: str,
     output: str,
-    match_bonus: int = 5000,
-    max_mismatch: int = 5,
-    mismatch_penalty: int = -10000,
+    match_bonus: int,
+    max_mismatch: int,
+    mismatch_penalty: int,
 ) -> None:
     """
     Run simulation and model training from YAML configuration.

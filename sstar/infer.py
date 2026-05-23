@@ -32,9 +32,9 @@ def infer(
     feat_file: str,
     pred_file: str,
     tract_file: str,
-    match_bonus: int = 5000,
-    max_mismatch: int = 5,
-    mismatch_penalty: int = -10000,
+    match_bonus: int,
+    max_mismatch: int,
+    mismatch_penalty: int,
 ) -> None:
     """
     Run feature preprocessing and model-based inference from a YAML configuration.
