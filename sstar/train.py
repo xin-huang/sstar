@@ -60,9 +60,7 @@ def train(
     global_config = GlobalConfig(**config_dict)
 
     if output is None:
-        if only_simulation:
-            return
-        raise ValueError("`output` is required unless `only_simulation=True`.")
+        raise ValueError("`output` is required.")
 
     output_dir = os.path.dirname(str(output))
     output_prefix = os.path.splitext(os.path.basename(str(output)))[0]
