@@ -30,6 +30,9 @@ def train(
     demes: str,
     config: str,
     output: str,
+    match_bonus: int = 5000,
+    max_mismatch: int = 5,
+    mismatch_penalty: int = -10000,
 ) -> None:
     """
     Run simulation and model training from YAML configuration.
@@ -43,6 +46,12 @@ def train(
     output : str
         Output path passed to the model's `train` method, used to store
         the trained model and derive simulation feature outputs.
+    match_bonus : int
+        S* `match_bonus` used during simulation/preprocessing.
+    max_mismatch : int
+        S* `max_mismatch` used during simulation/preprocessing.
+    mismatch_penalty : int
+        S* `mismatch_penalty` used during simulation/preprocessing.
     """
     try:
         with open(config, "r") as f:
@@ -53,7 +62,6 @@ def train(
         raise ValueError(f"Error parsing YAML configuration file '{config}': {e}")
 
     global_config = GlobalConfig(**config_dict)
-
     output_dir = os.path.dirname(str(output))
     output_prefix = os.path.splitext(os.path.basename(str(output)))[0]
     if output_dir:
@@ -67,6 +75,9 @@ def train(
             demo_model_file=demes,
             output_dir=output_dir,
             output_prefix=output_prefix,
+            match_bonus=match_bonus,
+            max_mismatch=max_mismatch,
+            mismatch_penalty=mismatch_penalty,
             **global_config.simulation.model_dump(),
         )
 

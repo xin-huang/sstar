@@ -10,7 +10,6 @@ simulation:
   ploidy: 2
   is_phased: True
   nfeature: 100
-  feature_config_file: "tests/data/sstar.yaml"
   is_shuffled: False
   nprocess: 2
   seed: 12345
@@ -23,7 +22,6 @@ preprocessing:
   win_len: 50000
   win_step: 50000
   is_phased: True
-  feature_config_file: "tests/data/sstar.yaml"
   nprocess: 2
   ploidy: 2
 

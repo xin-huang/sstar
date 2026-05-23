@@ -25,21 +25,16 @@ from sstar.feature_vector_preprocessor import FeatureVectorPreprocessor
 def test_run_calls_sstar_compute_and_formats_output(tmp_path, monkeypatch):
     ref_ind = tmp_path / "ref.ind"
     tgt_ind = tmp_path / "tgt.ind"
-    feat_yaml = tmp_path / "feature.yaml"
 
     ref_ind.write_text("ref1\n")
     tgt_ind.write_text("tgt1\n")
-    feat_yaml.write_text(
-        "sstar:\n"
-        "  match_bonus: 123\n"
-        "  max_mismatch: 4\n"
-        "  mismatch_penalty: -7\n"
-    )
 
     preprocessor = FeatureVectorPreprocessor(
         ref_ind_file=str(ref_ind),
         tgt_ind_file=str(tgt_ind),
-        feature_config_file=str(feat_yaml),
+        match_bonus=123,
+        max_mismatch=4,
+        mismatch_penalty=-7,
     )
 
     captured = {}

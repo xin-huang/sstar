@@ -101,3 +101,25 @@ def existed_file(value: str) -> str:
         if not os.path.isfile(value):
             raise argparse.ArgumentTypeError(f"{value} is not found")
     return value
+
+
+def non_negative_int(value: str) -> int:
+    """Validate if the provided string is a non-negative integer."""
+    try:
+        ivalue = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"{value} is not a valid integer") from exc
+    if ivalue < 0:
+        raise argparse.ArgumentTypeError(f"{value} is not a non-negative integer")
+    return ivalue
+
+
+def non_positive_int(value: str) -> int:
+    """Validate if the provided string is a non-positive integer."""
+    try:
+        ivalue = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"{value} is not a valid integer") from exc
+    if ivalue > 0:
+        raise argparse.ArgumentTypeError(f"{value} is not a non-positive integer")
+    return ivalue

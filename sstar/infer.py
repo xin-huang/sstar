@@ -32,6 +32,9 @@ def infer(
     feat_file: str,
     pred_file: str,
     tract_file: str,
+    match_bonus: int = 5000,
+    max_mismatch: int = 5,
+    mismatch_penalty: int = -10000,
 ) -> None:
     """
     Run feature preprocessing and model-based inference from a YAML configuration.
@@ -52,6 +55,12 @@ def infer(
         Path to the output tab-separated prediction table.
     tract_file : str
         Path to the output BED file containing inferred tracts.
+    match_bonus : int
+        S* `match_bonus` used during feature preprocessing.
+    max_mismatch : int
+        S* `max_mismatch` used during feature preprocessing.
+    mismatch_penalty : int
+        S* `mismatch_penalty` used during feature preprocessing.
 
     Raises
     ------
@@ -69,9 +78,11 @@ def infer(
         raise ValueError(f"Error parsing YAML configuration file '{config}': {e}")
 
     global_config = GlobalConfig(**config_dict)
-
     preprocess(
         output_file=feat_file,
+        match_bonus=match_bonus,
+        max_mismatch=max_mismatch,
+        mismatch_penalty=mismatch_penalty,
         **global_config.preprocessing.model_dump(),
     )
 

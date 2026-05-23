@@ -18,9 +18,13 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 import argparse
-from sstar.parsers.argument_validation import existed_file
-
-# from sstar.train import train
+from sstar.parsers.argument_validation import (
+    existed_file,
+    non_negative_int,
+    non_positive_int,
+    positive_int,
+)
+from sstar.train import train
 
 
 def _run_train(args: argparse.Namespace) -> None:
@@ -32,12 +36,14 @@ def _run_train(args: argparse.Namespace) -> None:
     args : argparse.Namespace
         A namespace object obtained from argparse, containing specified parameters.
     """
-    pass
-    # train(
-    #    demes=args.demes,
-    #    config=args.config,
-    #    output=args.output,
-    # )
+    train(
+        demes=args.demes,
+        config=args.config,
+        output=args.output,
+        match_bonus=args.match_bonus,
+        max_mismatch=args.max_mismatch,
+        mismatch_penalty=args.mismatch_penalty,
+    )
 
 
 def add_train_parser(subparsers: argparse.ArgumentParser) -> None:
@@ -69,5 +75,20 @@ def add_train_parser(subparsers: argparse.ArgumentParser) -> None:
         "--output",
         required=True,
         help="Path to the output file.",
+    )
+    parser.add_argument(
+        "--match-bonus", type=positive_int, default=5000, help="S* match bonus."
+    )
+    parser.add_argument(
+        "--max-mismatch",
+        type=non_negative_int,
+        default=5,
+        help="S* maximum mismatches.",
+    )
+    parser.add_argument(
+        "--mismatch-penalty",
+        type=non_positive_int,
+        default=-10000,
+        help="S* mismatch penalty.",
     )
     parser.set_defaults(runner=_run_train)

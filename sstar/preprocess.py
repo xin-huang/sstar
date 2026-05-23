@@ -31,8 +31,10 @@ def preprocess(
     tgt_ind_file: str,
     win_len: int,
     win_step: int,
-    feature_config_file: str,
     output_file: str,
+    match_bonus: int,
+    max_mismatch: int,
+    mismatch_penalty: int,
     nprocess: int = 1,
     ploidy: int = 2,
     is_phased: bool = True,
@@ -59,10 +61,14 @@ def preprocess(
         Length of the sliding window for analysis, in base pairs.
     win_step : int
         Step size for the sliding window, in base pairs.
-    feature_config_file : str
-        Path to the YAML configuration file specifying the features to be computed.
     output_file : str
         Output feature file path.
+    match_bonus : int
+        S* match bonus.
+    max_mismatch : int
+        S* maximum mismatches.
+    mismatch_penalty : int
+        S* mismatch penalty.
     nprocess : int, optional
         Number of worker processes to use for parallel processing. Default: 1.
     ploidy : int, optional
@@ -95,7 +101,9 @@ def preprocess(
     preprocessor = FeatureVectorPreprocessor(
         ref_ind_file=ref_ind_file,
         tgt_ind_file=tgt_ind_file,
-        feature_config_file=feature_config_file,
+        match_bonus=match_bonus,
+        max_mismatch=max_mismatch,
+        mismatch_penalty=mismatch_penalty,
     )
     res = mp_manager(job=preprocessor, data_generator=generator, nprocess=nprocess)
 

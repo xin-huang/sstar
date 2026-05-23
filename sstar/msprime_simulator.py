@@ -56,7 +56,9 @@ class MsprimeSimulator:
         output_prefix: str,
         output_dir: str,
         is_phased: bool,
-        feature_config_file: str,
+        match_bonus: int,
+        max_mismatch: int,
+        mismatch_penalty: int,
     ):
         """
         Initialize a new instance of MsprimeSimulator with specific parameters for msprime simulations.
@@ -107,7 +109,9 @@ class MsprimeSimulator:
         self.output_dir = output_dir
         self.test_tgt_id = self.tgt_id
         self.is_phased = is_phased
-        self.feature_config_file = feature_config_file
+        self.match_bonus = match_bonus
+        self.max_mismatch = max_mismatch
+        self.mismatch_penalty = mismatch_penalty
 
     def run(self, rep: int = None, seed: int = None) -> list[dict[str, object]]:
         """
@@ -191,7 +195,9 @@ class MsprimeSimulator:
         preprocessor = FeatureVectorPreprocessor(
             ref_ind_file=ref_ind_file,
             tgt_ind_file=tgt_ind_file,
-            feature_config_file=self.feature_config_file,
+            match_bonus=self.match_bonus,
+            max_mismatch=self.max_mismatch,
+            mismatch_penalty=self.mismatch_penalty,
         )
 
         features = preprocessor.run(**list(window_data_generator.get())[0])
