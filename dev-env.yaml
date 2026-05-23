@@ -10,7 +10,7 @@ dependencies:
   - msprime=1.4.1
   - numpy=2.4.5
   - onnx=1.19.1
-  - onnxruntime=1.23.2
+  - onnxruntime=1.26.0
   - pandas=3.0.3
   - pip=26.1.1
   - pydantic=2.12.4
