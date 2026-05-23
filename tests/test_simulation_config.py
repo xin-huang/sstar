@@ -17,13 +17,35 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-from pathlib import Path
+import pytest
 
 from sstar.configs.simulation_config import SimulationConfig
 
 
-def test_simulation_config_normalizes_output_file(tmp_path):
-    rel_out = tmp_path / "nested" / "sim.features.tsv"
+def test_simulation_config_rejects_output_file(tmp_path):
+    with pytest.raises(ValueError):
+        SimulationConfig(
+            nrep=1,
+            nref=2,
+            ntgt=2,
+            ref_id="REF",
+            tgt_id="TGT",
+            ploidy=2,
+            is_phased=True,
+            seq_len=1000,
+            mut_rate=1e-8,
+            rec_rate=1e-8,
+            nprocess=1,
+            output_file=tmp_path / "nested" / "sim.features.tsv",
+            keep_sim_data=False,
+            seed=1,
+            feature_config_file=tmp_path / "feature.yml",
+            is_shuffled=True,
+            nfeature=10,
+        )
+
+
+def test_simulation_config_without_output_file(tmp_path):
     cfg = SimulationConfig(
         nrep=1,
         nref=2,
@@ -36,7 +58,6 @@ def test_simulation_config_normalizes_output_file(tmp_path):
         mut_rate=1e-8,
         rec_rate=1e-8,
         nprocess=1,
-        output_file=rel_out,
         keep_sim_data=False,
         seed=1,
         feature_config_file=tmp_path / "feature.yml",
@@ -44,4 +65,4 @@ def test_simulation_config_normalizes_output_file(tmp_path):
         nfeature=10,
     )
 
-    assert cfg.output_file == Path(rel_out).expanduser().resolve()
+    assert cfg.nrep == 1

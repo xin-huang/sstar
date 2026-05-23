@@ -9,7 +9,6 @@ simulation:
   rec_rate: 1e-8
   ploidy: 2
   is_phased: True
-  output_file: "tests/results/check.train.features.tsv"
   nfeature: 100
   feature_config_file: "tests/data/sstar.yaml"
   is_shuffled: False
