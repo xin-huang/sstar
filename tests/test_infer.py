@@ -28,7 +28,7 @@ def test_infer(tmp_path):
     tract_file = tmp_path / "check.inferred.tracts.bed"
 
     infer(
-        model="tests/data/test.qr.model.joblib",
+        model="tests/data/test.qr.model.onnx",
         config="tests/data/test.config.yaml",
         feat_file=feat_file,
         pred_file=pred_file,
