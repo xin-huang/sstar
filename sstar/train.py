@@ -58,7 +58,7 @@ def train(
         raise ValueError(f"Error parsing YAML configuration file '{config}': {e}")
 
     global_config = GlobalConfig(**config_dict)
-    data = f"{global_config.simulation.output_dir}/{global_config.simulation.output_prefix}.tsv"
+    data = str(global_config.simulation.output_file)
     if not os.path.exists(data):
         print("Training data is not found. Perform simulation.")
         simulation_params = filter_model_params_for_method(

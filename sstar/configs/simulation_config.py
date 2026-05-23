@@ -57,8 +57,9 @@ class SimulationConfig(BaseModel):
     )
 
     # Output
-    output_prefix: str = Field(..., description="Filename prefix for outputs")
-    output_dir: Path = Field(..., description="Directory for all outputs")
+    output_file: Path = Field(
+        ..., description="Output TSV file path for simulated features"
+    )
     keep_sim_data: bool = Field(
         False,
         description="Whether to keep raw simulation data (trees, msprime/demes outputs, etc.)",
@@ -79,8 +80,8 @@ class SimulationConfig(BaseModel):
     # Features
     nfeature: int = Field(..., gt=0, description="Number of features to sample/output")
 
-    @field_validator("output_dir")
+    @field_validator("output_file")
     @classmethod
-    def _ensure_output_dir(cls, p: Path) -> Path:
+    def _ensure_output_file(cls, p: Path) -> Path:
         # Do not create here; just normalize path
         return p.expanduser().resolve()
