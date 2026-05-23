@@ -30,7 +30,23 @@ def train(
     output: str,
     **model_params,
 ) -> None:
-    """ """
+    """
+    Train a gradient boosting regressor for predicting `S*_score`.
+
+    The model is trained using `Region_ind_SNP_number` as the input feature and
+    `S*_score` as the target variable. Rows with missing `S*_score` values are
+    removed before training. Unsupported parameters for
+    `GradientBoostingRegressor` are ignored.
+
+    Parameters
+    ----------
+    data : str
+        Path to the input tab-separated feature table.
+    output : str
+        Path to the output joblib file for the trained model.
+    **model_params
+        Additional keyword arguments passed to `GradientBoostingRegressor`.
+    """
     is_allowed = inspect.signature(GradientBoostingRegressor).parameters
     clean_params = {k: v for k, v in model_params.items() if k in is_allowed}
 
@@ -51,7 +67,28 @@ def infer(
     output: str,
     bed_file: str,
 ) -> None:
-    """ """
+    """
+    Predict `S*_score` and export regions exceeding the predicted score.
+
+    Predictions are generated for rows with non-missing
+    `Region_ind_SNP_number`. Rows with missing feature values keep
+    `Predicted_S*_score` as `NA`. The full table is written to `output`.
+    Regions where observed `S*_score` is greater than `Predicted_S*_score`
+    are written to `bed_file` in BED format. The BED start coordinate is
+    converted from 1-based to 0-based by subtracting 1.
+
+    Parameters
+    ----------
+    data : str
+        Path to the input tab-separated feature table.
+    model : str
+        Path to the trained joblib model.
+    output : str
+        Path to the output tab-separated table with predictions.
+    bed_file : str
+        Path to the output BED file containing regions with observed
+        `S*_score` greater than `Predicted_S*_score`.
+    """
     df = pd.read_csv(data, sep="\t")
     mask = df["Region_ind_SNP_number"].notna()
     df["Predicted_S*_score"] = np.nan
