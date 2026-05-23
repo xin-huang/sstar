@@ -19,7 +19,7 @@
 
 from pathlib import Path
 from pydantic import BaseModel, ConfigDict
-from pydantic import Field, field_validator
+from pydantic import Field
 
 
 class SimulationConfig(BaseModel):
@@ -51,9 +51,6 @@ class SimulationConfig(BaseModel):
     nprocess: int = Field(1, gt=0, description="Number of processes for simulation")
 
     # Output
-    output_file: Path = Field(
-        ..., description="Output TSV file path for simulated features"
-    )
     keep_sim_data: bool = Field(
         False,
         description="Whether to keep raw simulation data (trees, msprime/demes outputs, etc.)",
@@ -74,8 +71,3 @@ class SimulationConfig(BaseModel):
     # Features
     nfeature: int = Field(..., gt=0, description="Number of features to sample/output")
 
-    @field_validator("output_file")
-    @classmethod
-    def _ensure_output_file(cls, p: Path) -> Path:
-        # Do not create here; just normalize path
-        return p.expanduser().resolve()

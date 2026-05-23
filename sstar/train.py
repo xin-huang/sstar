@@ -29,8 +29,7 @@ from sstar.utils import UniqueKeyLoader
 def train(
     demes: str,
     config: str,
-    output: str | None,
-    only_simulation: bool = False,
+    output: str,
 ) -> None:
     """
     Run simulation and model training from YAML configuration.
@@ -41,13 +40,9 @@ def train(
         Path to the demography (demes) YAML file used for simulation.
     config : str
         Path to the sstar configuration YAML file.
-    output : str, optional
-        Output path or directory passed to the model's `train` method, used
-        to store the trained model. Required when `only_simulation=False`.
-        Default: None.
-    only_simulation : bool, optional
-        If True, run simulation checks/simulation only and skip model
-        training. Default: False.
+    output : str
+        Output path passed to the model's `train` method, used to store
+        the trained model and derive simulation feature outputs.
     """
     try:
         with open(config, "r") as f:
@@ -58,18 +53,22 @@ def train(
         raise ValueError(f"Error parsing YAML configuration file '{config}': {e}")
 
     global_config = GlobalConfig(**config_dict)
-    data = str(global_config.simulation.output_file)
+
+    output_dir = os.path.dirname(str(output))
+    output_prefix = os.path.splitext(os.path.basename(str(output)))[0]
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+
+    data = os.path.join(output_dir, f"{output_prefix}.training.features.tsv")
+
     if not os.path.exists(data):
         print("Training data is not found. Performing simulation ...")
         simulate(
             demo_model_file=demes,
+            output_dir=output_dir,
+            output_prefix=output_prefix,
             **global_config.simulation.model_dump(),
         )
-
-    if only_simulation:
-        return
-    if output is None:
-        raise ValueError("`output` is required unless `only_simulation=True`.")
 
     qr.train(
         data=data,

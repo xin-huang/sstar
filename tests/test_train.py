@@ -18,8 +18,6 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 
-import pytest
-import shutil
 import pandas as pd
 from sstar.train import train
 
@@ -27,19 +25,19 @@ from sstar.train import train
 def test_train(tmp_path):
     output_file = tmp_path / "check.qr.joblib"
 
-    try:
-        train(
+    train(
             demes="tests/data/ArchIE_3D19_wo_intro.yaml",
             config="tests/data/test.config.yaml",
             output=output_file,
         )
 
-        df = pd.read_csv("tests/results/check.train.features.tsv", sep="\t")
-        df_expected = pd.read_csv(
+    train_features_file = tmp_path / "check.qr.training.features.tsv"
+    df = pd.read_csv(train_features_file, sep="\t")
+    df_expected = pd.read_csv(
             "tests/exp_results/test.train.expected.features.tsv", sep="\t"
         )
 
-        pd.testing.assert_frame_equal(
+    pd.testing.assert_frame_equal(
             df,
             df_expected,
             check_dtype=False,
@@ -48,7 +46,6 @@ def test_train(tmp_path):
             atol=1e-8,
         )
 
-        assert output_file.exists(), f"{output_file} was not created"
-        assert output_file.is_file(), f"{output_file} is not a file"
-    finally:
-        shutil.rmtree("tests/results", ignore_errors=True)
+    assert output_file.exists(), f"{output_file} was not created"
+    assert output_file.is_file(), f"{output_file} is not a file"
+

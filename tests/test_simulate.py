@@ -24,7 +24,9 @@ from sstar.simulate import simulate
 
 
 def test_simulate(tmp_path):
-    output_file = tmp_path / "check.simulate.tsv"
+    output_dir = tmp_path
+    output_prefix = "check.simulate"
+    output_file = output_dir / f"{output_prefix}.training.features.tsv"
 
     simulate(
         demo_model_file="tests/data/ArchIE_3D19_wo_intro.yaml",
@@ -38,7 +40,8 @@ def test_simulate(tmp_path):
         mut_rate=1.25e-8,
         rec_rate=1.0e-8,
         feature_config_file="tests/data/sstar.yaml",
-        output_file=output_file,
+        output_dir=output_dir,
+        output_prefix=output_prefix,
         nfeature=10000,
         is_phased=False,
         is_shuffled=False,

@@ -17,7 +17,9 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-import os, random, shutil
+import os
+import random
+import shutil
 
 import pandas as pd
 from sstar.mp_manager import mp_manager
@@ -37,7 +39,8 @@ def simulate(
     mut_rate: float,
     rec_rate: float,
     feature_config_file: str,
-    output_file: str,
+    output_dir: str,
+    output_prefix: str,
     nfeature: int,
     is_phased: bool,
     is_shuffled: bool,
@@ -74,8 +77,10 @@ def simulate(
         Recombination rate per base pair per generation.
     feature_config_file : str
         Path to the YAML configuration file specifying features to compute.
-    output_file : str
-        Output TSV file path for simulated features.
+    output_dir : str
+        Output directory for simulated features and intermediates.
+    output_prefix : str
+        Output filename prefix for simulated features and intermediates.
     nfeature : int
         Total number of features to generate.
     is_phased : bool
@@ -105,8 +110,6 @@ def simulate(
     if nfeature <= 0:
         raise ValueError("nfeature must be positive.")
 
-    output_dir = os.path.dirname(output_file)
-    output_prefix = os.path.splitext(os.path.basename(output_file))[0]
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
 
@@ -177,4 +180,5 @@ def simulate(
             )
         )
 
+    output_file = os.path.join(output_dir, f"{output_prefix}.training.features.tsv")
     pd.DataFrame(total_features).to_csv(output_file, sep="\t", index=False, na_rep="NA")
