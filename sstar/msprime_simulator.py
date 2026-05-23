@@ -89,12 +89,6 @@ class MsprimeSimulator:
             Directory where the output files will be stored.
         is_phased : bool
             Indicates whether the true tracts should be considered as unphased.
-
-        Notes
-        -----
-        This class no longer inherits simulator state from a generic base.
-        All simulator state used by :meth:`run` is initialized directly in this
-        constructor.
         """
         self.demo_model_file = demo_model_file
         self.nref = nref
