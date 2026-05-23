@@ -45,7 +45,7 @@ def infer(
     Parameters
     ----------
     model : str
-        Path to the trained joblib model file used for inference.
+        Path to the trained ONNX model file used for inference.
     config : str
         Path to the inference configuration YAML file.
     feat_file : str

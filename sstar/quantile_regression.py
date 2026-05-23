@@ -18,9 +18,13 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 
-import inspect, joblib
+import inspect
+
 import numpy as np
+import onnxruntime as ort
 import pandas as pd
+from skl2onnx import to_onnx
+from skl2onnx.common.data_types import FloatTensorType
 from sklearn.ensemble import GradientBoostingRegressor
 
 
@@ -43,7 +47,7 @@ def train(
     data : str
         Path to the input tab-separated feature table.
     output : str
-        Path to the output joblib file for the trained model.
+        Path to the output ONNX file for the trained model.
     **model_params
         Additional keyword arguments passed to `GradientBoostingRegressor`.
     """
@@ -57,7 +61,10 @@ def train(
     model = GradientBoostingRegressor(**clean_params)
     model.fit(x, y)
 
-    joblib.dump(model, output)
+    initial_type = [("float_input", FloatTensorType([None, 1]))]
+    model_onnx = to_onnx(model, initial_types=initial_type, target_opset=17)
+    with open(output, "wb") as output_fp:
+        output_fp.write(model_onnx.SerializeToString())
 
 
 @staticmethod
@@ -82,7 +89,7 @@ def infer(
     data : str
         Path to the input tab-separated feature table.
     model : str
-        Path to the trained joblib model.
+        Path to the trained ONNX model.
     output : str
         Path to the output tab-separated table with predictions.
     bed_file : str
@@ -92,10 +99,17 @@ def infer(
     df = pd.read_csv(data, sep="\t")
     mask = df["Region_ind_SNP_number"].notna()
     df["Predicted_S*_score"] = np.nan
-    model = joblib.load(model)
-    df.loc[mask, "Predicted_S*_score"] = model.predict(
-        df.loc[mask, ["Region_ind_SNP_number"]]
-    )
+    session = ort.InferenceSession(model, providers=["CPUExecutionProvider"])
+    input_name = session.get_inputs()[0].name
+    predictions = session.run(
+        None,
+        {
+            input_name: df.loc[mask, ["Region_ind_SNP_number"]].to_numpy(
+                dtype=np.float32
+            )
+        },
+    )[0].ravel()
+    df.loc[mask, "Predicted_S*_score"] = predictions
 
     df.sort_values(by=["Sample", "Chromosome", "Start", "End"]).to_csv(
         output, sep="\t", index=False, na_rep="NA"

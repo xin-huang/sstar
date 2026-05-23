@@ -23,7 +23,7 @@ from sstar.train import train
 
 
 def test_train(tmp_path):
-    output_file = tmp_path / "check.qr.joblib"
+    output_file = tmp_path / "check.qr.onnx"
 
     train(
         demes="tests/data/ArchIE_3D19_wo_intro.yaml",
