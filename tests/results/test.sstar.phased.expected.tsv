@@ -1,4 +1,4 @@
-Chromosome	Start	End	Sample	Sstar	Region_ind_SNP_number
+Chromosome	Start	End	Sample	S*_score	Region_ind_SNP_number
 21	1	50000	ind1_1	67770.0	10
 21	1	50000	ind1_2	38425.0	9
 21	1	50000	ind2_1	19330.0	7

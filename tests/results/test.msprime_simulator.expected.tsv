@@ -1,4 +1,4 @@
-Chromosome	Start	End	Sample	Sstar	Region_ind_SNP_number	Replicate
+Chromosome	Start	End	Sample	S*_score	Region_ind_SNP_number	Replicate
 1	1	50000	tsk_50_1	NA	109	0
 1	1	50000	tsk_50_2	NA	108	0
 1	1	50000	tsk_51_1	73838.0	117	0

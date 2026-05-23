@@ -75,7 +75,7 @@ def test_run_calls_sstar_compute_and_formats_output(tmp_path, monkeypatch):
             "Start": 10,
             "End": 20,
             "Sample": "tgt1",
-            "Sstar": 42.0,
+            "S*_score": 42.0,
             "Region_ind_SNP_number": 1000,
         }
     ]
