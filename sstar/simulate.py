@@ -32,7 +32,6 @@ def simulate(
     ntgt: int,
     ref_id: str,
     tgt_id: str,
-    src_id: str,
     ploidy: int,
     seq_len: int,
     mut_rate: float,
@@ -65,8 +64,6 @@ def simulate(
         Identifier for the reference population.
     tgt_id : str
         Identifier for the target population.
-    src_id : str
-        Identifier for the source population.
     ploidy : int
         Ploidy of the individuals.
     seq_len : int
@@ -120,7 +117,6 @@ def simulate(
         ntgt=ntgt,
         ref_id=ref_id,
         tgt_id=tgt_id,
-        src_id=src_id,
         ploidy=ploidy,
         seq_len=seq_len,
         mut_rate=mut_rate,
@@ -182,4 +178,4 @@ def simulate(
             )
         )
 
-    pd.DataFrame(total_features).to_csv(output_file, sep="\t", index=False)
+    pd.DataFrame(total_features).to_csv(output_file, sep="\t", index=False, na_rep="NA")

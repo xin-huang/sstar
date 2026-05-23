@@ -172,7 +172,7 @@ class MsprimeSimulator:
 
         ts.dump(ts_file)
         with open(vcf_file, "w") as o:
-            ts.write_vcf(o)
+            ts.write_vcf(o, allow_position_zero=True)
         if seed is not None:
             with open(seed_file, "w") as o:
                 o.write(f"{seed}\n")

@@ -20,14 +20,15 @@
 
 import pytest
 import pandas as pd
-from sstar.msprime_simulator import MsprimeSimulator
+from sstar.simulate import simulate
 
 
-def test_MsprimeSimulator(tmp_path):
-    output_file = tmp_path / "check.msprime_simulator.tsv"
+def test_simulate(tmp_path):
+    output_file = tmp_path / "check.simulate.tsv"
 
-    simulator = MsprimeSimulator(
+    simulate(
         demo_model_file="tests/data/ArchIE_3D19_wo_intro.yaml",
+        nrep=100,
         nref=50,
         ntgt=50,
         ref_id="Reference",
@@ -36,19 +37,18 @@ def test_MsprimeSimulator(tmp_path):
         seq_len=50000,
         mut_rate=1.25e-8,
         rec_rate=1.0e-8,
-        output_prefix="check",
-        output_dir=tmp_path,
-        is_phased=True,
         feature_config_file="tests/data/sstar.yaml",
+        output_file=output_file,
+        nfeature=10000,
+        is_phased=False,
+        is_shuffled=False,
+        keep_sim_data=False,
+        seed=12345,
+        nprocess=2,
     )
-
-    res = simulator.run(rep=0, seed=1234)
-    pd.DataFrame(res).to_csv(output_file, sep="\t", index=False, na_rep="NA")
 
     df = pd.read_csv(output_file, sep="\t")
-    df_expected = pd.read_csv(
-        "tests/results/test.msprime_simulator.expected.tsv", sep="\t"
-    )
+    df_expected = pd.read_csv("tests/results/test.simulate.expected.tsv", sep="\t")
 
     pd.testing.assert_frame_equal(
         df,
