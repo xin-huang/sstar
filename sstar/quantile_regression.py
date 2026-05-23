@@ -23,6 +23,7 @@ import pandas as pd
 from sklearn.ensemble import GradientBoostingRegressor
 
 
+@staticmethod
 def train(
     data: str,
     output: str,
@@ -33,7 +34,7 @@ def train(
     clean_params = {k: v for k, v in model_params.items() if k in is_allowed}
 
     df = pd.read_csv(data, sep="\t").dropna(subset=["S*_score"])
-    x = df["Region_ind_SNP_number"].copy()
+    x = df[["Region_ind_SNP_number"]].copy()
     y = df["S*_score"].copy()
 
     model = GradientBoostingRegressor(**clean_params)
@@ -42,6 +43,7 @@ def train(
     joblib.dump(model, output)
 
 
+@staticmethod
 def infer(
     data: str,
     model: str,

@@ -48,7 +48,7 @@ def test_simulate(tmp_path):
     )
 
     df = pd.read_csv(output_file, sep="\t")
-    df_expected = pd.read_csv("tests/results/test.simulate.expected.tsv", sep="\t")
+    df_expected = pd.read_csv("tests/exp_results/test.simulate.expected.tsv", sep="\t")
 
     pd.testing.assert_frame_equal(
         df,

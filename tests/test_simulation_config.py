@@ -36,7 +36,6 @@ def test_simulation_config_normalizes_output_file(tmp_path):
         mut_rate=1e-8,
         rec_rate=1e-8,
         nprocess=1,
-        force_balanced=False,
         output_file=rel_out,
         keep_sim_data=False,
         seed=1,

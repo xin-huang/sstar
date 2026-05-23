@@ -1,0 +1,38 @@
+simulation:
+  nrep: 100
+  nref: 50
+  ntgt: 50
+  ref_id: "Reference"
+  tgt_id: "Target"
+  seq_len: 50000
+  mut_rate: 1.25e-8
+  rec_rate: 1e-8
+  ploidy: 2
+  is_phased: True
+  output_file: "tests/results/check.train.features.tsv"
+  nfeature: 100
+  feature_config_file: "tests/data/sstar.yaml"
+  is_shuffled: False
+  nprocess: 2
+  seed: 12345
+
+preprocessing:
+  vcf_file: "tests/expected_results/simulators/MsprimeSimulator/0/test.0.vcf"
+  chr_name: "1"
+  ref_ind_file: "tests/expected_results/simulators/MsprimeSimulator/0/test.0.ref.ind.list"
+  tgt_ind_file: "tests/expected_results/simulators/MsprimeSimulator/0/test.0.tgt.ind.list"
+  win_len: 50000
+  win_step: 50000
+  is_phased: True
+  feature_config_file: "tests/data/sstar.yaml"
+  output_file: "check/sstar2.qr.pred.tsv"
+  nprocess: 2
+  ploidy: 2
+
+model:
+  params:
+    loss: "quantile"
+    quantile: 0.9
+    n_estimators: 200
+    max_depth: 3
+    random_state: 12345

@@ -47,7 +47,7 @@ def test_MsprimeSimulator(tmp_path):
 
     df = pd.read_csv(output_file, sep="\t")
     df_expected = pd.read_csv(
-        "tests/results/test.msprime_simulator.expected.tsv", sep="\t"
+        "tests/exp_results/test.msprime_simulator.expected.tsv", sep="\t"
     )
 
     pd.testing.assert_frame_equal(

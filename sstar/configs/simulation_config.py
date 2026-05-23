@@ -50,11 +50,6 @@ class SimulationConfig(BaseModel):
     # Parallelization
     nprocess: int = Field(1, gt=0, description="Number of processes for simulation")
 
-    force_balanced: bool = Field(
-        False,
-        description="Whether to enforce class balance between intro/non-intro",
-    )
-
     # Output
     output_file: Path = Field(
         ..., description="Output TSV file path for simulated features"

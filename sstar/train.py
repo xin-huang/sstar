@@ -20,8 +20,8 @@
 
 import os
 import yaml
+import sstar.quantile_regression as qr
 from sstar.configs import GlobalConfig
-from sstar.quantile_regression import train
 from sstar.simulate import simulate
 from sstar.utils import UniqueKeyLoader
 
@@ -71,7 +71,7 @@ def train(
     if output is None:
         raise ValueError("`output` is required unless `only_simulation=True`.")
 
-    train(
+    qr.train(
         data=data,
         output=output,
         **global_config.model.params,

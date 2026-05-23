@@ -40,7 +40,7 @@ def test_preprocess_unphased(tmp_path):
 
     df = pd.read_csv(output_file, sep="\t")
     df_expected = pd.read_csv(
-        "tests/results/test.sstar.unphased.expected.tsv", sep="\t"
+        "tests/exp_results/test.sstar.unphased.expected.tsv", sep="\t"
     )
 
     pd.testing.assert_frame_equal(
@@ -70,7 +70,9 @@ def test_preprocess_phased(tmp_path):
     )
 
     df = pd.read_csv(output_file, sep="\t")
-    df_expected = pd.read_csv("tests/results/test.sstar.phased.expected.tsv", sep="\t")
+    df_expected = pd.read_csv(
+        "tests/exp_results/test.sstar.phased.expected.tsv", sep="\t"
+    )
 
     pd.testing.assert_frame_equal(
         df,
