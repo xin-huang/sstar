@@ -32,7 +32,6 @@ class FeatureVectorPreprocessor:
     This class extends DataPreprocessor to include additional functionality for creating
     feature vectors based on genomic variants, reference and target individual genotypes,
     and window-based genomic statistics.
-
     """
 
     def __init__(self, ref_ind_file: str, tgt_ind_file: str, feature_config_file: str):
@@ -54,7 +53,6 @@ class FeatureVectorPreprocessor:
             If the feature configuration file is not found.
         ValueError
             If the feature configuration file is incorrectly formatted or does not contain any features.
-
         """
         try:
             with open(feature_config_file, "r") as f:
@@ -111,7 +109,6 @@ class FeatureVectorPreprocessor:
         -------
         list
             A list of dictionaries containing the formatted feature vectors for the genomic window.
-
         """
         params = {
             "ref_gts": ref_gts,
@@ -162,7 +159,6 @@ class FeatureVectorPreprocessor:
         -------
         list
             A list of dictionaries containing the formatted results with one row per sample and one column per feature.
-
         """
         if is_phased:
             num_samples = len(self.samples["tgt"]) * ploidy

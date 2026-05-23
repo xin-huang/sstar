@@ -38,7 +38,6 @@ def positive_int(value: str) -> int:
     ------
     argparse.ArgumentTypeError
         If the value is not a valid integer or positive integer.
-
     """
     if value is not None:
         try:
@@ -68,7 +67,6 @@ def positive_number(value: str) -> float:
     ------
     argparse.ArgumentTypeError
         If the value is not a valid number or positive number.
-
     """
     if value is not None:
         try:
@@ -98,7 +96,6 @@ def existed_file(value: str) -> str:
     ------
     argparse.ArgumentTypeError
         If the file does not exist.
-
     """
     if value is not None:
         if not os.path.isfile(value):

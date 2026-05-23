@@ -101,7 +101,6 @@ def simulate(
     The simulation process is dependent on the correctness of the `LRTrainingDataSimulator`,
     `RandomNumberGenerator`, and the feature computation classes. Ensure these components are correctly
     implemented and tested.
-
     """
     if nfeature <= 0:
         raise ValueError("nfeature must be positive.")

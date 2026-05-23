@@ -24,7 +24,6 @@ from sstar.generators import GenericGenerator
 class RandomNumberGenerator(GenericGenerator):
     """
     Generates random numbers based on specified parameters.
-
     """
 
     def __init__(self, nrep: int, start_rep: int = 0, seed: int = None):
@@ -46,7 +45,6 @@ class RandomNumberGenerator(GenericGenerator):
         ------
         ValueError
             If `nrep` is less than or equal to 0, or `start_rep` is negative.
-
         """
         if nrep <= 0:
             raise ValueError("nrep must be greater than 0.")
@@ -76,7 +74,6 @@ class RandomNumberGenerator(GenericGenerator):
             A dictionary with two keys: 'rep' and 'seed'. 'rep' corresponds to the replicate number,
             and 'seed' corresponds to the random seed for that replicate. Each call to `get()`
             yields a new dictionary for the next replicate until all replicates are exhausted.
-
         """
         for rep, seed in zip(self.rep_list, self.seed_list):
             yield {"rep": rep, "seed": seed}
