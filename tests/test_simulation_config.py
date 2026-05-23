@@ -39,7 +39,6 @@ def test_simulation_config_rejects_output_file(tmp_path):
             output_file=tmp_path / "nested" / "sim.features.tsv",
             keep_sim_data=False,
             seed=1,
-            feature_config_file=tmp_path / "feature.yml",
             is_shuffled=True,
             nfeature=10,
         )
@@ -60,7 +59,6 @@ def test_simulation_config_without_output_file(tmp_path):
         nprocess=1,
         keep_sim_data=False,
         seed=1,
-        feature_config_file=tmp_path / "feature.yml",
         is_shuffled=True,
         nfeature=10,
     )

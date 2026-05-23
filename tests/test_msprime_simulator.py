@@ -39,7 +39,9 @@ def test_MsprimeSimulator(tmp_path):
         output_prefix="check",
         output_dir=tmp_path,
         is_phased=True,
-        feature_config_file="tests/data/sstar.yaml",
+        match_bonus=5000,
+        max_mismatch=5,
+        mismatch_penalty=-10000,
     )
 
     res = simulator.run(rep=0, seed=1234)

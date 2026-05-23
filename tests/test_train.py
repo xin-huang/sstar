@@ -26,26 +26,28 @@ def test_train(tmp_path):
     output_file = tmp_path / "check.qr.joblib"
 
     train(
-            demes="tests/data/ArchIE_3D19_wo_intro.yaml",
-            config="tests/data/test.config.yaml",
-            output=output_file,
-        )
+        demes="tests/data/ArchIE_3D19_wo_intro.yaml",
+        config="tests/data/test.config.yaml",
+        output=output_file,
+        match_bonus=5000,
+        max_mismatch=5,
+        mismatch_penalty=-10000,
+    )
 
     train_features_file = tmp_path / "check.qr.training.features.tsv"
     df = pd.read_csv(train_features_file, sep="\t")
     df_expected = pd.read_csv(
-            "tests/exp_results/test.train.expected.features.tsv", sep="\t"
-        )
+        "tests/exp_results/test.train.expected.features.tsv", sep="\t"
+    )
 
     pd.testing.assert_frame_equal(
-            df,
-            df_expected,
-            check_dtype=False,
-            check_exact=False,
-            rtol=1e-6,
-            atol=1e-8,
-        )
+        df,
+        df_expected,
+        check_dtype=False,
+        check_exact=False,
+        rtol=1e-6,
+        atol=1e-8,
+    )
 
     assert output_file.exists(), f"{output_file} was not created"
     assert output_file.is_file(), f"{output_file} is not a file"
-

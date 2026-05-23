@@ -19,7 +19,7 @@
 
 from pathlib import Path
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PreprocessingConfig(BaseModel):
@@ -54,8 +54,3 @@ class PreprocessingConfig(BaseModel):
     # Windowing
     win_len: int = Field(..., gt=0, description="Window length in bp")
     win_step: int = Field(..., gt=0, description="Window step size in bp")
-
-    # Features
-    feature_config_file: Path = Field(
-        ..., description="Path to feature configuration YAML/JSON"
-    )

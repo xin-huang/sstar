@@ -17,10 +17,8 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-import yaml
 import numpy as np
 from typing import Any
-from sstar.configs import FeatureConfig
 from sstar.sstar import Sstar
 from sstar.utils import parse_ind_file
 
@@ -34,7 +32,14 @@ class FeatureVectorPreprocessor:
     and window-based genomic statistics.
     """
 
-    def __init__(self, ref_ind_file: str, tgt_ind_file: str, feature_config_file: str):
+    def __init__(
+        self,
+        ref_ind_file: str,
+        tgt_ind_file: str,
+        match_bonus: int,
+        max_mismatch: int,
+        mismatch_penalty: int,
+    ):
         """
         Initializes a new instance of FeatureVectorsPreprocessor with specific parameters.
 
@@ -44,27 +49,16 @@ class FeatureVectorPreprocessor:
             Path to the file listing reference individual identifiers.
         tgt_ind_file : str
             Path to the file listing target individual identifiers.
-        feature_config_file : str
-            Path to the configuration file specifying the features to be computed.
-
-        Raises
-        ------
-        FileNotFoundError
-            If the feature configuration file is not found.
-        ValueError
-            If the feature configuration file is incorrectly formatted or does not contain any features.
+        match_bonus : int
+            S* match bonus.
+        max_mismatch : int
+            S* maximum mismatches.
+        mismatch_penalty : int
+            S* mismatch penalty.
         """
-        try:
-            with open(feature_config_file, "r") as f:
-                config_dict = yaml.safe_load(f)
-        except FileNotFoundError:
-            raise FileNotFoundError(
-                f"Feature configuration file {feature_config_file} not found."
-            )
-        except yaml.YAMLError as exc:
-            raise ValueError(f"Error parsing feature configuration: {exc}")
-
-        self.feature_config = FeatureConfig(**config_dict)
+        self.match_bonus = match_bonus
+        self.max_mismatch = max_mismatch
+        self.mismatch_penalty = mismatch_penalty
         ref_samples = parse_ind_file(ref_ind_file)
         tgt_samples = parse_ind_file(tgt_ind_file)
         self.samples = {
@@ -124,8 +118,11 @@ class FeatureVectorPreprocessor:
 
         stat_params = {}
         stat_params.update(**params)
-        if isinstance(self.feature_config.root.get("sstar"), dict):
-            stat_params.update(**self.feature_config.root["sstar"])
+        stat_params.update(
+            match_bonus=self.match_bonus,
+            max_mismatch=self.max_mismatch,
+            mismatch_penalty=self.mismatch_penalty,
+        )
         sstar_res = Sstar.compute(**stat_params)
         items.update(sstar_res)
 

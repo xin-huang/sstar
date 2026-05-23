@@ -34,6 +34,9 @@ def test_infer(tmp_path):
         feat_file=feat_file,
         pred_file=pred_file,
         tract_file=tract_file,
+        match_bonus=5000,
+        max_mismatch=5,
+        mismatch_penalty=-10000,
     )
 
     res_files = [feat_file, pred_file, tract_file]

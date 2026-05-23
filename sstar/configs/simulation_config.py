@@ -17,7 +17,6 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-from pathlib import Path
 from pydantic import BaseModel, ConfigDict
 from pydantic import Field
 
@@ -59,10 +58,6 @@ class SimulationConfig(BaseModel):
     # Randomness
     seed: int = Field(..., description="Base random seed")
 
-    feature_config_file: Path = Field(
-        ..., description="Path to feature config YAML/JSON"
-    )
-
     is_shuffled: bool = Field(
         True,
         description="Whether to shuffle feature rows (e.g. before saving/training)",
@@ -70,4 +65,3 @@ class SimulationConfig(BaseModel):
 
     # Features
     nfeature: int = Field(..., gt=0, description="Number of features to sample/output")
-

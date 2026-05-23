@@ -38,7 +38,9 @@ def simulate(
     seq_len: int,
     mut_rate: float,
     rec_rate: float,
-    feature_config_file: str,
+    match_bonus: int,
+    max_mismatch: int,
+    mismatch_penalty: int,
     output_dir: str,
     output_prefix: str,
     nfeature: int,
@@ -75,8 +77,12 @@ def simulate(
         Mutation rate per base pair per generation.
     rec_rate : float
         Recombination rate per base pair per generation.
-    feature_config_file : str
-        Path to the YAML configuration file specifying features to compute.
+    match_bonus : int
+        S* match bonus.
+    max_mismatch : int
+        S* maximum mismatches.
+    mismatch_penalty : int
+        S* mismatch penalty.
     output_dir : str
         Output directory for simulated features and intermediates.
     output_prefix : str
@@ -126,7 +132,9 @@ def simulate(
         output_prefix=output_prefix,
         output_dir=output_dir,
         is_phased=is_phased,
-        feature_config_file=feature_config_file,
+        match_bonus=match_bonus,
+        max_mismatch=max_mismatch,
+        mismatch_penalty=mismatch_penalty,
     )
 
     total_features = []
