@@ -36,7 +36,7 @@ class MsprimeSimulator:
 
     Callers can rely on:
     - initialization-time attributes such as `demo_model_file`, `nref`,
-      `ntgt`, `ref_id`, `tgt_id`, `src_id`, `ploidy`, `seq_len`, `mut_rate`,
+      `ntgt`, `ref_id`, `tgt_id`, `ploidy`, `seq_len`, `mut_rate`,
       `rec_rate`, `output_prefix`, `output_dir`, and `is_phased`
     - `run(rep=None, seed=None)`, which returns a list containing one mapping
       of output artifact paths
@@ -49,7 +49,6 @@ class MsprimeSimulator:
         ntgt: int,
         ref_id: str,
         tgt_id: str,
-        src_id: str,
         ploidy: int,
         seq_len: int,
         mut_rate: float,
@@ -74,8 +73,6 @@ class MsprimeSimulator:
             Identifier for the reference population in the demographic model.
         tgt_id : str
             Identifier for the target population in the demographic model.
-        src_id : str
-            Identifier for the source population in the demographic model.
         ploidy : int
             Ploidy of the samples; typically 2 for diploid organisms.
         seq_len : int
@@ -102,7 +99,6 @@ class MsprimeSimulator:
         self.ntgt = ntgt
         self.ref_id = ref_id
         self.tgt_id = tgt_id
-        self.src_id = src_id
         self.ploidy = ploidy
         self.seq_len = seq_len
         self.mut_rate = mut_rate
