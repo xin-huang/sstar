@@ -99,7 +99,14 @@ def infer(
     df = pd.read_csv(data, sep="\t")
     mask = df["Region_ind_SNP_number"].notna()
     df["Predicted_S*_score"] = np.nan
-    session = ort.InferenceSession(model, providers=["CPUExecutionProvider"])
+    session_options = ort.SessionOptions()
+    session_options.intra_op_num_threads = 1
+    session_options.inter_op_num_threads = 1
+    session = ort.InferenceSession(
+        model,
+        sess_options=session_options,
+        providers=["CPUExecutionProvider"],
+    )
     input_name = session.get_inputs()[0].name
     predictions = session.run(
         None,
