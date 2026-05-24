@@ -38,5 +38,8 @@ Homepage = "https://github.com/xin-huang/sstar"
 sstar2 = "sstar.__main__:main"
 
 [tool.setuptools]
-packages = ["sstar"]
 include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sstar", "sstar.*"]
