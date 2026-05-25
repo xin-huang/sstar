@@ -224,3 +224,38 @@ def test_cal_match_pct_unphased_matches_golden(data, tmp_path):
 
     exp = _read_lines(data["exp_output_unphased"])
     assert got == exp
+
+def test_cal_match_pct_default_is_unphased(data, tmp_path):
+    """
+    Calling cal_match_pct without phased=... should match phased=False behavior.
+    """
+    out_default = tmp_path / "match_rate.default.tsv"
+    out_unphased = tmp_path / "match_rate.unphased.tsv"
+
+    cal_match_pct(
+        data["vcf"],
+        data["ref_ind_file"],
+        data["tgt_ind_file"],
+        data["src_ind_file"],
+        None,
+        str(out_default),
+        1,
+        data["score_file"],
+        None,
+    )
+
+    cal_match_pct(
+        data["vcf"],
+        data["ref_ind_file"],
+        data["tgt_ind_file"],
+        data["src_ind_file"],
+        None,
+        str(out_unphased),
+        1,
+        data["score_file"],
+        None,
+        phased=False,
+    )
+
+    assert out_default.read_text() == out_unphased.read_text()
+

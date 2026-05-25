@@ -90,7 +90,8 @@ def _dosage_for_positions(
 
     pos_to_i = {int(p): i for i, p in enumerate(pos)}
 
-    out = np.full(len(positions), -1.0, dtype=float)
+    # Positions absent from a variant-only VCF are treated as homozygous reference (dosage 0)
+    out = np.zeros(len(positions), dtype=float)
     idx = []
     out_i = []
 
@@ -128,7 +129,7 @@ def cal_match_pct(
     thread: int,
     score_file: str,
     mapped_region_file: Optional[str],
-    phased: bool = True,  # NEW: phased/unphased flag
+    phased: bool = False,  # NEW: phased/unphased flag
 ) -> None:
     """
     Calculate source-match rates for S* haplotypes or dosage-based S* SNP sets.
@@ -407,113 +408,65 @@ def _cal_match_pct_ind(
     src_data: dict,
     src_samples: list,
     sample_size: int,
-    phased: bool,  # NEW
+    phased: bool,
     score_col: dict,
 ) -> list:
     """
     Calculate source-match rates for one target individual.
-
-    Parameters
-    ----------
-    data : list
-        Score-file rows for one target individual.
-    tgt_ind_index : int
-        Index of the target individual in `tgt_data`.
-    mapped_intervals : dict or None
-        Mapped-region intervals by chromosome. If None, full windows are treated as mapped.
-    tgt_data : dict
-        Target genotype data by chromosome.
-    src_data : dict
-        Source genotype data by chromosome.
-    src_samples : list
-        Source sample IDs in the genotype data.
-    sample_size : int
-        Number of target samples in the genotype data.
-    phased : bool
-        If True, use haplotype-based matching; otherwise use dosage-based matching.
-    score_col : dict
-        Mapping from score-file column names to column indices.
-
-    Returns
-    -------
-    list
-        Output lines containing match-rate results for the target individual.
     """
     res = []
     for line in data:
-        elements = line.split("\t")
+        elements = line.split("	")
         chr_name = elements[score_col["chrom"]]
         win_start = int(elements[score_col["start"]])
         win_end = int(elements[score_col["end"]])
         sample = elements[score_col["sample"]]
         hap_index = elements[score_col["hap_index"]]
 
-        # S* SNP positions (comma-separated positions in the score file)
         snp_positions = [
             int(p) for p in elements[score_col["S*_SNPs"]].split(",") if p and p != "NA"
         ]
 
-        for src_ind_index in range(len(src_samples)):
-            src_sample = src_samples[src_ind_index]
-
-            hap1_res = cal_matchpct(
-                chr_name,
-                mapped_intervals,
-                tgt_data,
-                src_data,
-                tgt_ind_index,
-                src_ind_index,
-                0,
-                int(win_start),
-                int(win_end),
-                sample_size,
-            )
-            hap2_res = cal_matchpct(
-                chr_name,
-                mapped_intervals,
-                tgt_data,
-                src_data,
-                tgt_ind_index,
-                src_ind_index,
-                1,
-                int(win_start),
-                int(win_end),
-                sample_size,
-            )
-
-            hap1_match_pct = hap1_res[-1]
-            hap2_match_pct = hap2_res[-1]
-            hap_match_pct = "NA"
-            if (hap1_match_pct != "NA") and (hap2_match_pct != "NA"):
-                hap_match_pct = (hap1_match_pct + hap2_match_pct) / 2
-
+        for src_ind_index, src_sample in enumerate(src_samples):
             if phased:
+                # phased output stays haplotype-based
+                hap1_res = cal_matchpct(
+                    chr_name, mapped_intervals, tgt_data, src_data,
+                    tgt_ind_index, src_ind_index, 0, win_start, win_end, sample_size
+                )
+                hap2_res = cal_matchpct(
+                    chr_name, mapped_intervals, tgt_data, src_data,
+                    tgt_ind_index, src_ind_index, 1, win_start, win_end, sample_size
+                )
+                hap1_match_pct = hap1_res[-1]
+                hap2_match_pct = hap2_res[-1]
+
                 res.append(
-                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t1\t{hap1_match_pct}\t{src_sample}"
+                    f"{chr_name}	{win_start}	{win_end}	{sample}	1	{hap1_match_pct}	{src_sample}"
                 )
                 res.append(
-                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t2\t{hap2_match_pct}\t{src_sample}"
+                    f"{chr_name}	{win_start}	{win_end}	{sample}	2	{hap2_match_pct}	{src_sample}"
                 )
             else:
-                res.append(
-                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t{hap_index}\t{hap_match_pct}\t{src_sample}"
+                # NEW: unphased output uses dosage-based formula on S* SNP positions
+                tgt_gt = tgt_data[chr_name]["GT"]
+                tgt_pos = tgt_data[chr_name]["POS"]
+                src_gt = src_data[chr_name]["GT"]
+                src_pos = src_data[chr_name]["POS"]
+
+                tgt_dos = _dosage_for_positions(
+                    tgt_gt, tgt_pos, tgt_ind_index, snp_positions
+                )
+                src_dos = _dosage_for_positions(
+                    src_gt, src_pos, src_ind_index, snp_positions
                 )
 
-                # -------------------------------------
-                # NEW UNPHASED (DOSAGE-BASED) LOGIC
-                # -------------------------------------
-                # tgt_gt = tgt_data[chr_name]["GT"]
-                # tgt_pos = tgt_data[chr_name]["POS"]
-                # src_gt = src_data[chr_name]["GT"]
-                # src_pos = src_data[chr_name]["POS"]
+                match_pct = calc_match_pct(tgt_dos, src_dos, P=2)
 
-                # tgt_dos = _dosage_for_positions(
-                #    tgt_gt, tgt_pos, tgt_ind_index, snp_positions
-                # )
-                # src_dos = _dosage_for_positions(
-                #    src_gt, src_pos, src_ind_index, snp_positions
-                # )
-
-                # hap_match_pct = calc_match_pct(tgt_dos, src_dos, P=2)
+                res.append(
+                    f"{chr_name}	{win_start}	{win_end}	{sample}	{hap_index}	{match_pct}	{src_sample}"
+                )
 
     return res
+
+
