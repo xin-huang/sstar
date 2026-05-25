@@ -442,10 +442,10 @@ def _cal_match_pct_ind(
                 hap2_match_pct = hap2_res[-1]
 
                 res.append(
-                    f"{chr_name}	{win_start}	{win_end}	{sample}	1	{hap1_match_pct}	{src_sample}"
+                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t1\t{hap1_match_pct}\t{src_sample}"
                 )
                 res.append(
-                    f"{chr_name}	{win_start}	{win_end}	{sample}	2	{hap2_match_pct}	{src_sample}"
+                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t2\t{hap2_match_pct}\t{src_sample}"
                 )
             else:
                 # NEW: unphased output uses dosage-based formula on S* SNP positions
@@ -464,7 +464,7 @@ def _cal_match_pct_ind(
                 match_pct = calc_match_pct(tgt_dos, src_dos, P=2)
 
                 res.append(
-                    f"{chr_name}	{win_start}	{win_end}	{sample}	{hap_index}	{match_pct}	{src_sample}"
+                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t{hap_index}\t{match_pct}\t{src_sample}"
                 )
 
     return res
