@@ -308,7 +308,6 @@ def _cal_score_worker(
                 match_bonus,
                 max_mismatch,
                 mismatch_penalty,
-                chr_last_pos=int(tgt_pos[-1]),
             )
             out_queue.put("\n".join(res))
 
@@ -326,7 +325,6 @@ def _cal_score_ind(
     match_bonus: int,
     max_mismatch: int,
     mismatch_penalty: int,
-    chr_last_pos: Optional[int] = None,
 ) -> list:
     """
     Calculate S* scores for one target individual or haplotype.
@@ -362,14 +360,6 @@ def _cal_score_ind(
         Formatted output lines containing S* scores for each window.
     """
     res = []
-    if chr_last_pos is None:
-        chr_last_pos = int(tgt_pos[-1]) if len(tgt_pos) > 0 else 0
-
-
-    # Backward-compatible fallback for direct unit-test calls
-    if chr_last_pos is None:
-        chr_last_pos = int(tgt_pos[-1]) if len(tgt_pos) > 0 else 0
-
     if len(tgt_gt) <= 2:
         # An individual should have at least three SNPs for S* calculation
         last_pos = 0
@@ -378,7 +368,7 @@ def _cal_score_ind(
         win_start = (tgt_pos[0] + win_step) // win_step * win_step - win_len
         if win_start < 0:
             win_start = 0
-        last_pos = chr_last_pos
+        last_pos = tgt_pos[-1]
 
     while last_pos > win_start:
         win_end = win_start + win_len
