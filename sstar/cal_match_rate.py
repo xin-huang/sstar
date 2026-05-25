@@ -416,7 +416,7 @@ def _cal_match_pct_ind(
     """
     res = []
     for line in data:
-        elements = line.split("	")
+        elements = line.split("\t")
         chr_name = elements[score_col["chrom"]]
         win_start = int(elements[score_col["start"]])
         win_end = int(elements[score_col["end"]])
