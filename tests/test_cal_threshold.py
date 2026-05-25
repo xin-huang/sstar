@@ -26,24 +26,25 @@ def data():
     pytest.simulated_data = (
         "./examples/data/simulated_data/gravel_asn_scale_60k.simulated.data"
     )
-    pytest.score_file = "./tests/results/test.score.exp.results"
+    pytest.score_file = "./tests/results/test.score.unphased.exp.results"
     pytest.recomb_map = "./examples/data/real_data/hum.windows.50k.10k.recomb.map"
-    pytest.output = "./tests/results/test.threshold.results"
     pytest.exp_output = "./tests/results/test.threshold.exp.results"
 
 
-def test_cal_threshold(data):
+def test_cal_threshold(data, tmp_path):
+    output = tmp_path / "test.threshold.results"
+
     cal_threshold(
         simulated_data=pytest.simulated_data,
         score_file=pytest.score_file,
         recomb_rate=0,
         recomb_map=pytest.recomb_map,
         quantile=0.99,
-        output=pytest.output,
+        output=output,
         k=8,
     )
 
-    df_actual = pd.read_csv(pytest.output, sep="\t")
+    df_actual = pd.read_csv(output, sep="\t")
     df_expected = pd.read_csv(pytest.exp_output, sep="\t")
 
     assert df_actual.shape == df_expected.shape, "DataFrame shape mismatch"

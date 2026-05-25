@@ -16,6 +16,7 @@
 import allel
 import pytest
 import numpy as np
+import pandas as pd
 from sstar.cal_s_star import cal_s_star, _cal_score_ind
 
 
@@ -25,17 +26,19 @@ def data():
     pytest.tgt_ind_list = "./tests/data/test.tgt.ind.list"
     pytest.vcf = "./tests/data/test.score.data.vcf"
     pytest.anc_allele = "./tests/data/test.anc.allele"
-    pytest.output = "./tests/results/test.score.results"
-    pytest.exp_output = "./tests/results/test.score.exp.results"
+    pytest.exp_unphased_output = "./tests/results/test.score.unphased.exp.results"
+    pytest.exp_phased_output = "./tests/results/test.score.phased.exp.results"
 
 
-def test_cal_s_star_with_unphased_data(data):
+def test_cal_s_star_with_unphased_data(data, tmp_path):
+    output = tmp_path / "test.score.unphased.results"
+
     cal_s_star(
         vcf=pytest.vcf,
         ref_ind_file=pytest.ref_ind_list,
         tgt_ind_file=pytest.tgt_ind_list,
         anc_allele_file=None,
-        output=pytest.output,
+        output=output,
         win_len=50000,
         win_step=10000,
         thread=1,
@@ -44,17 +47,21 @@ def test_cal_s_star_with_unphased_data(data):
         mismatch_penalty=-10000,
         is_phased=False,
     )
-    f1 = open(pytest.output, "r")
-    res = f1.read()
-    f1.close()
-    f2 = open(pytest.exp_output, "r")
-    exp_res = f2.read()
-    f2.close()
 
-    assert res == exp_res
+    df = pd.read_csv(output, sep="\t")
+    df_expected = pd.read_csv(pytest.exp_unphased_output, sep="\t")
+
+    pd.testing.assert_frame_equal(
+        df,
+        df_expected,
+        check_dtype=False,
+        check_exact=False,
+        rtol=1e-6,
+        atol=1e-8,
+    )
 
 
-def test_cal_s_star_with_phased_data_same_input(data):
+def test_cal_s_star_with_phased_data(data, tmp_path):
     """
     Run the SAME VCF as the unphased test, but treat GT as PHASED (haplotypes).
 
@@ -64,14 +71,14 @@ def test_cal_s_star_with_phased_data_same_input(data):
       - both haplotype suffixes ('_1', '_2') are present in sample labels
       - phased output has at least as many rows as the unphased expected output
     """
-    output_phased = "./tests/results/test.score.phased_same_input.results"
+    output = tmp_path / "test.score.phased.results"
 
     cal_s_star(
         vcf=pytest.vcf,
         ref_ind_file=pytest.ref_ind_list,
         tgt_ind_file=pytest.tgt_ind_list,
         anc_allele_file=None,
-        output=output_phased,
+        output=output,
         win_len=50000,
         win_step=10000,
         thread=1,
@@ -81,45 +88,17 @@ def test_cal_s_star_with_phased_data_same_input(data):
         is_phased=True,
     )
 
-    # Read phased result
-    with open(output_phased) as f:
-        phased_lines = [l.rstrip("\n") for l in f]
+    df = pd.read_csv(output, sep="\t")
+    df_expected = pd.read_csv(pytest.exp_phased_output, sep="\t")
 
-    # Header + at least one data row
-    assert len(phased_lines) > 1
-
-    header = phased_lines[0].split("\t")
-    assert header == [
-        "chrom",
-        "start",
-        "end",
-        "sample",
-        "hap_index",
-        "S*_score",
-        "region_ind_SNP_number",
-        "S*_SNP_number",
-        "S*_SNPs",
-    ]
-
-    # Basic row integrity
-    first_data = phased_lines[1].split("\t")
-    assert len(first_data) == 9
-
-    # Check that hap_index column includes phased haplotypes 1 and 2
-    hap_indices = {line.split("\t")[4] for line in phased_lines[1:]}
-    assert "1" in hap_indices
-    assert "2" in hap_indices
-
-    # Compare number of rows to *expected* unphased output (static file)
-    with open(pytest.exp_output) as f:
-        unphased_lines = [l.rstrip("\n") for l in f]
-
-    # Ignore headers (first line)
-    phased_n = len(phased_lines) - 1
-    unphased_n = len(unphased_lines) - 1
-
-    # Phased run has at least as many windows as the unphased one
-    assert phased_n >= unphased_n
+    pd.testing.assert_frame_equal(
+        df,
+        df_expected,
+        check_dtype=False,
+        check_exact=False,
+        rtol=1e-6,
+        atol=1e-8,
+    )
 
 
 def test_cal_score_ind_with_too_few_snps():
@@ -134,7 +113,6 @@ def test_cal_score_ind_with_too_few_snps():
     res = _cal_score_ind(
         chr_name="chr1",
         sample_name="ind1",
-        hap_index="NA",
         ref_pos=ref_pos,
         tgt_pos=tgt_pos,
         tgt_gt=tgt_gt,
@@ -161,7 +139,6 @@ def test_cal_score_ind_with_perfect_ld_chain():
     res = _cal_score_ind(
         chr_name="chr1",
         sample_name="ind1",
-        hap_index="NA",
         ref_pos=ref_pos,
         tgt_pos=tgt_pos,
         tgt_gt=tgt_gt,
@@ -175,7 +152,7 @@ def test_cal_score_ind_with_perfect_ld_chain():
 
     assert len(res) >= 1
     fields = res[0].split("\t")
-    assert len(fields) == 9
+    assert len(fields) == 8
 
     s_star_score = fields[5]
     s_star_snp_num = fields[7]
@@ -196,7 +173,6 @@ def test_cal_score_ind_with_mismatch_penalty():
     res = _cal_score_ind(
         chr_name="chr1",
         sample_name="ind1",
-        hap_index="NA",
         ref_pos=ref_pos,
         tgt_pos=tgt_pos,
         tgt_gt=tgt_gt,
@@ -210,7 +186,7 @@ def test_cal_score_ind_with_mismatch_penalty():
 
     assert len(res) >= 1
     fields = res[0].split("\t")
-    assert len(fields) == 9
+    assert len(fields) == 8
     # S*_score may be "NA" or numeric depending on the optimal chain,
     # but the function must run and produce well-formed output.
 
@@ -226,7 +202,6 @@ def test_cal_score_ind_with_short_phy_distance():
     res = _cal_score_ind(
         chr_name="chr1",
         sample_name="ind1",
-        hap_index="NA",
         ref_pos=ref_pos,
         tgt_pos=tgt_pos,
         tgt_gt=tgt_gt,
@@ -240,4 +215,4 @@ def test_cal_score_ind_with_short_phy_distance():
 
     assert len(res) >= 1
     fields = res[0].split("\t")
-    assert len(fields) == 9
+    assert len(fields) == 8

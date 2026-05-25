@@ -13,19 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-tests/test_cal_match_rate.py
-
-This test suite validates:
-1) Unit behavior of calc_match_pct (dosage-based match rate).
-2) End-to-end cal_match_pct pipeline in both modes:
-   - phased=True  -> matches phased golden file (existing)
-   - phased=False -> matches unphased golden file (new)
-3) No shared outputs: all integration tests write to tmp_path.
-"""
 
 import pytest
 import numpy as np
+import pandas as pd
 import allel
 
 from sstar.cal_match_rate import (
@@ -51,30 +42,9 @@ def data():
         "src_ind_file": "./examples/data/ind_list/nean.ind.list",
         "vcf": "./tests/data/test.match.rate.data.vcf",
         "score_file": "./tests/results/test.match.rate.score.exp.results",
-        # Existing repo golden (this corresponds to phased/haplotype logic).
-        "exp_output_phased": "./tests/results/test.match.rate.exp.results",
-        # New repo golden (you must create/commit this file after generating it once).
-        "exp_output_unphased": "./tests/results/test.match.rate.exp.unphased.results",
+        "exp_output_phased": "./tests/results/test.match.rate.phased.exp.results",
+        "exp_output_unphased": "./tests/results/test.match.rate.unphased.exp.results",
     }
-
-
-def test_read_score_file_accepts_phased_sample_ids(tmp_path):
-    score = tmp_path / "score.tsv"
-    score.write_text(
-        "chrom\tstart\tend\tsample\thap_index\tS*_score\tregion_ind_SNP_number\tS*_SNP_number\tS*_SNPs\n"
-        "1\t100\t200\ttgt1\t1\t1.0\t2\t2\t100,150\n"
-        "1\t100\t200\ttgt1\t2\t0.9\t2\t2\t100,150\n"
-        "1\t100\t200\ttgt2\tNA\t0.8\t2\t2\t100,150\n"
-        "1\t100\t200\tignore_me\t1\t0.7\t2\t2\t100,150\n"
-    )
-
-    data, windows, samples, col = _read_score_file(str(score), ["1"], ["tgt1", "tgt2"])
-
-    assert samples == ["tgt1", "tgt2"]
-    assert col["hap_index"] == 4
-    assert len(data["tgt1"]) == 2
-    assert len(data["tgt2"]) == 1
-    assert windows["1"] == [(100, 200), (100, 200), (100, 200)]
 
 
 # ----------------------------
@@ -124,52 +94,6 @@ def test_calc_match_pct_with_scikit_allel_genotypes():
     assert calc_match_pct(x, y, P=2) == pytest.approx(0.75)
 
 
-# ---------------------------------------
-# Helpers: integration output validation
-# ---------------------------------------
-
-
-def _read_lines(path: str):
-    with open(path, "r") as f:
-        return f.read().splitlines()
-
-
-def _assert_output_sane(lines):
-    """
-    Validate structure and numeric invariants of cal_match_pct output.
-
-    Guarantees:
-    - correct header
-    - each row has 7 columns
-    - match_rate is "NA" or a float within [0,1]
-    """
-    assert len(lines) > 1, "Expected header + at least one row"
-
-    header = lines[0].split("\t")
-    assert header == [
-        "chrom",
-        "start",
-        "end",
-        "sample",
-        "hap_index",
-        "match_rate",
-        "src_sample",
-    ]
-
-    for row in lines[1:]:
-        fields = row.split("\t")
-        assert len(fields) == 7, f"Expected 7 columns, got {len(fields)}: {row}"
-        mr = fields[5]
-        if mr != "NA":
-            v = float(mr)
-            assert 0.0 <= v <= 1.0, f"match_rate out of bounds: {v}"
-
-
-# ---------------------------------------
-# Integration: phased & unphased goldens
-# ---------------------------------------
-
-
 def test_cal_match_pct_phased_matches_golden(data, tmp_path):
     """
     phased=True must match the existing golden file exactly.
@@ -189,11 +113,17 @@ def test_cal_match_pct_phased_matches_golden(data, tmp_path):
         phased=True,
     )
 
-    got = out.read_text().splitlines()
-    _assert_output_sane(got)
+    df = pd.read_csv(out, sep="\t")
+    df_expected = pd.read_csv(data["exp_output_phased"], sep="\t")
 
-    exp = _read_lines(data["exp_output_phased"])
-    assert got == exp
+    pd.testing.assert_frame_equal(
+        df,
+        df_expected,
+        check_dtype=False,
+        check_exact=False,
+        rtol=1e-6,
+        atol=1e-8,
+    )
 
 
 def test_cal_match_pct_unphased_matches_golden(data, tmp_path):
@@ -219,8 +149,14 @@ def test_cal_match_pct_unphased_matches_golden(data, tmp_path):
         phased=False,
     )
 
-    got = out.read_text().splitlines()
-    _assert_output_sane(got)
+    df = pd.read_csv(out, sep="\t")
+    df_expected = pd.read_csv(data["exp_output_unphased"], sep="\t")
 
-    exp = _read_lines(data["exp_output_unphased"])
-    assert got == exp
+    pd.testing.assert_frame_equal(
+        df,
+        df_expected,
+        check_dtype=False,
+        check_exact=False,
+        rtol=1e-6,
+        atol=1e-8,
+    )

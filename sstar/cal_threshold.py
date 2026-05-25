@@ -53,7 +53,7 @@ def cal_threshold(
     k : int
         Basis dimension passed to the MGCV smooth term.
     phased : bool, optional
-        If True, expect phased score rows with non-NA haplotype indices. Default: `False`.
+        If True, expect phased score rows with sample labels suffixed by haplotype index. Default: `False`.
     """
 
     # FORCE legacy + correct behavior:
@@ -154,7 +154,7 @@ def _predict_res(
     fit_lr : bool
         If True, include local recombination rate in prediction data.
     phased : bool
-        If True, expect phased score rows with non-NA haplotype indices.
+        If True, expect phased score rows with sample labels suffixed by haplotype index.
 
     Returns
     -------
@@ -230,7 +230,7 @@ def _read_score_file(
     fit_lr : bool
         If True, include local recombination rate in prediction data.
     phased : bool
-        If True, expect phased score rows with non-NA haplotype indices.
+        If True, expect phased score rows with sample labels suffixed by haplotype index.
 
     Returns
     -------
@@ -258,22 +258,6 @@ def _read_score_file(
             win_start = element[col["start"]]
             win_end = element[col["end"]]
             sample = element[col["sample"]]
-            hap_index = element[col["hap_index"]] if "hap_index" in col else "NA"
-
-            is_hap_row = hap_index != "NA"
-
-            if phased and not is_hap_row:
-                raise ValueError(
-                    "threshold called with --phased but score file does not contain phased rows "
-                    "(expected hap_index column to contain non-NA values)."
-                )
-
-            if (not phased) and is_hap_row:
-                raise ValueError(
-                    "threshold called without --phased but score file contains phased rows "
-                    "(hap_index has non-NA values). Use phased quantiles and run threshold with --phased."
-                )
-
             score = element[col["S*_score"]]
             total_snp_num = element[col["region_ind_SNP_number"]]
 

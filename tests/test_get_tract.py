@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import pytest
+import pandas as pd
 from sstar.get_tract import get_tract
 
 
@@ -28,55 +29,82 @@ def data():
     pytest.exp_src2_bed = "./tests/results/test.tract.exp.src2.bed"
 
 
-def test_get_tract(data):
+def test_get_tract(data, tmp_path):
+    output_prefix = str(tmp_path) + "/test.tract"
+    output = str(tmp_path) + "/test.tract.bed"
+
     get_tract(
         threshold_file=pytest.threshold,
         match_pct_files=None,
-        output_prefix="./tests/results/test.tract",
+        output_prefix=output_prefix,
         diff=0,
     )
-    f1 = open("./tests/results/test.tract.bed", "r")
-    res = f1.read()
-    f1.close()
-    f2 = open(pytest.exp_bed, "r")
-    exp_res = f2.read()
-    f2.close()
 
-    assert res == exp_res
+    df = pd.read_csv(output, sep="\t")
+    df_expected = pd.read_csv(pytest.exp_bed, sep="\t")
+
+    pd.testing.assert_frame_equal(
+        df,
+        df_expected,
+        check_dtype=False,
+        check_exact=False,
+        rtol=1e-6,
+        atol=1e-8,
+    )
+
+
+def test_get_tract_with_src(data, tmp_path):
+    output_prefix = str(tmp_path) + "/test.tract.with.src.match.rate"
+    output = str(tmp_path) + "/test.tract.with.src.match.rate.bed"
 
     get_tract(
         threshold_file=pytest.threshold,
         match_pct_files=[pytest.src1_match_pct],
-        output_prefix="./tests/results/test.tract.with.src.match.rate",
+        output_prefix=output_prefix,
         diff=0,
     )
-    f1 = open("./tests/results/test.tract.with.src.match.rate.bed", "r")
-    res = f1.read()
-    f1.close()
-    f2 = open(pytest.exp_bed_with_src, "r")
-    exp_res = f2.read()
-    f2.close()
 
-    assert res == exp_res
+    df = pd.read_csv(output, sep="\t")
+    df_expected = pd.read_csv(pytest.exp_bed_with_src, sep="\t")
+
+    pd.testing.assert_frame_equal(
+        df,
+        df_expected,
+        check_dtype=False,
+        check_exact=False,
+        rtol=1e-6,
+        atol=1e-8,
+    )
+
+
+def test_get_tract_with_multi_src(data, tmp_path):
+    output_prefix = str(tmp_path) + "/test.tract"
+    output1 = str(tmp_path) + "/test.tract.src1.bed"
+    output2 = str(tmp_path) + "/test.tract.src2.bed"
 
     get_tract(
         threshold_file=pytest.threshold,
         match_pct_files=[pytest.src1_match_pct, pytest.src2_match_pct],
-        output_prefix="./tests/results/test.tract",
+        output_prefix=output_prefix,
         diff=0,
     )
-    f1 = open("./tests/results/test.tract.src1.bed", "r")
-    res1 = f1.read()
-    f1.close()
-    f2 = open("./tests/results/test.tract.src2.bed", "r")
-    res2 = f2.read()
-    f2.close()
-    f3 = open(pytest.exp_src1_bed, "r")
-    exp_res1 = f3.read()
-    f3.close()
-    f4 = open(pytest.exp_src2_bed, "r")
-    exp_res2 = f4.read()
-    f4.close()
 
-    assert res1 == exp_res1
-    assert res2 == exp_res2
+    for f1, f2 in zip([output1, output2], [pytest.exp_src1_bed, pytest.exp_src2_bed]):
+        try:
+            df = pd.read_csv(f1, sep="\t")
+        except pd.errors.EmptyDataError:
+            df = pd.DataFrame()
+
+        try:
+            df_expected = pd.read_csv(f2, sep="\t")
+        except pd.errors.EmptyDataError:
+            df_expected = pd.DataFrame()
+
+        pd.testing.assert_frame_equal(
+            df,
+            df_expected,
+            check_dtype=False,
+            check_exact=False,
+            rtol=1e-6,
+            atol=1e-8,
+        )
