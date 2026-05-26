@@ -165,11 +165,11 @@ def cal_match_pct(
 
     mapped_intervals = read_mapped_region_file(mapped_region_file)
     data, windows, samples, score_col = _read_score_file(
-        score_file, chr_names, tgt_samples
+        score_file, chr_names, tgt_samples, phased
     )
     sample_size = len(samples)
 
-    header = "chrom\tstart\tend\tsample\thap_index\tmatch_rate\tsrc_sample"
+    header = "chrom\tstart\tend\tsample\tmatch_rate\tsrc_sample"
 
     if thread > 1:
         thread = min(os.cpu_count() - 1, sample_size, thread)
@@ -195,7 +195,7 @@ def cal_match_pct(
 
 # @profile
 def _read_score_file(
-    score_file: str, chr_names: Iterable[str], tgt_samples: list
+    score_file: str, chr_names: Iterable[str], tgt_samples: list, phased: bool
 ) -> Tuple[dict, dict, list, dict]:
     """
     Read S* score rows used for source-match-rate calculation.
@@ -208,6 +208,8 @@ def _read_score_file(
         Chromosome names to initialize in the window index.
     tgt_samples : list
         Target sample IDs to retain from the score file.
+    phased : bool
+        Whether score rows are haplotype-phased (`sample_<hap>`) labels.
 
     Returns
     -------
@@ -230,7 +232,12 @@ def _read_score_file(
             win_start = elements[col["start"]]
             win_end = elements[col["end"]]
             sample = elements[col["sample"]]
-            if sample not in tgt_samples:
+            if phased:
+                sample_parts = sample.rsplit("_", 1)
+                sample_base = sample_parts[0]
+                if sample_base not in tgt_samples:
+                    continue
+            elif sample not in tgt_samples:
                 continue
             if elements[col["S*_SNP_number"]] == "NA":
                 continue
@@ -446,7 +453,6 @@ def _cal_match_pct_ind(
         win_start = int(elements[score_col["start"]])
         win_end = int(elements[score_col["end"]])
         sample = elements[score_col["sample"]]
-        hap_index = elements[score_col["hap_index"]]
 
         # S* SNP positions (comma-separated positions in the score file)
         snp_positions = [
@@ -489,14 +495,14 @@ def _cal_match_pct_ind(
 
             if phased:
                 res.append(
-                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t1\t{hap1_match_pct}\t{src_sample}"
+                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}_1\t{hap1_match_pct}\t{src_sample}"
                 )
                 res.append(
-                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t2\t{hap2_match_pct}\t{src_sample}"
+                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}_2\t{hap2_match_pct}\t{src_sample}"
                 )
             else:
                 res.append(
-                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t{hap_index}\t{hap_match_pct}\t{src_sample}"
+                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t{hap_match_pct}\t{src_sample}"
                 )
 
                 # -------------------------------------

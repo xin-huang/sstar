@@ -519,7 +519,7 @@ def _s_star_cli_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--phased",
         action="store_true",
-        help="Expect phased score rows with non-NA haplotype indices.",
+        help="Expect phased score rows where sample names carry haplotype suffixes (for example sample_1).",
     )
     _add_score_args(parser)
     parser.add_argument(

@@ -207,13 +207,13 @@ def _cal_score(
             sample_idx = hap_idx // ploidy
             hap_no = (hap_idx % ploidy) + 1
             sample_name = samples[sample_idx]
-            in_queue.put((hap_idx, sample_name, str(hap_no)))
+            in_queue.put((hap_idx, f"{sample_name}_{hap_no}"))
     else:
         n_jobs = len(samples)
         # CHANGE REQUESTED BY XIN (Dec 5, 2025): use n_jobs in the loop range
         for s in range(n_jobs):
             sample_name = samples[s]
-            in_queue.put((s, sample_name, "NA"))
+            in_queue.put((s, sample_name))
 
     try:
         for worker in workers:
@@ -230,7 +230,7 @@ def _cal_score(
         for worker in workers:
             worker.join()
 
-    header = "chrom\tstart\tend\tsample\thap_index\tS*_score\tregion_ind_SNP_number\tS*_SNP_number\tS*_SNPs"
+    header = "chrom\tstart\tend\tsample\tS*_score\tregion_ind_SNP_number\tS*_SNP_number\tS*_SNPs"
     with open(output, "w") as o:
         o.write(header + "\n")
         o.write("\n".join(res))
@@ -278,7 +278,7 @@ def _cal_score_worker(
     """
 
     while True:
-        s, sample_name, hap_index = in_queue.get()
+        s, sample_name = in_queue.get()
         chr_names = tgt_data.keys()
         for c in chr_names:
             tgt_gt = tgt_data[c]["GT"]  # 2D: (V, N_tgt)
@@ -299,7 +299,6 @@ def _cal_score_worker(
             res = _cal_score_ind(
                 c,
                 sample_name,
-                hap_index,
                 ref_sub_pos,
                 tgt_sub_pos,
                 tgt_sub_gt,
@@ -317,7 +316,6 @@ def _cal_score_worker(
 def _cal_score_ind(
     chr_name: str,
     sample_name: str,
-    hap_index: str,
     ref_pos: Union[list, np.ndarray],
     tgt_pos: Union[list, np.ndarray],
     tgt_gt: np.ndarray,
@@ -337,8 +335,6 @@ def _cal_score_ind(
         Chromosome name.
     sample_name : str
         Sample ID written to the score output.
-    hap_index : str
-        Haplotype index, or `"NA"` for unphased runs.
     ref_pos : list or numpy.ndarray
         Variant positions observed in the reference population.
     tgt_pos : list or numpy.ndarray
@@ -355,6 +351,8 @@ def _cal_score_ind(
         Maximum genotype distance allowed before a pair is discarded.
     mismatch_penalty : int
         Penalty for mismatching genotypes between two variants.
+    chr_last_pos : int
+        Last position of the chromosome.
 
     Returns
     -------
@@ -431,7 +429,7 @@ def _cal_score_ind(
 
         line = (
             f"{chr_name}\t{win_start}\t{win_end}\t{sample_name}\t"
-            f"{hap_index}\t{s_star_score}\t{total_snps}\t{s_star_snp_num}\t{haplotype}"
+            f"{s_star_score}\t{total_snps}\t{s_star_snp_num}\t{haplotype}"
         )
 
         win_start += win_step
