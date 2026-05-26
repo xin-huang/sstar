@@ -143,6 +143,7 @@ def test_cal_score_ind_with_too_few_snps():
         match_bonus=5000,
         max_mismatch=5,
         mismatch_penalty=-10000,
+        chr_last_pos=tgt_pos[-1],
     )
 
     assert res == []
@@ -169,6 +170,7 @@ def test_cal_score_ind_with_perfect_ld_chain():
         match_bonus=5000,
         max_mismatch=5,
         mismatch_penalty=-10000,
+        chr_last_pos=tgt_pos[-1],
     )
 
     assert len(res) >= 1
@@ -203,6 +205,7 @@ def test_cal_score_ind_with_mismatch_penalty():
         match_bonus=5000,
         max_mismatch=1,  # diff=1 allowed, diff=2 treated as > max_mismatch
         mismatch_penalty=-10000,
+        chr_last_pos=tgt_pos[-1],
     )
 
     assert len(res) >= 1
@@ -232,6 +235,7 @@ def test_cal_score_ind_with_short_phy_distance():
         match_bonus=5000,
         max_mismatch=5,
         mismatch_penalty=-10000,
+        chr_last_pos=tgt_pos[-1],
     )
 
     assert len(res) >= 1
