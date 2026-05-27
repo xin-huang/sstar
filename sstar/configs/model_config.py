@@ -32,7 +32,6 @@ class ModelConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-
     @field_validator("params", mode="before")
     @classmethod
     def validate_params_mapping(cls, value: Any) -> dict[str, Any]:
