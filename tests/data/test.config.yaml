@@ -28,7 +28,7 @@ preprocessing:
 model:
   params:
     loss: "quantile"
-    quantile: 0.9
+    alpha: 0.9
     n_estimators: 200
     max_depth: 3
     random_state: 12345
