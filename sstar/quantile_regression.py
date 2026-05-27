@@ -129,4 +129,6 @@ def infer(
 
     bed["Start"] = bed["Start"] - 1
 
-    bed.to_csv(bed_file, sep="\t", index=False, header=False)
+    bed.sort_values(by=["Sample", "Chromosome", "Start", "End"]).to_csv(
+        bed_file, sep="\t", index=False, header=False
+    )
