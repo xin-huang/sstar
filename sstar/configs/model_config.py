@@ -34,11 +34,13 @@ class ModelConfig(BaseModel):
     @model_validator(mode="after")
     def validate_known_keys(self):
         """
-        Validate keys against GradientBoostingRegressor signature plus sstar-specific keys.
+        Validate `params` against the GradientBoostingRegressor signature.
         """
         allowed_keys = set(inspect.signature(GradientBoostingRegressor).parameters)
-        unknown_keys = set(self.model_extra or {}).difference(allowed_keys)
+        unknown_keys = set(self.params).difference(allowed_keys)
+
         if unknown_keys:
             unknown_str = ", ".join(sorted(unknown_keys))
             raise ValueError(f"Unknown GradientBoostingRegressor params: {unknown_str}")
+
         return self
