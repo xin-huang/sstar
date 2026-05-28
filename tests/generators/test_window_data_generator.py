@@ -52,7 +52,9 @@ def expected_params(file_paths):
     chr_name = "1"
     win_len = 50000
     win_step = 50000
-    ref_data, ref_samples, tgt_data, tgt_samples = read_data(**file_paths)
+    ref_data, _ref_samples, tgt_data, _tgt_samples, _src_data, _src_samples = read_data(
+        **file_paths
+    )
     windows = split_genome(tgt_data[chr_name]["POS"], chr_name, win_step, win_len)
 
     for w in range(len(windows)):
@@ -102,6 +104,39 @@ def test_WindowDataGenerator(init_params, expected_params):
                 assert (
                     generated[key] == expected[key]
                 ), f"Values do not match for key {key}."
+
+
+def test_WindowDataGenerator_with_source_genotypes(init_params, file_paths, tmp_path):
+    src_ind_file = tmp_path / "src.ind.list"
+    src_ind_file.write_text("tsk_75\ntsk_76\ntsk_77\n")
+
+    generator = WindowDataGenerator(
+        **init_params,
+        src_ind_file=str(src_ind_file),
+    )
+    generated_params_list = list(generator.get())
+
+    ref_data, _ref_samples, tgt_data, _tgt_samples, src_data, _src_samples = read_data(
+        **file_paths,
+        src_ind_file=str(src_ind_file),
+    )
+    chr_name = init_params["chr_name"]
+    windows = split_genome(
+        tgt_data[chr_name]["POS"],
+        chr_name,
+        init_params["win_step"],
+        init_params["win_len"],
+    )
+
+    assert generated_params_list, "Expected at least one generated window."
+    for generated, window in zip(generated_params_list, windows):
+        chr_name = window[0]
+        start, end = window[1]
+        pos = tgt_data[chr_name]["POS"]
+        idx = (pos >= start) & (pos <= end)
+
+        assert "src_gts" in generated
+        assert np.array_equal(generated["src_gts"], src_data[chr_name]["GT"][idx])
 
 
 def test_window_generator_uses_closed_interval_boundaries():

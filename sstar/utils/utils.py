@@ -133,9 +133,10 @@ def read_data(
     tgt_ind_file: str,
     anc_allele_file: str,
     is_phased: bool,
-) -> tuple[dict, list, dict, list]:
+    src_ind_file: str = None,
+) -> tuple[dict, list, dict, list, dict, list]:
     """
-    Read data from reference and target populations.
+    Read data from reference, target, and optional source populations.
 
     Parameters
     ----------
@@ -151,6 +152,8 @@ def read_data(
         Name of the file containing ancestral allele information.
     is_phased : bool
         If True, use phased genotypes; otherwise, use unphased genotypes.
+    src_ind_file : str, optional
+        Name of the file containing sample information from source populations.
 
     Returns
     -------
@@ -162,8 +165,12 @@ def read_data(
         Genotype data from target populations.
     tgt_samples : list
         Sample information from target populations.
+    src_data : dict
+        Genotype data from source populations.
+    src_samples : list
+        Sample information from source populations.
     """
-    ref_data = ref_samples = tgt_data = tgt_samples = None
+    ref_data = ref_samples = tgt_data = tgt_samples = src_data = src_samples = None
     if ref_ind_file is not None:
         ref_samples = parse_ind_file(ref_ind_file)
         ref_data = read_geno_data(vcf_file, ref_samples, anc_allele_file, True)
@@ -171,6 +178,10 @@ def read_data(
     if tgt_ind_file is not None:
         tgt_samples = parse_ind_file(tgt_ind_file)
         tgt_data = read_geno_data(vcf_file, tgt_samples, anc_allele_file, True)
+
+    if src_ind_file is not None:
+        src_samples = parse_ind_file(src_ind_file)
+        src_data = read_geno_data(vcf_file, src_samples, anc_allele_file, True)
 
     if (ref_ind_file is not None) and (tgt_ind_file is not None):
         chr_names = tgt_data.keys()
@@ -184,8 +195,12 @@ def read_data(
             )
             fixed_index = np.logical_and(ref_fixed_variants, tgt_fixed_variants)
             index = np.logical_not(fixed_index)
+            fixed_pos = ref_data[c]["POS"][fixed_index]
             ref_data = filter_data(ref_data, c, index)
             tgt_data = filter_data(tgt_data, c, index)
+            if src_data is not None and c in src_data:
+                src_index = ~np.in1d(src_data[c]["POS"], fixed_pos)
+                src_data = filter_data(src_data, c, src_index)
 
     if is_phased:
         for c in chr_names:
@@ -197,12 +212,19 @@ def read_data(
             tgt_data[c]["GT"] = np.reshape(
                 tgt_data[c]["GT"].values, (mut_num, ind_num * ploidy)
             )
+            if src_data is not None and c in src_data:
+                mut_num, ind_num, ploidy = src_data[c]["GT"].shape
+                src_data[c]["GT"] = np.reshape(
+                    src_data[c]["GT"].values, (mut_num, ind_num * ploidy)
+                )
     else:
         for c in chr_names:
             ref_data[c]["GT"] = np.sum(ref_data[c]["GT"], axis=2)
             tgt_data[c]["GT"] = np.sum(tgt_data[c]["GT"], axis=2)
+            if src_data is not None and c in src_data:
+                src_data[c]["GT"] = np.sum(src_data[c]["GT"], axis=2)
 
-    return ref_data, ref_samples, tgt_data, tgt_samples
+    return ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples
 
 
 def get_ref_alt_allele(ref, alt, pos):
@@ -415,4 +437,3 @@ def split_genome(
                 )
 
     return window_positions
-
