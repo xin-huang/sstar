@@ -139,6 +139,57 @@ def test_WindowDataGenerator_with_source_genotypes(init_params, file_paths, tmp_
         assert np.array_equal(generated["src_gts"], src_data[chr_name]["GT"][idx])
 
 
+def test_WindowDataGenerator_aligns_source_to_target_positions(tmp_path):
+    vcf_file = tmp_path / "source_missing.vcf"
+    vcf_file.write_text(
+        "\n".join(
+            [
+                "##fileformat=VCFv4.2",
+                "##contig=<ID=1,length=100>",
+                '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT"
+                "\tref_0\ttgt_0\tsrc_0",
+                "1\t10\t.\tA\tG\t.\tPASS\t.\tGT\t0|0\t0|0\t0|1",
+                "1\t20\t.\tA\tG\t.\tPASS\t.\tGT\t0|1\t0|0\t.|.",
+                "1\t30\t.\tA\tG\t.\tPASS\t.\tGT\t1|0\t0|1\t1|1",
+            ]
+        )
+        + "\n"
+    )
+    ref_ind_file = tmp_path / "ref.ind.list"
+    tgt_ind_file = tmp_path / "tgt.ind.list"
+    src_ind_file = tmp_path / "src.ind.list"
+    ref_ind_file.write_text("ref_0\n")
+    tgt_ind_file.write_text("tgt_0\n")
+    src_ind_file.write_text("src_0\n")
+
+    _ref_data, _ref_samples, tgt_data, _tgt_samples, src_data, _src_samples = read_data(
+        str(vcf_file),
+        str(ref_ind_file),
+        str(tgt_ind_file),
+        None,
+        True,
+        str(src_ind_file),
+    )
+
+    assert np.array_equal(src_data["1"]["POS"], tgt_data["1"]["POS"])
+
+    generator = WindowDataGenerator(
+        vcf_file=str(vcf_file),
+        chr_name="1",
+        ref_ind_file=str(ref_ind_file),
+        tgt_ind_file=str(tgt_ind_file),
+        src_ind_file=str(src_ind_file),
+        win_len=100,
+        win_step=100,
+    )
+    window = next(generator.get())
+
+    assert np.array_equal(window["pos"], np.array([10, 20, 30]))
+    assert window["src_gts"].shape[0] == window["pos"].shape[0]
+    assert np.array_equal(window["src_gts"], src_data["1"]["GT"])
+
+
 def test_window_generator_uses_closed_interval_boundaries():
     pos = np.array([1, 10, 20, 21, 30])
     start = 10

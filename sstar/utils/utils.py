@@ -127,6 +127,42 @@ def filter_data(data: dict, c: str, index: np.ndarray) -> dict:
     return data
 
 
+def align_data_to_positions(data: dict, c: str, target_pos: np.ndarray) -> dict:
+    """
+    Align genotype data for one chromosome to a target position order.
+
+    Parameters
+    ----------
+    data : dict
+        Genotype data to align.
+    c : str
+        Name of the chromosome to align.
+    target_pos : np.ndarray
+        Target genomic positions and order to match.
+
+    Returns
+    -------
+    dict
+        Genotype data filtered and reordered to match ``target_pos``.
+
+    Raises
+    ------
+    ValueError
+        If the genotype data is missing one or more target positions.
+    """
+    source_pos = data[c]["POS"]
+    source_index_by_pos = {pos: idx for idx, pos in enumerate(source_pos)}
+    missing_pos = [pos for pos in target_pos if pos not in source_index_by_pos]
+    if missing_pos:
+        raise ValueError(
+            f"Cannot align source data for chromosome {c}: "
+            f"missing {len(missing_pos)} target position(s)."
+        )
+
+    index = np.array([source_index_by_pos[pos] for pos in target_pos])
+    return filter_data(data, c, index)
+
+
 def read_data(
     vcf_file: str,
     ref_ind_file: str,
@@ -181,7 +217,7 @@ def read_data(
 
     if src_ind_file is not None:
         src_samples = parse_ind_file(src_ind_file)
-        src_data = read_geno_data(vcf_file, src_samples, anc_allele_file, True)
+        src_data = read_geno_data(vcf_file, src_samples, anc_allele_file, False)
 
     if (ref_ind_file is not None) and (tgt_ind_file is not None):
         chr_names = tgt_data.keys()
@@ -201,6 +237,7 @@ def read_data(
             if src_data is not None and c in src_data:
                 src_index = ~np.isin(src_data[c]["POS"], fixed_pos)
                 src_data = filter_data(src_data, c, src_index)
+                src_data = align_data_to_positions(src_data, c, tgt_data[c]["POS"])
 
     if is_phased:
         for c in chr_names:
