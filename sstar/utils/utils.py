@@ -51,6 +51,7 @@ def read_geno_data(
     ind: list[str],
     anc_allele_file: str,
     filter_missing: bool,
+    chr_name: str = None,
 ) -> dict:
     """
     Read genotype data from a VCF file.
@@ -65,13 +66,18 @@ def read_geno_data(
         Path to the BED file containing ancestral allele information.
     filter_missing : bool
         Whether to filter out missing data.
+    chr_name : str, optional
+        If provided, read only this chromosome from the VCF.
 
     Returns
     -------
     dict
         Genotype data read from the VCF file.
     """
-    vcf = allel.read_vcf(str(vcf), alt_number=1, samples=ind)
+    vcf = allel.read_vcf(str(vcf), alt_number=1, samples=ind, region=chr_name)
+    if vcf is None:
+        raise ValueError(f"{chr_name} is not present in the VCF file.")
+
     gt = vcf["calldata/GT"]
     chr_names = np.unique(vcf["variants/CHROM"])
     samples = vcf["samples"]
@@ -239,7 +245,7 @@ def read_data(
     is_phased : bool
         If True, use phased genotypes; otherwise, use unphased genotypes.
     chr_name : str, optional
-        If provided, align and transform only this chromosome.
+        If provided, read, align, and transform only this chromosome.
 
     Returns
     -------
@@ -255,20 +261,17 @@ def read_data(
     ref_data = ref_samples = tgt_data = tgt_samples = None
     if ref_ind_file is not None:
         ref_samples = parse_ind_file(ref_ind_file)
-        ref_data = read_geno_data(vcf_file, ref_samples, anc_allele_file, True)
+        ref_data = read_geno_data(
+            vcf_file, ref_samples, anc_allele_file, True, chr_name=chr_name
+        )
 
     if tgt_ind_file is not None:
         tgt_samples = parse_ind_file(tgt_ind_file)
-        tgt_data = read_geno_data(vcf_file, tgt_samples, anc_allele_file, True)
+        tgt_data = read_geno_data(
+            vcf_file, tgt_samples, anc_allele_file, True, chr_name=chr_name
+        )
 
     if (ref_ind_file is not None) and (tgt_ind_file is not None):
-        if chr_name is not None:
-            chr_names = [chr_name]
-            ref_data = {c: ref_data[c] for c in chr_names if c in ref_data}
-            tgt_data = {c: tgt_data[c] for c in chr_names if c in tgt_data}
-        else:
-            chr_names = list(tgt_data.keys())
-
         ref_data, tgt_data = align_population_data_by_position(ref_data, tgt_data)
         chr_names = list(tgt_data.keys())
         for c in chr_names:
