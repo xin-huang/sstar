@@ -219,6 +219,7 @@ def read_data(
     tgt_ind_file: str,
     anc_allele_file: str,
     is_phased: bool,
+    chr_name: str = None,
 ) -> tuple[dict, list, dict, list]:
     """
     Read data from reference and target populations.
@@ -237,6 +238,8 @@ def read_data(
         Name of the file containing ancestral allele information.
     is_phased : bool
         If True, use phased genotypes; otherwise, use unphased genotypes.
+    chr_name : str, optional
+        If provided, align and transform only this chromosome.
 
     Returns
     -------
@@ -259,8 +262,15 @@ def read_data(
         tgt_data = read_geno_data(vcf_file, tgt_samples, anc_allele_file, True)
 
     if (ref_ind_file is not None) and (tgt_ind_file is not None):
+        if chr_name is not None:
+            chr_names = [chr_name]
+            ref_data = {c: ref_data[c] for c in chr_names if c in ref_data}
+            tgt_data = {c: tgt_data[c] for c in chr_names if c in tgt_data}
+        else:
+            chr_names = list(tgt_data.keys())
+
         ref_data, tgt_data = align_population_data_by_position(ref_data, tgt_data)
-        chr_names = tgt_data.keys()
+        chr_names = list(tgt_data.keys())
         for c in chr_names:
             # Remove variants fixed in both the reference and target individuals
             ref_fixed_variants = np.sum(ref_data[c]["GT"].is_hom_alt(), axis=1) == len(

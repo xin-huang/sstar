@@ -83,7 +83,12 @@ class WindowDataGenerator(GenericGenerator):
         self.is_phased = is_phased
 
         ref_data, ref_samples, tgt_data, tgt_samples = read_data(
-            vcf_file, ref_ind_file, tgt_ind_file, anc_allele_file, is_phased
+            vcf_file,
+            ref_ind_file,
+            tgt_ind_file,
+            anc_allele_file,
+            is_phased,
+            chr_name=chr_name,
         )
 
         if chr_name not in tgt_data:

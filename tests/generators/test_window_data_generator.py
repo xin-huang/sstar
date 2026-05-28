@@ -111,3 +111,40 @@ def test_window_generator_uses_closed_interval_boundaries():
     idx = (pos >= start) & (pos <= end)
 
     assert np.array_equal(pos[idx], np.array([10, 20]))
+
+
+def test_window_generator_scopes_alignment_to_requested_chromosome(tmp_path):
+    vcf_file = tmp_path / "multi_chrom_no_shared.vcf"
+    ref_ind_file = tmp_path / "ref.ind.list"
+    tgt_ind_file = tmp_path / "tgt.ind.list"
+
+    vcf_file.write_text(
+        "\n".join(
+            [
+                "##fileformat=VCFv4.2",
+                '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tref1\ttgt1",
+                "1\t100\t.\tA\tG\t.\tPASS\t.\tGT\t0|1\t0|0",
+                "1\t200\t.\tA\tG\t.\tPASS\t.\tGT\t0|0\t0|1",
+                "2\t100\t.\tA\tG\t.\tPASS\t.\tGT\t0|1\t.|.",
+                "2\t200\t.\tA\tG\t.\tPASS\t.\tGT\t.|.\t0|1",
+            ]
+        )
+        + "\n"
+    )
+    ref_ind_file.write_text("ref1\n")
+    tgt_ind_file.write_text("tgt1\n")
+
+    generator = WindowDataGenerator(
+        vcf_file=str(vcf_file),
+        chr_name="1",
+        ref_ind_file=str(ref_ind_file),
+        tgt_ind_file=str(tgt_ind_file),
+        win_len=1000,
+        win_step=1000,
+    )
+
+    generated_windows = list(generator.get())
+    assert len(generated_windows) == 1
+    assert generated_windows[0]["chr_name"] == "1"
+    assert np.array_equal(generated_windows[0]["pos"], np.array([100, 200]))
