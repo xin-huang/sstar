@@ -19,7 +19,7 @@
 
 import pytest
 import numpy as np
-from sstar.utils import split_genome
+from sstar.utils import read_data, split_genome
 
 
 @pytest.fixture
@@ -150,3 +150,40 @@ def test_split_genome_no_windows_created_random_polymorphisms(pos):
         str(exc_info.value)
         == "No windows could be created with the given number of polymorphisms."
     )
+
+
+def test_read_data_aligns_reference_and_target_after_missing_filtering(tmp_path):
+    vcf_file = tmp_path / "mismatched_missing.vcf"
+    ref_ind_file = tmp_path / "ref.ind.list"
+    tgt_ind_file = tmp_path / "tgt.ind.list"
+
+    vcf_file.write_text(
+        "\n".join(
+            [
+                "##fileformat=VCFv4.2",
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tref1\tref2\ttgt1\ttgt2",
+                "1\t100\t.\tA\tG\t.\tPASS\t.\tGT\t0|0\t0|1\t0|1\t0|0",
+                "1\t200\t.\tA\tG\t.\tPASS\t.\tGT\t.|.\t.|.\t0|1\t0|0",
+                "1\t300\t.\tA\tG\t.\tPASS\t.\tGT\t0|1\t0|0\t.|.\t.|.",
+                "1\t400\t.\tA\tG\t.\tPASS\t.\tGT\t0|1\t0|0\t0|1\t0|0",
+                "1\t500\t.\tA\tG\t.\tPASS\t.\tGT\t1|1\t1|1\t1|1\t1|1",
+            ]
+        )
+        + "\n"
+    )
+    ref_ind_file.write_text("ref1\nref2\n")
+    tgt_ind_file.write_text("tgt1\ntgt2\n")
+
+    ref_data, _, tgt_data, _ = read_data(
+        vcf_file=str(vcf_file),
+        ref_ind_file=str(ref_ind_file),
+        tgt_ind_file=str(tgt_ind_file),
+        anc_allele_file=None,
+        is_phased=True,
+    )
+
+    expected_pos = np.array([100, 400])
+    assert np.array_equal(ref_data["1"]["POS"], expected_pos)
+    assert np.array_equal(tgt_data["1"]["POS"], expected_pos)
+    assert np.array_equal(ref_data["1"]["POS"], tgt_data["1"]["POS"])
+    assert ref_data["1"]["GT"].shape[0] == tgt_data["1"]["GT"].shape[0]

@@ -127,6 +127,57 @@ def filter_data(data: dict, c: str, index: np.ndarray) -> dict:
     return data
 
 
+def align_population_data_by_position(
+    ref_data: dict,
+    tgt_data: dict,
+) -> tuple[dict, dict]:
+    """
+    Keep only variant positions shared by reference and target data.
+
+    Reference and target genotypes are read and missing-filtered separately, so
+    their retained variant positions can differ. This helper keeps the shared
+    positions per chromosome and validates that the resulting arrays are aligned
+    before downstream row-wise comparisons are performed.
+
+    Parameters
+    ----------
+    ref_data : dict
+        Reference genotype data keyed by chromosome.
+    tgt_data : dict
+        Target genotype data keyed by chromosome.
+
+    Returns
+    -------
+    tuple[dict, dict]
+        Reference and target genotype data filtered to shared, aligned variant
+        positions.
+
+    Raises
+    ------
+    ValueError
+        If a chromosome is missing from the reference data or if positions are
+        not aligned after filtering.
+    """
+    for c in tgt_data.keys():
+        if c not in ref_data:
+            raise ValueError(f"Chromosome {c} is missing from the reference data.")
+
+        common_pos = np.intersect1d(ref_data[c]["POS"], tgt_data[c]["POS"])
+        ref_index = np.isin(ref_data[c]["POS"], common_pos)
+        tgt_index = np.isin(tgt_data[c]["POS"], common_pos)
+
+        ref_data = filter_data(ref_data, c, ref_index)
+        tgt_data = filter_data(tgt_data, c, tgt_index)
+
+        if not np.array_equal(ref_data[c]["POS"], tgt_data[c]["POS"]):
+            raise ValueError(
+                "Reference and target variants are not aligned "
+                f"on chromosome {c} after filtering."
+            )
+
+    return ref_data, tgt_data
+
+
 def read_data(
     vcf_file: str,
     ref_ind_file: str,
@@ -173,6 +224,7 @@ def read_data(
         tgt_data = read_geno_data(vcf_file, tgt_samples, anc_allele_file, True)
 
     if (ref_ind_file is not None) and (tgt_ind_file is not None):
+        ref_data, tgt_data = align_population_data_by_position(ref_data, tgt_data)
         chr_names = tgt_data.keys()
         for c in chr_names:
             # Remove variants fixed in both the reference and target individuals
@@ -415,4 +467,3 @@ def split_genome(
                 )
 
     return window_positions
-
