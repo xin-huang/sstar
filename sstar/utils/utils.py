@@ -91,6 +91,7 @@ def read_geno_data(
             data[c]["GT"] = gt
         index = np.where(vcf["variants/CHROM"] == c)
         data = filter_data(data, c, index)
+        validate_unique_variant_positions(data, c)
         # Remove missing data
         if filter_missing:
             index = data[c]["GT"].count_missing(axis=1) == len(samples)
@@ -125,6 +126,33 @@ def filter_data(data: dict, c: str, index: np.ndarray) -> dict:
     data[c]["GT"] = allel.GenotypeArray(data[c]["GT"][index])
 
     return data
+
+
+def validate_unique_variant_positions(data: dict, c: str) -> None:
+    """
+    Raise an error if a chromosome contains duplicate variant positions.
+
+    Parameters
+    ----------
+    data : dict
+        Genotype data keyed by chromosome.
+    c : str
+        Chromosome name.
+
+    Raises
+    ------
+    ValueError
+        If duplicate variant positions are present on the chromosome.
+    """
+    pos = data[c]["POS"]
+    if len(np.unique(pos)) != len(pos):
+        unique_pos, counts = np.unique(pos, return_counts=True)
+        duplicate_pos = unique_pos[counts > 1]
+        duplicate_pos_text = ", ".join(str(p) for p in duplicate_pos)
+        raise ValueError(
+            f"Duplicate variant positions found on chromosome {c}: "
+            f"{duplicate_pos_text}"
+        )
 
 
 def align_population_data_by_position(

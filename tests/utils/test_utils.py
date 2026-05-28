@@ -188,3 +188,33 @@ def test_read_data_aligns_reference_and_target_after_missing_filtering(tmp_path)
     assert np.array_equal(tgt_data["1"]["POS"], expected_pos)
     assert np.array_equal(ref_data["1"]["POS"], tgt_data["1"]["POS"])
     assert ref_data["1"]["GT"].shape[0] == tgt_data["1"]["GT"].shape[0]
+
+
+def test_read_data_rejects_duplicate_variant_positions(tmp_path):
+    vcf_file = tmp_path / "duplicate_positions.vcf"
+    ref_ind_file = tmp_path / "ref.ind.list"
+    tgt_ind_file = tmp_path / "tgt.ind.list"
+
+    vcf_file.write_text(
+        "\n".join(
+            [
+                "##fileformat=VCFv4.2",
+                '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tref1\ttgt1",
+                "1\t100\t.\tA\tG\t.\tPASS\t.\tGT\t0|1\t0|0",
+                "1\t100\t.\tA\tT\t.\tPASS\t.\tGT\t0|0\t0|1",
+            ]
+        )
+        + "\n"
+    )
+    ref_ind_file.write_text("ref1\n")
+    tgt_ind_file.write_text("tgt1\n")
+
+    with pytest.raises(ValueError, match="Duplicate variant positions.*100"):
+        read_data(
+            vcf_file=str(vcf_file),
+            ref_ind_file=str(ref_ind_file),
+            tgt_ind_file=str(tgt_ind_file),
+            anc_allele_file=None,
+            is_phased=True,
+        )
