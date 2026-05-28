@@ -163,9 +163,10 @@ def align_population_data_by_position(
     Keep only variant positions shared by reference and target data.
 
     Reference and target genotypes are read and missing-filtered separately, so
-    their retained variant positions can differ. This helper keeps the shared
-    positions per chromosome and validates that the resulting arrays are aligned
-    before downstream row-wise comparisons are performed.
+    their retained variant positions can differ. This helper mutates ``ref_data``
+    and ``tgt_data`` in place, keeping only shared positions per chromosome, and
+    validates that the resulting arrays are aligned before downstream row-wise
+    comparisons are performed.
 
     Parameters
     ----------
@@ -183,14 +184,20 @@ def align_population_data_by_position(
     Raises
     ------
     ValueError
-        If a chromosome is missing from the reference data or if positions are
-        not aligned after filtering.
+        If a chromosome is missing from the reference data, no shared positions
+        remain, or positions are not aligned after filtering.
     """
     for c in tgt_data.keys():
         if c not in ref_data:
             raise ValueError(f"Chromosome {c} is missing from the reference data.")
 
         common_pos = np.intersect1d(ref_data[c]["POS"], tgt_data[c]["POS"])
+        if len(common_pos) == 0:
+            raise ValueError(
+                "No shared variant positions between reference and target "
+                f"on chromosome {c} after filtering."
+            )
+
         ref_index = np.isin(ref_data[c]["POS"], common_pos)
         tgt_index = np.isin(tgt_data[c]["POS"], common_pos)
 

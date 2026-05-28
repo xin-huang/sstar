@@ -218,3 +218,33 @@ def test_read_data_rejects_duplicate_variant_positions(tmp_path):
             anc_allele_file=None,
             is_phased=True,
         )
+
+
+def test_read_data_rejects_no_shared_variant_positions_after_filtering(tmp_path):
+    vcf_file = tmp_path / "no_shared_positions.vcf"
+    ref_ind_file = tmp_path / "ref.ind.list"
+    tgt_ind_file = tmp_path / "tgt.ind.list"
+
+    vcf_file.write_text(
+        "\n".join(
+            [
+                "##fileformat=VCFv4.2",
+                '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tref1\ttgt1",
+                "1\t100\t.\tA\tG\t.\tPASS\t.\tGT\t0|1\t.|.",
+                "1\t200\t.\tA\tG\t.\tPASS\t.\tGT\t.|.\t0|1",
+            ]
+        )
+        + "\n"
+    )
+    ref_ind_file.write_text("ref1\n")
+    tgt_ind_file.write_text("tgt1\n")
+
+    with pytest.raises(ValueError, match="No shared variant positions.*chromosome 1"):
+        read_data(
+            vcf_file=str(vcf_file),
+            ref_ind_file=str(ref_ind_file),
+            tgt_ind_file=str(tgt_ind_file),
+            anc_allele_file=None,
+            is_phased=True,
+        )
