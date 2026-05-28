@@ -161,6 +161,7 @@ def test_read_data_aligns_reference_and_target_after_missing_filtering(tmp_path)
         "\n".join(
             [
                 "##fileformat=VCFv4.2",
+                '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
                 "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tref1\tref2\ttgt1\ttgt2",
                 "1\t100\t.\tA\tG\t.\tPASS\t.\tGT\t0|0\t0|1\t0|1\t0|0",
                 "1\t200\t.\tA\tG\t.\tPASS\t.\tGT\t.|.\t.|.\t0|1\t0|0",
