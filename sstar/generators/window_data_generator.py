@@ -36,9 +36,9 @@ class WindowDataGenerator(GenericGenerator):
         win_len: int,
         win_step: int,
         anc_allele_file: str = None,
-        src_ind_file: str = None,
         ploidy: int = 2,
         is_phased: bool = True,
+        src_ind_file: str = None,
     ):
         """
         Initializes a new instance of WindowDataGenerator.
@@ -60,13 +60,13 @@ class WindowDataGenerator(GenericGenerator):
         anc_allele_file : str, optional
             The path to the file containing ancestral allele information.
             Default: None.
-        src_ind_file : str, optional
-            The path to the file containing identifiers for source individuals.
-            Default: None.
         ploidy : int, optional
             The ploidy of the genome. Default: 2.
         is_phased : bool, optional
             Specifies whether the genotype data is phased. Default: True.
+        src_ind_file : str, optional
+            The path to the file containing identifiers for source individuals.
+            Default: None.
 
         Raises
         ------

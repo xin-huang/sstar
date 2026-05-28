@@ -106,6 +106,25 @@ def test_WindowDataGenerator(init_params, expected_params):
                 ), f"Values do not match for key {key}."
 
 
+def test_WindowDataGenerator_preserves_existing_optional_positional_args(file_paths):
+    generator = WindowDataGenerator(
+        file_paths["vcf_file"],
+        "1",
+        file_paths["ref_ind_file"],
+        file_paths["tgt_ind_file"],
+        50000,
+        50000,
+        file_paths["anc_allele_file"],
+        2,
+        file_paths["is_phased"],
+    )
+    generated_params = next(generator.get())
+
+    assert generated_params["ploidy"] == 2
+    assert generated_params["is_phased"] is True
+    assert "src_gts" not in generated_params
+
+
 def test_WindowDataGenerator_with_source_genotypes(init_params, file_paths, tmp_path):
     src_ind_file = tmp_path / "src.ind.list"
     src_ind_file.write_text("tsk_75\ntsk_76\ntsk_77\n")
