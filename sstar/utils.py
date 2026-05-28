@@ -136,7 +136,6 @@ def read_data(
     tgt_ind_file: Optional[str],
     src_ind_file: Optional[str],
     anc_allele_file: Optional[str],
-    is_phased: Optional[bool] = None,
 ) -> Tuple[
     Optional[dict],
     Optional[list],
@@ -160,8 +159,6 @@ def read_data(
         Path to the file containing source individual IDs. If None, source data is not loaded.
     anc_allele_file : str or None
         Path to the ancestral allele file. If None, ancestral allele filtering is not applied.
-    is_phased : bool or None, optional
-        Placeholder flag for phased or dosage processing. Default: `None`.
 
     Returns
     -------
@@ -208,16 +205,6 @@ def read_data(
             if data["src"] and (c in data["src"]):
                 src_keep = ~np.in1d(data["src"][c]["POS"], fixed_pos)
                 data["src"] = filter_data(data["src"], c, src_keep)
-
-    # --- Determine chromosome names for downstream processing -----------------
-    # Use chromosome keys from tgt > ref > src depending on availability.
-    chr_names = (data["tgt"] or data["ref"] or data["src"] or {}).keys()
-
-    for c in chr_names:
-        for k in ("ref", "tgt", "src"):
-            if not data[k] or (c not in data[k]):
-                continue
-            GT = data[k][c]["GT"]
 
     # --- Return loaded and processed data -------------------------------------
     return (

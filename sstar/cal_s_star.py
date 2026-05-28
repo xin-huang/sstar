@@ -74,7 +74,6 @@ def cal_s_star(
         tgt_ind_file=tgt_ind_file,
         src_ind_file=None,
         anc_allele_file=anc_allele_file,
-        is_phased=is_phased,
     )
 
     # --- Convert GT to 2D: phased haplotypes or genotype dosage -------------
