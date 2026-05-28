@@ -199,7 +199,7 @@ def read_data(
             ref_data = filter_data(ref_data, c, index)
             tgt_data = filter_data(tgt_data, c, index)
             if src_data is not None and c in src_data:
-                src_index = ~np.in1d(src_data[c]["POS"], fixed_pos)
+                src_index = ~np.isin(src_data[c]["POS"], fixed_pos)
                 src_data = filter_data(src_data, c, src_index)
 
     if is_phased:
