@@ -19,7 +19,7 @@
 
 import allel
 import numpy as np
-from typing import Any, Callable
+from typing import Any
 
 
 def parse_ind_file(filename: str) -> list[str]:
@@ -416,40 +416,3 @@ def split_genome(
 
     return window_positions
 
-
-def filter_model_params_for_method(
-    model_method: Callable[..., Any], model_params: dict[str, Any]
-) -> dict[str, Any]:
-    """
-    Keep only kwargs accepted by a model method signature.
-
-    Parameters
-    ----------
-    model_method : callable
-        Bound or unbound model method whose signature is used for filtering.
-    model_params : dict
-        Candidate keyword arguments from parsed model configuration.
-
-    Returns
-    -------
-    dict
-        A filtered dictionary containing only keys accepted by ``model_method``.
-        If ``model_method`` accepts ``**kwargs``, the original ``model_params``
-        dictionary is returned unchanged.
-    """
-    import inspect
-
-    sig = inspect.signature(model_method)
-    has_var_kwargs = any(
-        p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
-    )
-    if has_var_kwargs:
-        return model_params
-
-    allowed = {
-        name
-        for name, p in sig.parameters.items()
-        if p.kind
-        in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)
-    }
-    return {k: v for k, v in model_params.items() if k in allowed}
