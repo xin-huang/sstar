@@ -445,7 +445,7 @@
   <span class="md-ellipsis">
     
   
-    Calculate quanitles of expected S*
+    Calculate quantiles of expected S*
   
 
     
@@ -683,17 +683,17 @@
 <h1 id="sstar">sstar</h1>
 <p><code>sstar</code> is a Python package for detecting archaic introgression from population genetic data with S* scores (Plagnol and Wall 2006), which can be used for detecting introgression not only in humans, but also in other species, e.g. Kulhwilm et al. (2019).</p>
 <h3 id="requirements">Requirements</h3>
-<p><code>sstar</code> works on UNIX/LINUX operating systems and tested with the following:</p>
+<p><code>sstar</code> works on Unix/Linux operating systems and tested with the following:</p>
 <ul>
-<li>Python 3.8/3.9</li>
+<li>Python 3.8.19</li>
 <li>R 4.1</li>
 <li>Python packages:<ul>
-<li>demes</li>
-<li>numpy</li>
-<li>pandas</li>
-<li>rpy2</li>
-<li>scikit-allel</li>
-<li>scipy</li>
+<li>demes=0.2.3</li>
+<li>numpy=1.24.4</li>
+<li>pandas=2.0.3</li>
+<li>rpy2=3.5.11</li>
+<li>scikit-allel=1.3.7</li>
+<li>scipy=1.10.1</li>
 </ul>
 </li>
 <li>R packages:<ul>
@@ -712,9 +712,9 @@
 <div class="codehilite"><pre><span></span><code>pip install sstar
 </code></pre></div>
 
-<p>Users can also use <code>conda</code> to create a virtual environment and install <code>sstar</code> with this <a href="https://github.com/xin-huang/sstar/blob/main/conda-env.yml">conda-env.yml</a> or this <a href="https://github.com/admixVIE/sstar-analysis/blob/main/environment.yml">environment.yml</a> in <a href="https://github.com/admixVIE/sstar-analysis">sstar-analysis</a>. To install <code>conda</code>, please follow the <a href="https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html">instruction</a>. We recommend users use <a href="https://github.com/mamba-org/mamba">mamba</a> to create the virtual environment, because <code>mamba</code> is much faster than <code>conda</code>. Then users can use the following commands:</p>
+<p>Users can also use <code>conda</code> to create a virtual environment and install <code>sstar</code> with this <a href="https://github.com/xin-huang/sstar/blob/main/build-env.yaml">build-env.yaml</a>. To install <code>conda</code>, please follow the <a href="https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html">instruction</a>. We recommend users use <a href="https://github.com/mamba-org/mamba">mamba</a> to create the virtual environment, because <code>mamba</code> is much faster than <code>conda</code>. Then users can use the following commands:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">conda</span><span class="w"> </span><span class="n">install</span><span class="w"> </span><span class="n">mamba</span><span class="w"> </span><span class="o">-</span><span class="n">n</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="o">-</span><span class="n">c</span><span class="w"> </span><span class="n">conda</span><span class="o">-</span><span class="n">forge</span>
-<span class="n">mamba</span><span class="w"> </span><span class="n">env</span><span class="w"> </span><span class="n">create</span><span class="w"> </span><span class="o">-</span><span class="n">f</span><span class="w"> </span><span class="n">conda</span><span class="o">-</span><span class="n">env</span><span class="o">.</span><span class="n">yml</span>
+<span class="n">mamba</span><span class="w"> </span><span class="n">env</span><span class="w"> </span><span class="n">create</span><span class="w"> </span><span class="o">-</span><span class="n">f</span><span class="w"> </span><span class="n">build</span><span class="o">-</span><span class="n">env</span><span class="o">.</span><span class="n">yaml</span>
 <span class="n">conda</span><span class="w"> </span><span class="n">activate</span><span class="w"> </span><span class="n">sstar</span>
 <span class="k">export</span><span class="w"> </span><span class="n">R_LIBS</span><span class="o">=$</span><span class="n">CONDA_PREFIX</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">R</span><span class="o">/</span><span class="n">library</span>
 </code></pre></div>
