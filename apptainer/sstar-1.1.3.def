@@ -1,0 +1,29 @@
+Bootstrap: docker
+From: condaforge/miniforge3:latest
+
+%files
+    sstar-1.1.3-env.yaml /opt/sstar-1.1.3-env.yaml
+
+%post
+    set -e
+
+    mamba env create -f /opt/sstar-1.1.3-env.yaml
+    mamba clean -afy
+
+%environment
+    . /opt/conda/etc/profile.d/conda.sh
+    conda activate sstar
+    export PATH=/opt/conda/envs/sstar/bin:$PATH
+
+%runscript
+    exec sstar "$@"
+
+%test
+    . /opt/conda/etc/profile.d/conda.sh
+    conda activate sstar
+
+    python -m pip show sstar
+    python -c "import sstar; print('sstar import OK')"
+    python -c "import numpy, pandas, scipy, allel, demes, rpy2; print('Python deps OK')"
+    python -c "import rpy2.robjects as ro; print(ro.r('R.version.string')[0])"
+    sstar --help

@@ -11,3 +11,4 @@ examples/snakepipe/logs_slurm/*
 .coverage
 tests/results/simulation
 site
+*.sif
