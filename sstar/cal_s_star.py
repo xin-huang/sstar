@@ -68,11 +68,10 @@ def cal_s_star(
     """
 
     # --- Load data in 3D GenotypeArray form (V x N x ploidy) -----------------
-    ref_data, ref_samples, tgt_data, tgt_samples, src_data, src_samples = read_data(
+    ref_data, ref_samples, tgt_data, tgt_samples = read_data(
         vcf_file=vcf,
         ref_ind_file=ref_ind_file,
         tgt_ind_file=tgt_ind_file,
-        src_ind_file=None,
         anc_allele_file=anc_allele_file,
     )
 
