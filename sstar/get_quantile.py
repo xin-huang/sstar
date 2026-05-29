@@ -90,6 +90,7 @@ def get_quantile(
     output_dir: str,
     thread: int,
     seeds: Optional[list],
+    quantile_step: float,
     is_phased: bool = False,
     keep_simulated_data: bool = False,
 ) -> None:
@@ -130,11 +131,14 @@ def get_quantile(
         Number of worker processes.
     seeds : list or None
         Three random seed numbers used in ms simulation. If None, ms uses its default seeding behavior.
+    quantile_step : float
+        Step size between quantiles from 0.5 to less than 1.
     is_phased : bool, optional
         If True, run `sstar score` with `--phased`. Default: `False`.
     keep_simulated_data : bool, optional
         If True, keep intermediate simulation directories. Default: `False`.
     """
+    _validate_quantile_step(quantile_step)
     if seeds is not None:
         np.random.seed(np.sum(seeds))
     output_dir = os.path.abspath(output_dir)
@@ -156,11 +160,25 @@ def get_quantile(
         output_dir,
         thread,
         seeds,
+        quantile_step,
         is_phased,
     )
     _summary(output_dir, rec_rate)
     if not keep_simulated_data:
         _cleanup_simulated_data(output_dir, simulated_snp_dirs)
+
+
+def _validate_quantile_step(quantile_step: float) -> None:
+    """
+    Validate the quantile step size.
+
+    Parameters
+    ----------
+    quantile_step : float
+        Step size between quantiles from 0.5 to less than 1.
+    """
+    if not np.isfinite(quantile_step) or quantile_step <= 0 or quantile_step >= 0.5:
+        raise ValueError("quantile_step must be greater than 0 and less than 0.5")
 
 
 def _generate_mut_rec_combination(
@@ -241,6 +259,7 @@ def _run_ms_simulation(
     output_dir: str,
     thread: int,
     seeds: Optional[list],
+    quantile_step: float,
     is_phased: bool = False,
 ) -> list:
     """
@@ -276,6 +295,8 @@ def _run_ms_simulation(
         Number of worker processes.
     seeds : list or None
         Three random seed numbers used in ms simulation. If None, ms uses its default seeding behavior.
+    quantile_step : float
+        Step size between quantiles from 0.5 to less than 1.
     is_phased : bool, optional
         If True, run `sstar score` with `--phased`. Default: `False`.
 
@@ -346,6 +367,7 @@ def _run_ms_simulation(
                 ref_list,
                 tgt_list,
                 seeds,
+                quantile_step,
                 is_phased,
             ),
         )
@@ -382,6 +404,7 @@ def _run_ms_simulation_worker(
     ref_list: str,
     tgt_list: str,
     seeds: Optional[list],
+    quantile_step: float,
     is_phased: bool = False,
 ) -> None:
     """
@@ -413,6 +436,8 @@ def _run_ms_simulation_worker(
         Path to the file containing simulated target individual IDs.
     seeds : list or None
         Three random seed numbers used in ms simulation. If None, ms uses its default seeding behavior.
+    quantile_step : float
+        Step size between quantiles from 0.5 to less than 1.
     is_phased : bool, optional
         If True, run `sstar score` with `--phased`. Default: `False`.
     """
@@ -501,7 +526,7 @@ def _run_ms_simulation_worker(
 
         _safe_sstar_score(score_cmd)  # safe wrapper (no linter error)
 
-        _cal_quantile(output_score, output_quantile, snp_num)
+        _cal_quantile(output_score, output_quantile, snp_num, quantile_step)
         out_queue.put("Finished")
 
 
@@ -565,7 +590,9 @@ def _ms2vcf(
             shift += seq_len
 
 
-def _cal_quantile(in_file: str, out_file: str, snp_num: int) -> None:
+def _cal_quantile(
+    in_file: str, out_file: str, snp_num: int, quantile_step: float
+) -> None:
     """
     Calculate quantiles of expected S* for one simulated SNP count.
 
@@ -577,7 +604,10 @@ def _cal_quantile(in_file: str, out_file: str, snp_num: int) -> None:
         Path to the output quantile file.
     snp_num : int
         SNP count used in the ms simulation.
+    quantile_step : float
+        Step size between quantiles from 0.5 to less than 1.
     """
+    _validate_quantile_step(quantile_step)
     df = pd.read_csv(in_file, sep="\t")
     df["S*_score"] = pd.to_numeric(df["S*_score"], errors="coerce")
     df = df.dropna(subset=["S*_score"])
@@ -585,7 +615,7 @@ def _cal_quantile(in_file: str, out_file: str, snp_num: int) -> None:
     if df.empty:
         raise RuntimeError(f"No valid S* scores found in {in_file}")
 
-    quantiles = np.arange(0.5, 1, 0.005)
+    quantiles = np.arange(0.5, 1, quantile_step)
     mean_df = (
         df.groupby(["chrom", "start", "end"], as_index=False)["S*_score"]
         .mean()
@@ -615,7 +645,7 @@ def _summary(output_dir: str, rec_rate: float) -> None:
         df = pd.read_csv(filename, sep="\t")
         li.append(df)
 
-    df = pd.concat(li, ignore_index=True).round(3)
+    df = pd.concat(li, ignore_index=True)
     df["log(local_recomb_rate)"] = np.log10(rec_rate)
     df.sort_values(by=["SNP_num", "quantile"]).to_csv(
         f"{output_dir}/quantile.summary.txt", sep="\t", index=False

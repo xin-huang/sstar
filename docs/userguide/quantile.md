@@ -8,7 +8,7 @@ Users need to install the `ms` program from [Hudson Lab](https://home.uchicago.e
 
 	sstar quantile --model BonoboGhost_4K19_no_introgression.yaml --ms-dir ./msdir/ --N0 1000 --nsamp 22 --nreps 20000 --ref-pop Western --ref-size 20 --tgt-pop Central --tgt-size 2 --mut-rate 1.2e-8 --rec-rate 0.7e-8 --seq-len 40000 --snp-num-range 25 30 5 --output-dir quantiles --thread 2
 
-The meaning of each option can be found using `sstar quantile -h`.
+The meaning of each option can be found using `sstar quantile -h`. By default, `sstar quantile` reports quantiles from 0.5 to less than 1 in steps of 0.005. Use `--quantile-step` to adjust this interval, for example `--quantile-step 0.01`.
 
 The expected result above can be found in [test.quantile.exp.summary](https://github.com/xin-huang/sstar/blob/main/tests/results/test.quantile.exp.summary).
 
