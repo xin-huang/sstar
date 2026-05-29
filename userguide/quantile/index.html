@@ -691,7 +691,8 @@
 <div class="codehilite"><pre><span></span><code>sstar quantile --model BonoboGhost_4K19_no_introgression.yaml --ms-dir ./msdir/ --N0 1000 --nsamp 22 --nreps 20000 --ref-pop Western --ref-size 20 --tgt-pop Central --tgt-size 2 --mut-rate 1.2e-8 --rec-rate 0.7e-8 --seq-len 40000 --snp-num-range 25 30 5 --output-dir quantiles --thread 2
 </code></pre></div>
 
-<p>The expected result above can be found in <a href="https://github.com/xin-huang/sstar/blob/main/tests/results/test.quantile.exp.summary">test.quantile.exp.summary</a>.</p>
+<p>The expected result above can be found in <a href="https://github.com/xin-huang/sstar/blob/main/tests/results/test.quantile.exp.summary">test.quantile.exp.summary</a>.
+The meaning of each option can be found using <code>sstar quantile -h</code>. By default, <code>sstar quantile</code> reports quantiles from 0.5 to less than 1 in steps of 0.005. Use <code>--quantile-step</code> to adjust this interval, for example <code>--quantile-step 0.01</code>.</p>
 <h3 id="output">Output</h3>
 <p>An example for the output is below:</p>
 <table>
@@ -839,7 +840,7 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
