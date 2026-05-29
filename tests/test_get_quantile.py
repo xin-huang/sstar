@@ -31,7 +31,6 @@ from sstar.get_quantile import (
     _run_ms_simulation_worker,
 )
 
-
 # ------------------------------------------------------
 # ORIGINAL TEST (UNCHANGED)
 # ------------------------------------------------------
@@ -63,6 +62,7 @@ def test_get_quantile(data, tmp_path):
         snp_num_range=[25, 30, 5],
         output_dir=tmp_path,
         thread=2,
+        quantile_step=0.005,
     )
 
     df = pd.read_csv(output, sep="\t")
@@ -107,6 +107,7 @@ def test_get_quantile_raises_if_ref_equals_tgt(tmp_path, data):
             snp_num_range=[10, 10, 1],
             output_dir=str(outdir),
             thread=1,
+            quantile_step=0.005,
         )
 
 
@@ -124,13 +125,47 @@ def test_cal_quantile_basic(tmp_path):
     )
     df.to_csv(in_file, sep="\t", index=False)
 
-    _cal_quantile(str(in_file), str(out_file), snp_num=42)
+    _cal_quantile(str(in_file), str(out_file), snp_num=42, quantile_step=0.005)
     out = pd.read_csv(out_file, sep="\t")
 
     assert set(out.columns) == {"S*_score", "SNP_num", "quantile"}
     assert (out["SNP_num"].unique() == [42]).all()
     assert np.isclose(out["quantile"].min(), 0.5)
     assert np.isclose(out["quantile"].max(), 0.995)
+
+
+def test_cal_quantile_custom_step(tmp_path):
+    in_file = tmp_path / "scores.txt"
+    out_file = tmp_path / "quantile.txt"
+
+    df = pd.DataFrame(
+        {
+            "chrom": ["1", "1", "1", "1"],
+            "start": [0, 0, 100, 100],
+            "end": [100, 100, 200, 200],
+            "S*_score": [1.0, 2.0, 3.0, 4.0],
+        }
+    )
+    df.to_csv(in_file, sep="\t", index=False)
+
+    _cal_quantile(str(in_file), str(out_file), snp_num=42, quantile_step=0.01)
+    out = pd.read_csv(out_file, sep="\t")
+
+    assert np.isclose(out["quantile"].min(), 0.5)
+    assert np.isclose(out["quantile"].max(), 0.99)
+
+
+@pytest.mark.parametrize(
+    "quantile_step",
+    [0, -0.1, 0.5, 1.0, float("inf"), float("nan")],
+)
+def test_cal_quantile_rejects_invalid_step(tmp_path, quantile_step):
+    in_file = tmp_path / "scores.txt"
+    out_file = tmp_path / "quantile.txt"
+    in_file.write_text("chrom\tstart\tend\tS*_score\n1\t0\t1\t1.0\n")
+
+    with pytest.raises(ValueError):
+        _cal_quantile(str(in_file), str(out_file), snp_num=42, quantile_step=quantile_step)
 
 
 def test_summary_aggregates_quantiles(tmp_path):
@@ -204,8 +239,7 @@ def test_ms2vcf_roundtrip(tmp_path):
     ms_file = tmp_path / "sim.ms"
     vcf_file = tmp_path / "sim.vcf"
 
-    ms_content = textwrap.dedent(
-        """\
+    ms_content = textwrap.dedent("""\
         ms 4 1 -t 5 -r 5 1000
 
         //
@@ -214,8 +248,7 @@ def test_ms2vcf_roundtrip(tmp_path):
         0011
         1100
         0011
-        """
-    )
+        """)
     ms_file.write_text(ms_content)
 
     _ms2vcf(str(ms_file), str(vcf_file), nsamp=4, seq_len=1000, ploidy=2)
@@ -257,6 +290,7 @@ def test_run_ms_simulation_ref_lt_tgt_importerror(tmp_path, data, monkeypatch):
         output_dir=str(output_dir),
         thread=1,
         seeds=[1, 2, 3],
+        quantile_step=0.005,
     )
 
     assert (output_dir / "sim.ref.list").exists()
@@ -283,6 +317,7 @@ def test_run_ms_simulation_raises_if_pop_not_in_model(tmp_path, data):
             output_dir=str(output_dir),
             thread=1,
             seeds=[1, 2, 3],
+            quantile_step=0.005,
         )
 
 
@@ -366,6 +401,7 @@ def test_run_ms_simulation_worker_simple(tmp_path, monkeypatch):
                 str(output_dir / "sim.ref.list"),
                 str(output_dir / "sim.tgt.list"),
                 seeds=[1, 2, 3],
+                quantile_step=0.005,
                 is_phased=is_phased,
             )
 
