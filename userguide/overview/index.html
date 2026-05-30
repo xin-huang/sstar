@@ -484,33 +484,6 @@
   
 
     
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../references/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    References
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
   </ul>
 </nav>
                   </div>
@@ -547,6 +520,7 @@
 
 
 <h1 id="overview">Overview</h1>
+<p><code>sstar</code> assumes individuals are diploid and variants are bi-allelic in the combined reference and target populations used for scoring. Source populations are used for downstream annotation and match-rate calculation, and should not determine which variants are retained for S* scoring. Please check the data carefully before using <code>sstar</code>.</p>
 <p>There are five subcommands in <code>sstar</code>:</p>
 <ul>
 <li><code>score</code></li>
@@ -563,7 +537,8 @@
 <div class="codehilite"><pre><span></span><code>sstar score -h
 </code></pre></div>
 
-<p><strong>Note:</strong> In this manual, we define the population without introgressed fragments as the <strong>reference population</strong>, the population receiving introgressed fragments as the <strong>target population</strong>, and the population donating introgressed fragments as the <strong>source population</strong>. <code>sstar</code> assumes individuals are diploid and variants are bi-allelic in the combined reference and target populations used for scoring. Source populations are used for downstream annotation and match-rate calculation, and should not determine which variants are retained for S* scoring. Please check your data carefully before using <code>sstar</code>. </p>
+<p><strong>Note:</strong> In this manual, we define the population without introgressed fragments as the <strong>reference population</strong>, the population receiving introgressed fragments as the <strong>target population</strong>, and the population donating introgressed fragments as the <strong>source population</strong>.</p>
+<p>The example commands assume that users have cloned the <code>sstar</code> <a href="https://github.com/xin-huang/sstar">GitHub repository</a> and run the commands from the root directory of the repository.</p>
 
 
 
