@@ -14,7 +14,7 @@
         <link rel="prev" href="../matchrate/">
       
       
-        <link rel="next" href="../../examples/">
+        <link rel="next" href="../../references/">
       
       
         
@@ -561,33 +561,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Examples
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../references/" class="md-nav__link">
         
   
@@ -686,16 +659,20 @@
 
 <h1 id="get-candidate-introgressed-fragments">Get candidate introgressed fragments</h1>
 <h3 id="input">Input</h3>
-<p>To obtain candidate introgressed fragments from <code>sstar</code>, users should provide the output (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.threshold">test.tract.threshold</a>) from <code>sstar threshold</code>. If no source genome is available, users can use the following command:</p>
-<div class="codehilite"><pre><span></span><code>sstar tract --threshold test.tract.threshold --output-prefix test
+<p>To obtain candidate introgressed fragments from <code>sstar</code>, users should provide the output (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.threshold.tsv">test.tract.threshold.tsv</a>) from <code>sstar threshold</code>. If no source genome is available, users can use the following command:</p>
+<div class="codehilite"><pre><span></span><code>sstar tract --threshold tests/data/test.tract.threshold.tsv --output-prefix test
 </code></pre></div>
 
-<p>If one source individual is available, users can calculate source match rates and output these source match rates and candidate introgressed regions in a single BED file:</p>
-<div class="codehilite"><pre><span></span><code>sstar tract --threshold test.tract.threshold --output-prefix test --match-rate test.tract.src1.match.rate
+<p>If one source genome is available, users can calculate source match rates and output these source match rates and candidate introgressed regions in a single BED file:</p>
+<div class="codehilite"><pre><span></span><code>sstar tract --threshold tests/data/test.tract.threshold.tsv \
+            --output-prefix test \
+            --match-rate tests/data/test.tract.src1.match.rate.tsv
 </code></pre></div>
 
-<p>If source genomes from two different source populations are available, users can provide the output (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.src1.match.rate">test.tract.src1.match.rate</a> and <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.src2.match.rate">test.tract.src2.match.rate</a>) from <code>sstar matchrate</code>, and use the following command:</p>
-<div class="codehilite"><pre><span></span><code>sstar tract --threshold test.tract.threshold --output-prefix test --match-rate test.tract.src1.match.rate test.tract.src2.match.rate
+<p>If source genomes from two different source populations are available, users can provide the output (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.src1.match.rate.tsv">test.tract.src1.match.rate.tsv</a> and <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.src2.match.rate.tsv">test.tract.src2.match.rate.tsv</a>) from <code>sstar matchrate</code>, and use the following command:</p>
+<div class="codehilite"><pre><span></span><code>sstar tract --threshold tests/data/test.tract.threshold.tsv \
+            --output-prefix test \
+            --match-rate tests/data/test.tract.src1.match.rate.tsv tests/data/test.tract.src2.match.rate.tsv
 </code></pre></div>
 
 <h3 id="output">Output</h3>
@@ -715,25 +692,15 @@ test.src2.bed
 <p>These two files contain segments assigned to one of the two possible source genomes or source populations.</p>
 <p>An example of the output is below:</p>
 <table>
-<thead>
-<tr>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>75030000</td>
-<td>75080000</td>
-<td>tsk_10</td>
-<td>0.280797</td>
-</tr>
-</tbody>
+    <tr>
+        <td>1</td>
+        <td>75030000</td>
+        <td>75080000</td>
+        <td>tsk_10</td>
+        <td>0.280797</td>
+    </tr>
 </table>
+
 <ul>
 <li>The first column is the name of the chromosome.</li>
 <li>The second column is the start position.</li>
@@ -742,8 +709,33 @@ test.src2.bed
 <li>The fifth column is the source match rate. This column is included only when source match-rate files are provided.</li>
 </ul>
 <h3 id="settings">Settings</h3>
-<p>When two source match-rate files are provided, users can use <code>--diff</code> to set the difference cutoff for assigning tracts to the two sources. The default is <code>0</code>.</p>
-<p>For two source match-rate files, the current implementation compares <code>match_rate_x - match_rate_y</code>, where <code>match_rate_x</code> is from the first match-rate file and <code>match_rate_y</code> is from the second match-rate file. Rows with <code>match_rate_x - match_rate_y &gt; diff</code> are written to <code>.src1.bed</code>, and rows with <code>match_rate_x - match_rate_y &lt; diff</code> are written to <code>.src2.bed</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--threshold</code></td>
+<td>Path to the threshold file generated by <code>sstar threshold</code>.</td>
+</tr>
+<tr>
+<td><code>--match-rate</code></td>
+<td>One or two source match-rate files generated by <code>sstar matchrate</code>.</td>
+</tr>
+<tr>
+<td><code>--output-prefix</code></td>
+<td>Prefix for output BED files.</td>
+</tr>
+<tr>
+<td><code>--diff</code></td>
+<td>Difference cutoff used to assign tracts when two source match-rate files are provided. Default: <code>0</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>When two source match-rate files are provided, users can use <code>--diff</code> to set the difference cutoff for assigning tracts to the two sources. The current implementation compares <code>match_rate_x - match_rate_y</code>, where <code>match_rate_x</code> is from the first match-rate file and <code>match_rate_y</code> is from the second match-rate file. Rows with <code>match_rate_x - match_rate_y &gt; diff</code> are written to <code>.src1.bed</code>, and rows with <code>match_rate_x - match_rate_y &lt; diff</code> are written to <code>.src2.bed</code>.</p>
 
 
 

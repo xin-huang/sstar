@@ -561,33 +561,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Examples
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../references/" class="md-nav__link">
         
   
@@ -686,12 +659,17 @@
 
 <h1 id="calculate-source-match-rates">Calculate source match rates</h1>
 <h3 id="input">Input</h3>
-<p>To calculate source match rates, users should provide a VCF file containing genotypes from the reference, target, and source populations (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.match.rate.data.vcf">test.match.rate.data.vcf</a>). Users also need to provide three files containing names of individuals from the reference, target and source populations (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/examples/data/ind_list/ref.ind.list">ref.ind.list</a>, <a href="https://github.com/xin-huang/sstar/blob/main/examples/data/ind_list/tgt.ind.list">tgt.ind.list</a> and <a href="https://github.com/xin-huang/sstar/blob/main/examples/data/ind_list/nean.ind.list">nean.ind.list</a>) for analysis. The file (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/results/test.match.rate.score.exp.results">test.match.rate.score.exp.results</a>) containing S* scores from <code>sstar score</code> is also required.</p>
+<p>To calculate source match rates, users should provide a VCF file containing <strong>phased</strong> genotypes from the reference, target, and source populations (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.match.rate.data.vcf">test.match.rate.data.vcf</a>). Users also need to provide three files containing names of individuals from the reference, target and source populations (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/examples/data/ind_list/ref.ind.list">ref.ind.list</a>, <a href="https://github.com/xin-huang/sstar/blob/main/examples/data/ind_list/tgt.ind.list">tgt.ind.list</a> and <a href="https://github.com/xin-huang/sstar/blob/main/examples/data/ind_list/nean.ind.list">nean.ind.list</a>) for analysis. The file (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/results/test.match.rate.score.exp.results.tsv">test.match.rate.score.exp.results.tsv</a>) containing S* scores from <code>sstar score</code> is also required.</p>
 <p>Users can calculate source match rates with the following command:</p>
-<div class="codehilite"><pre><span></span><code>sstar matchrate --vcf test.match.rate.data.vcf --ref ref.ind.list --tgt tgt.ind.list --src nean.ind.list --score test.match.rate.score.exp.results --output test.match.rate.results
+<div class="codehilite"><pre><span></span><code>sstar matchrate --vcf tests/data/test.match.rate.data.vcf \
+                --ref examples/data/ind_list/ref.ind.list \
+                --tgt examples/data/ind_list/tgt.ind.list \
+                --src examples/data/ind_list/nean.ind.list \
+                --score tests/results/test.match.rate.score.exp.results.tsv \
+                --output test.match.rate.results.tsv
 </code></pre></div>
 
-<p>The expected result above can be found in <a href="https://github.com/xin-huang/sstar/blob/main/tests/results/test.match.rate.exp.results">test.match.rate.exp.results</a>.</p>
+<p>The expected result above can be found in <a href="https://github.com/xin-huang/sstar/blob/main/tests/results/test.match.rate.exp.results.tsv">test.match.rate.exp.results.tsv</a>.</p>
 <h3 id="output">Output</h3>
 <p>An example of the output is below:</p>
 <table>
@@ -701,7 +679,6 @@
 <th>start</th>
 <th>end</th>
 <th>sample</th>
-<th>hap_index</th>
 <th>match_rate</th>
 <th>src_sample</th>
 </tr>
@@ -712,22 +689,67 @@
 <td>9400000</td>
 <td>9450000</td>
 <td>NA06986</td>
-<td>NA</td>
 <td>0.0454545</td>
 <td>Nean</td>
 </tr>
 </tbody>
 </table>
-<p>The meanings of the first five columns are the same as those in the <a href="https://sstar.readthedocs.io/en/latest/userguide/score/#output">output</a> from <code>sstar score</code>. The meanings of the remaining columns:</p>
+<p>The meanings of the first five columns are the same as those in the <a href="https://xin-huang.github.io/sstar/userguide/score/#output">output</a> from <code>sstar score</code>. The meanings of the remaining columns:</p>
 <ul>
-<li>The <code>match_rate</code> column is the source match rate on the current region.</li>
+<li>The <code>match_rate</code> column is the source match rate on the current region. If the <code>--phased</code> argument is used, it reports the match rate for each haplotype; otherwise, it reports the average match rate across the two haplotypes carried by a diploid individual.</li>
 <li>The <code>src_sample</code> column is the name of the individual from the source population used for calculating the source match rate.</li>
 </ul>
 <h3 id="settings">Settings</h3>
-<p>By default, <code>sstar</code> assumes the reference allele is the ancestral allele and the alternative allele is the derived allele. Users can use the argument <code>--anc-allele</code> with a BED format file (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.anc.allele.bed">test.anc.allele.bed</a>) to define the ancestral allele for each variant. If <code>--anc-allele</code> is used, variants without ancestral allele information will be removed.</p>
-<p>Users can provide a BED file (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.mapped.region.bed">test.mapped.region.bed</a>) defining non-overlapping mapped regions with <code>--mapped-region</code>. If <code>--mapped-region</code> is not provided, the full window is treated as mapped.</p>
-<p>By default, <code>sstar matchrate</code> reports one row per target sample and preserves the <code>hap_index</code> value from the score file, which is usually <code>NA</code> for score files generated without <code>--phased</code>. In this default mode, the current implementation calculates the two haplotype-level match rates over the candidate window and reports their average as one individual-level match rate. Therefore, for a diploid individual, a source-matching segment carried by only one haplotype can produce an individual-level match rate of approximately 0.5 when the other haplotype does not match. Users can use <code>--phased</code> to output source match rates for phased haplotypes. When <code>--phased</code> is used, the command outputs one row per target haplotype and sets <code>hap_index</code> to <code>1</code> or <code>2</code> for diploid data.</p>
-<p>Users can use <code>--thread</code> to specify the number of CPUs used for multiprocessing.</p>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--vcf</code></td>
+<td>Path to the VCF file containing genotype data.</td>
+</tr>
+<tr>
+<td><code>--ref</code></td>
+<td>Path to the file containing reference individual IDs.</td>
+</tr>
+<tr>
+<td><code>--tgt</code></td>
+<td>Path to the file containing target individual IDs.</td>
+</tr>
+<tr>
+<td><code>--src</code></td>
+<td>Path to the file containing source individual IDs.</td>
+</tr>
+<tr>
+<td><code>--anc-allele</code></td>
+<td>Path to the BED format file containing ancestral allele information.</td>
+</tr>
+<tr>
+<td><code>--output</code></td>
+<td>Path to the output file.</td>
+</tr>
+<tr>
+<td><code>--thread</code></td>
+<td>Number of threads for multiprocessing. Default: <code>1</code>.</td>
+</tr>
+<tr>
+<td><code>--mapped-region</code></td>
+<td>Path to the BED file containing mapped regions. If not provided, the full window is treated as mapped.</td>
+</tr>
+<tr>
+<td><code>--score</code></td>
+<td>Path to the score file generated by <code>sstar score</code>.</td>
+</tr>
+<tr>
+<td><code>--phased</code></td>
+<td>Report match rates for each haplotype.</td>
+</tr>
+</tbody>
+</table>
 
 
 

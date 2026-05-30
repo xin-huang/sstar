@@ -491,33 +491,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Examples
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../references/" class="md-nav__link">
         
   
@@ -590,8 +563,7 @@
 <div class="codehilite"><pre><span></span><code>sstar score -h
 </code></pre></div>
 
-<p><strong>Note:</strong> <code>sstar score</code> assumes variants are bi-allelic in the combined reference and target populations used for scoring. Source populations are used for downstream annotation and match-rate calculation, and should not determine which variants are retained for S* scoring. Please check your data carefully before using <code>sstar</code>. In this manual, we define the population without introgressed fragments as the reference population, the population receiving introgressed fragments as the target population, and the population donating introgressed fragments as the source population. <code>sstar</code> assumes individuals are diploid.</p>
-<p>By default, <code>sstar score</code> reports one row per target individual using genotype dosages and sets <code>hap_index</code> to <code>NA</code>. With <code>--phased</code>, <code>sstar score</code> reports one row per target haplotype and uses <code>hap_index</code> to identify the haplotype. Downstream commands that consume score files should be run in the same mode as the score file when a <code>--phased</code> option is available.</p>
+<p><strong>Note:</strong> In this manual, we define the population without introgressed fragments as the <strong>reference population</strong>, the population receiving introgressed fragments as the <strong>target population</strong>, and the population donating introgressed fragments as the <strong>source population</strong>. <code>sstar</code> assumes individuals are diploid and variants are bi-allelic in the combined reference and target populations used for scoring. Source populations are used for downstream annotation and match-rate calculation, and should not determine which variants are retained for S* scoring. Please check your data carefully before using <code>sstar</code>. </p>
 
 
 
