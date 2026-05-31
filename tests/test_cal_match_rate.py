@@ -41,9 +41,9 @@ def data():
         "tgt_ind_file": "./examples/data/ind_list/tgt.ind.list",
         "src_ind_file": "./examples/data/ind_list/nean.ind.list",
         "vcf": "./tests/data/test.match.rate.data.vcf",
-        "score_file": "./tests/results/test.match.rate.score.exp.results",
-        "exp_output_phased": "./tests/results/test.match.rate.phased.exp.results",
-        "exp_output_unphased": "./tests/results/test.match.rate.unphased.exp.results",
+        "score_file": "./tests/results/test.match.rate.score.exp.results.tsv",
+        "exp_output_phased": "./tests/results/test.match.rate.phased.exp.results.tsv",
+        "exp_output_unphased": "./tests/results/test.match.rate.unphased.exp.results.tsv",
     }
 
 

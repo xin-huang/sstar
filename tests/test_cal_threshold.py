@@ -26,9 +26,9 @@ def data():
     pytest.simulated_data = (
         "./examples/data/simulated_data/gravel_asn_scale_60k.simulated.data"
     )
-    pytest.score_file = "./tests/results/test.score.unphased.exp.results"
+    pytest.score_file = "./tests/results/test.score.unphased.exp.results.tsv"
     pytest.recomb_map = "./examples/data/real_data/hum.windows.50k.10k.recomb.map"
-    pytest.exp_output = "./tests/results/test.threshold.exp.results"
+    pytest.exp_output = "./tests/results/test.threshold.exp.results.tsv"
 
 
 def test_cal_threshold(data, tmp_path):
