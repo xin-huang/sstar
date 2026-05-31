@@ -13,7 +13,7 @@ Users can calculate source match rates with the following command:
                     --score tests/results/test.match.rate.score.exp.results.tsv \
                     --output test.match.rate.results.tsv
 
-The expected result above can be found in [test.match.rate.exp.results.tsv](https://github.com/xin-huang/sstar/blob/main/tests/results/test.match.rate.exp.results.tsv).
+The expected result above can be found in [test.match.rate.score.exp.results.tsv](https://github.com/xin-huang/sstar/blob/main/tests/results/test.match.rate.score.exp.results.tsv).
 
 ### Output
 
