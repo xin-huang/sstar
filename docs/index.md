@@ -1,6 +1,6 @@
 # sstar
 
-`sstar` is a Python package for detecting archaic introgression from population genetic data with S\* scores (Plagnol and Wall 2006), which can be used for detecting introgression not only in humans, but also in other species.
+`sstar` is a Python package for detecting archaic introgression from population genetic data with S\* scores ([Plagnol and Wall 2006](https://doi.org/10.1371/journal.pgen.0020105)), which can be used for detecting introgression not only in humans, but also in other species.
 
 ### Requirements
 
@@ -45,6 +45,14 @@ And it should return some paths similar to
 
 	/path/to/conda/envs/sstar/bin/python
 	/path/to/conda/envs/sstar/bin/R
+
+Users can also use [Apptainer](https://apptainer.org/) to pull a container image that includes `sstar` and `ms`:
+
+    apptainer pull sstar.sif oras://ghcr.io/xin-huang/sstar:1.2.0
+
+Then run `sstar` with:
+
+    apptainer exec sstar.sif sstar
 
 ### Citations
 

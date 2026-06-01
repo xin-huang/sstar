@@ -25,6 +25,8 @@ Users need to install the `ms` program from [Hudson Lab](https://home.uchicago.e
 
 The expected result above can be found in [test.quantile.exp.summary](https://github.com/xin-huang/sstar/blob/main/tests/results/test.quantile.exp.summary).
 
+If users run `sstar` from [the Apptainer image](https://github.com/xin-huang/sstar/pkgs/container/sstar), `ms` is available at `/opt/ms`.
+
 ### Output
 
 An example of the output is below:
