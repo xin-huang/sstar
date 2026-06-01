@@ -1,64 +1,56 @@
-# sstar
+# sstar2
 
-`sstar` is a Python package for detecting archaic introgression from population genetic data with S\* scores ([Plagnol and Wall 2006](https://doi.org/10.1371/journal.pgen.0020105)), which can be used for detecting introgression not only in humans, but also in other species.
+`sstar2` is a Python package for *S*\*-based archaic introgression detection with machine learning.
 
 ### Requirements
 
-`sstar` works on Unix/Linux operating systems and tested with the following:
+`sstar2` works on Unix/Linux operating systems and was tested with the following:
 
-- Python 3.8.19
-- R 4.1
+- Python 3.12.13
 - Python packages:
-	- demes=0.2.3
-	- numpy=1.24.4
-	- pandas=2.0.3
-	- rpy2=3.5.11
-	- scikit-allel=1.3.7
-	- scipy=1.10.1
-- R packages:
-	- MASS
-	- mgcv
-	- stat
+    - black=26.3.1
+    - codecov=2.1.13
+    - demes=0.2.3
+    - flake8=7.3.0
+    - msprime=1.4.1
+    - numpy=2.4.5
+    - onnx=1.19.1
+    - onnxruntime=1.26.0
+    - pandas=3.0.3
+    - pip=26.1.1
+    - pydantic=2.12.4
+    - pytest=9.0.3
+    - pytest-cov=7.1.0
+    - scikit-allel=1.3.13
+    - scikit-learn=1.8.0
+    - scipy=1.17.1
+    - skl2onnx=1.19.1
 
 ### Installation
 
-Users should first install [R](https://cran.r-project.org/) and all the R dependencies listed above. Please ensure the path for the dynamic libraries in R is in the environment variable `$LD_LIBRARY_PATH`. For example, if the dynamic libraries in R are in the path `/usr/local/lib/R/lib/`, users can add this path with the following command:
+Users can install `sstar2` with `pip`:
 
-	export LD_LIBRARY_PATH=/usr/local/lib/R/lib:$LD_LIBRARY_PATH
+	pip install sstar==2.0.0
 
-Then users can install `sstar` with `pip`.
-
-	pip install sstar
-
-Users can also use [mamba](https://github.com/mamba-org/mamba) to create a virtual environment and install `sstar` with this [build-env.yaml](https://github.com/xin-huang/sstar/blob/main/build-env.yaml).
+Users can also use [mamba](https://github.com/mamba-org/mamba) to create a virtual environment and install `sstar2` with this [build-env.yaml](https://github.com/xin-huang/sstar/blob/main/build-env.yaml):
 
 	mamba env create -f build-env.yaml
-	conda activate sstar
-	export R_LIBS=$CONDA_PREFIX/lib/R/library
+	conda activate sstar2
 
-Users may verify whether using the correct versions of Python and R under the virtual environment sstar or not with the following commands:
+Users can also use [Apptainer](https://apptainer.org/) to pull a container image that includes `sstar2`:
 
-	which python
-	which R
+    apptainer pull sstar2.sif oras://ghcr.io/xin-huang/sstar:2.0.0
 
-And it should return some paths similar to
+Then run `sstar2` with:
 
-	/path/to/conda/envs/sstar/bin/python
-	/path/to/conda/envs/sstar/bin/R
-
-Users can also use [Apptainer](https://apptainer.org/) to pull a container image that includes `sstar` and `ms`:
-
-    apptainer pull sstar.sif oras://ghcr.io/xin-huang/sstar:1.2.0
-
-Then run `sstar` with:
-
-    apptainer exec sstar.sif sstar
+    apptainer exec sstar2.sif sstar2
 
 ### Citations
 
-If you find `sstar` is useful, please cite
+If you find `sstar2` useful, please star the [GitHub repository](https://github.com/xin-huang/sstar) and cite:
 
-- Plagnol V, Wall JD. 2006. Possible ancestral structure in human populations. *PLoS Genet*. **2**: e105.
-- Vernot B, Akey JM. 2014. Resurrecting surviving Neandertal lineages from modern human genomes. *Science* **343**: 1017–1021.
+- Koça A, Stöckl A, Chen S, Kuhlwilm M, Huang X. 2026. sstar2: A Python package for *S*\*-based archaic introgression detection with machine learning. bioRxiv: 2026.05.31.729079.
+- Huang X, Kruisz P, Kuhlwilm M. 2022. sstar: A Python package for detecting archaic introgression from population genetic data with *S*\*. *Molecular Biology and Evolution* **39**: msac212.
 - Vernot B, et al. 2016. Excavating Neandertal and Denisovan DNA from the genomes of Melanesian individuals. *Science* **352**: 235–239.
-- Huang X, Kruisz P, Kuhlwilm M. 2022. sstar: A Python package for detecting archaic introgression from population genetic data with *S*\*. *Mol Biol Evol* **39**: msac212.
+- Vernot B, Akey JM. 2014. Resurrecting surviving Neandertal lineages from modern human genomes. *Science* **343**: 1017–1021.
+- Plagnol V, Wall JD. 2006. Possible ancestral structure in human populations. *PLoS Genetics*. **2**: e105.

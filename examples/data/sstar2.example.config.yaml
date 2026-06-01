@@ -15,10 +15,10 @@ simulation:
   seed: 12345
 
 preprocessing:
-  vcf_file: examples/sstar2.example.biallelic.snps.vcf.gz
+  vcf_file: examples/data/sstar2.example.biallelic.snps.vcf.gz
   chr_name: "21"
-  ref_ind_file: examples/ref.samples.list
-  tgt_ind_file: examples/tgt.samples.list
+  ref_ind_file: examples/data/ref.samples.list
+  tgt_ind_file: examples/data/tgt.samples.list
   win_len: 50_000
   win_step: 10000
   is_phased: false

@@ -71,12 +71,12 @@ def test_assign_source_by_unique_maximum_match_rate(tmp_path):
         output_prefix=str(output_prefix),
     )
 
-    src1_bed = _read_bed(tmp_path / "out.src1.bed")
-    src2_bed = _read_bed(tmp_path / "out.src2.bed")
+    src1_bed = _read_bed(tmp_path / "out.src1.inferred.tracts.bed")
+    src2_bed = _read_bed(tmp_path / "out.src2.inferred.tracts.bed")
 
     assert src1_bed.values.tolist() == [[1, 100, 200, "ind1", 0.8]]
     assert src2_bed.values.tolist() == [[1, 300, 400, "ind1", 0.9]]
-    assert (tmp_path / "out.src3.bed").read_text() == ""
+    assert (tmp_path / "out.src3.inferred.tracts.bed").read_text() == ""
 
 
 def test_assign_source_uses_intersection_of_tract_keys(tmp_path):
@@ -105,9 +105,9 @@ def test_assign_source_uses_intersection_of_tract_keys(tmp_path):
         output_prefix=str(output_prefix),
     )
 
-    src1_bed = _read_bed(tmp_path / "out.src1.bed")
+    src1_bed = _read_bed(tmp_path / "out.src1.inferred.tracts.bed")
     assert src1_bed.values.tolist() == [[1, 100, 200, "ind1", 0.8]]
-    assert (tmp_path / "out.src2.bed").read_text() == ""
+    assert (tmp_path / "out.src2.inferred.tracts.bed").read_text() == ""
 
 
 def test_assign_source_ignores_na_and_rejects_ties(tmp_path):
@@ -147,10 +147,10 @@ def test_assign_source_ignores_na_and_rejects_ties(tmp_path):
         output_prefix=str(output_prefix),
     )
 
-    src2_bed = _read_bed(tmp_path / "out.src2.bed")
+    src2_bed = _read_bed(tmp_path / "out.src2.inferred.tracts.bed")
     assert src2_bed.values.tolist() == [[1, 100, 200, "ind1", 0.4]]
-    assert (tmp_path / "out.src1.bed").read_text() == ""
-    assert (tmp_path / "out.src3.bed").read_text() == ""
+    assert (tmp_path / "out.src1.inferred.tracts.bed").read_text() == ""
+    assert (tmp_path / "out.src3.inferred.tracts.bed").read_text() == ""
 
 
 def test_assign_source_validates_inputs(tmp_path):

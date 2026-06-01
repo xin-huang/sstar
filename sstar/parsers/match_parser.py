@@ -77,7 +77,7 @@ def add_match_parser(subparsers: argparse.ArgumentParser) -> None:
         "--tract-file",
         type=existed_file,
         required=True,
-        help="Path to the inferred tract BED file from sstar2 infer.",
+        help="Path to the inferred tract BED file from `sstar2 infer`.",
     )
     parser.add_argument(
         "--output",
@@ -88,6 +88,6 @@ def add_match_parser(subparsers: argparse.ArgumentParser) -> None:
         "--ploidy",
         type=positive_int,
         default=2,
-        help="Ploidy used to normalize dosage differences.",
+        help="Ploidy used to normalize dosage differences. Default: %(default)s.",
     )
     parser.set_defaults(runner=_run_match)
