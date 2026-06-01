@@ -674,6 +674,14 @@ which R
 /path/to/conda/envs/sstar/bin/R
 </code></pre></div>
 
+<p>Users can also use <a href="https://apptainer.org/">Apptainer</a> to pull a container image that includes <code>sstar</code> and <code>ms</code>:</p>
+<div class="codehilite"><pre><span></span><code>apptainer pull sstar.sif oras://ghcr.io/xin-huang/sstar:1.2.0
+</code></pre></div>
+
+<p>Then run <code>sstar</code> with:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">apptainer</span><span class="w"> </span><span class="k">exec</span><span class="w"> </span><span class="nv">sstar</span>.<span class="nv">sif</span><span class="w"> </span><span class="nv">sstar</span>
+</code></pre></div>
+
 <h3 id="citations">Citations</h3>
 <p>If you find <code>sstar</code> is useful, please cite</p>
 <ul>
