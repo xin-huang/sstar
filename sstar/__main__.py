@@ -24,6 +24,7 @@ import argparse
 from sstar import __version__
 from sstar.parsers.train_parser import add_train_parser
 from sstar.parsers.infer_parser import add_infer_parser
+from sstar.parsers.matchparser import add_match_parser
 
 
 def _set_sigpipe_handler() -> None:
@@ -56,6 +57,7 @@ def _sstar_cli_parser() -> argparse.ArgumentParser:
 
     add_train_parser(subparsers)
     add_infer_parser(subparsers)
+    add_match_parser(subparsers)
 
     return top_parser
 
