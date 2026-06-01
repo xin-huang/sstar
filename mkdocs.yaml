@@ -12,20 +12,22 @@ theme:
     accent: cyan
 plugins:
   - search
+  - mike:
+      alias_type: redirect
 markdown_extensions:
   - extra
   - tables
   - fenced_code
   - admonition
   - codehilite
+extra:
+  version:
+    provider: mike
 extra_javascript:
   - 'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML'
 nav:
 - Home: 'index.md'
 - User Guide: 
     - Overview: 'userguide/overview.md'
-    - Calculate S* scores: 'userguide/score.md'
-    - Calculate quantiles of expected S*: 'userguide/quantile.md'
-    - Calculate significant S* score thresholds: 'userguide/threshold.md'
-    - Calculate source match rates: 'userguide/matchrate.md'
-    - Get candidate introgressed fragments: 'userguide/tract.md'
+    - Training: 'userguide/train.md'
+    - Inference: 'userguide/infer.md'
