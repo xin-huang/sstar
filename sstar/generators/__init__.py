@@ -17,9 +17,6 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
-from importlib.metadata import version, PackageNotFoundError
-
-try:
-    __version__ = version("sstar")
-except PackageNotFoundError:
-    __version__ = "0.0.0+dev"
+from .generic_generator import GenericGenerator  # noqa: F401
+from .random_number_generator import RandomNumberGenerator  # noqa: F401
+from .window_data_generator import WindowDataGenerator  # noqa: F401
