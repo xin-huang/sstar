@@ -8,13 +8,9 @@
       
       
       
-        <link rel="canonical" href="https://xin-huang.github.io/sstar/2.0/userguide/overview/">
+        <link rel="canonical" href="https://xin-huang.github.io/sstar/2.0/userguide/match/">
       
       
-        <link rel="prev" href="../..">
-      
-      
-        <link rel="next" href="../train/">
       
       
         
@@ -25,7 +21,7 @@
     
     
       
-        <title>Overview - sstar</title>
+        <title>Match - sstar</title>
       
     
     
@@ -73,11 +69,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#overview" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -114,7 +105,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Overview
+              Match
             
           </span>
         </div>
@@ -258,20 +249,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -292,7 +281,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -307,19 +296,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
         
   
   
@@ -335,7 +315,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -449,8 +428,6 @@
   
   
   
-    
-  
   
 </nav>
                   </div>
@@ -467,24 +444,9 @@
 
 
 
-<h1 id="overview">Overview</h1>
-<p><code>sstar2</code> assumes biallelic genotype data with derived alleles coded as <code>1</code> and supports both phased and unphased data.</p>
-<p>There are three subcommands in <code>sstar2</code>:</p>
-<ul>
-<li><code>train</code></li>
-<li><code>infer</code></li>
-<li><code>match</code></li>
-</ul>
-<p>To display help information for each subcommand, users can use:</p>
-<div class="codehilite"><pre><span></span><code>sstar2 subcommand -h
-</code></pre></div>
+  <h1>Match</h1>
 
-<p>For example:</p>
-<div class="codehilite"><pre><span></span><code>sstar2 train -h
-</code></pre></div>
 
-<p><strong>Note:</strong> In this manual, we define the population without introgressed fragments as the <strong>reference population</strong>, the population receiving introgressed fragments as the <strong>target population</strong>, and the population donating introgressed fragments as the <strong>source population</strong>.</p>
-<p>The example commands assume that users have cloned the <code>sstar</code> <a href="https://github.com/xin-huang/sstar">GitHub repository</a> and run the commands from the root directory of the repository.</p>
 
 
 
