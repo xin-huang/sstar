@@ -1,0 +1,48 @@
+Bootstrap: docker
+From: condaforge/miniforge3:latest
+
+%files
+    build-env.yaml /opt/sstar/build-env.yaml
+    pyproject.toml /opt/sstar/pyproject.toml
+    README.md /opt/sstar/README.md
+    LICENSE /opt/sstar/LICENSE
+    sstar /opt/sstar/sstar
+    ms.tar.gz /opt/src/ms.tar.gz
+
+%post
+    set -e
+
+    cd /opt/sstar
+    mamba install -c conda-forge gcc=9.5.0
+    mamba env create -f build-env.yaml
+    mamba clean -afy
+
+    mkdir -p /opt/ms /tmp/ms-build
+    tar -xzf /opt/src/ms.tar.gz -C /tmp/ms-build
+    cd /tmp/ms-build/msdir
+    gcc -O3 -o /opt/ms/ms ms.c streec.c rand1.c -lm
+    chmod 755 /opt/ms/ms
+    rm -rf /tmp/ms-build /opt/src/ms.tar.gz
+
+%environment
+    . /opt/conda/etc/profile.d/conda.sh
+    conda activate sstar
+    export PATH=/opt/conda/envs/sstar/bin:/opt/ms:$PATH
+
+%runscript
+    exec sstar "$@"
+
+%test
+    . /opt/conda/etc/profile.d/conda.sh
+    conda activate sstar
+
+    python -m pip show sstar
+    python -c "import sstar; print('sstar import OK')"
+    python -c "import numpy, pandas, scipy, allel, demes, rpy2; print('Python deps OK')"
+    python -c "import rpy2.robjects as ro; print(ro.r('R.version.string')[0])"
+
+    test -x /opt/ms/ms
+    cd /tmp
+    /opt/ms/ms 2 1 -t 1
+
+    sstar --help
