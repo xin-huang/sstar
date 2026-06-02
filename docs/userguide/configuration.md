@@ -13,9 +13,9 @@ simulation:
   mut_rate: 1.2e-8
   rec_rate: 0.7e-8
   ploidy: 2
-  is_phased: False
+  is_phased: false
   nfeature: 100
-  is_shuffled: False
+  is_shuffled: false
   nprocess: 2
   seed: 4836
 
@@ -26,7 +26,7 @@ preprocessing:
   tgt_ind_file: "examples/data/tgt.ind.list"
   win_len: 40000
   win_step: 10000
-  is_phased: False
+  is_phased: false
   nprocess: 2
   ploidy: 2
 
@@ -56,7 +56,7 @@ In the `simulation` section:
 | `ploidy` | Ploidy of the simulated individuals. |
 | `is_phased` | Whether the simulated data are treated as phased. |
 | `nfeature` | Minimum number of genomic windows to generate for model training. |
-| `is_shuffled` | Whether the generated features are shuffled before model training. |
+| `is_shuffled` | Whether the generated genomic windows are shuffled before model training. |
 | `nprocess` | Number of processes used for simulation. |
 | `seed` | Random seed for reproducibility. |
 
