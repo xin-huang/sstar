@@ -73,6 +73,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#configuration" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -339,6 +344,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -470,6 +477,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -486,9 +495,43 @@
 
 
 
-  <h1>Configuration</h1>
+<h1 id="configuration">Configuration</h1>
+<p>For the <code>train</code> and <code>infer</code> commands, <code>sstar2</code> requires a <a href="https://en.wikipedia.org/wiki/YAML">YAML</a> configuration file specifying parameters in simulation, preprocessing, and the machine learning model (<a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html">GradientBoostingRegressor</a>). An example file can be found <a href="https://github.com/xin-huang/sstar/blob/docs/examples/data/sstar2.config.template.yaml">here</a> and is shown below:</p>
+<div class="codehilite"><pre><span></span><code>simulation:
+  nrep: 100
+  nref: 10
+  ntgt: 10
+  ref_id: &quot;Western&quot;
+  tgt_id: &quot;Bonobo&quot;
+  seq_len: 40000
+  mut_rate: 1.2e-8
+  rec_rate: 0.7e-8
+  ploidy: 2
+  is_phased: False
+  nfeature: 100
+  is_shuffled: False
+  nprocess: 2
+  seed: 4836
 
+preprocessing:
+  vcf_file: &quot;examples/data/example.vcf&quot;
+  chr_name: &quot;1&quot;
+  ref_ind_file: &quot;examples/data/ref.ind.list&quot;
+  tgt_ind_file: &quot;examples/data/tgt.ind.list&quot;
+  win_len: 40000
+  win_step: 10000
+  is_phased: False
+  nprocess: 2
+  ploidy: 2
 
+model:
+  params:
+    loss: &quot;quantile&quot;
+    alpha: 0.999
+    n_estimators: 200
+    max_depth: 3
+    random_state: 4836
+</code></pre></div>
 
 
 
