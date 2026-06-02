@@ -29,5 +29,6 @@ nav:
 - Home: 'index.md'
 - User Guide: 
     - Overview: 'userguide/overview.md'
-    - Training: 'userguide/train.md'
-    - Inference: 'userguide/infer.md'
+    - train: 'userguide/train.md'
+    - infer: 'userguide/infer.md'
+    - match: 'userguide/match.md'

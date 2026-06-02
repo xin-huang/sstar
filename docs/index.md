@@ -4,7 +4,7 @@
 
 ### Requirements
 
-`sstar` works on Unix/Linux operating systems and tested with the following:
+`sstar2` works on Unix/Linux operating systems and was tested with the following:
 
 - Python 3.12.13
 - Python packages:
@@ -32,7 +32,7 @@ Users can install `sstar2` with `pip`:
 
 	pip install sstar==2.0.0
 
-Users can also use [mamba](https://github.com/mamba-org/mamba) to create a virtual environment and install `sstar2` with this [build-env.yaml](https://github.com/xin-huang/sstar/blob/main/build-env.yaml).
+Users can also use [mamba](https://github.com/mamba-org/mamba) to create a virtual environment and install `sstar2` with this [build-env.yaml](https://github.com/xin-huang/sstar/blob/main/build-env.yaml):
 
 	mamba env create -f build-env.yaml
 	conda activate sstar2
@@ -47,10 +47,10 @@ Then run `sstar2` with:
 
 ### Citations
 
-If you find `sstar2` is useful, please cite
+If you find `sstar2` is useful, please cite:
 
-- Koça A, Stöckl A, Chen S, Kuhlwilm M*, Huang X*. 2026. sstar2: A Python package for S*-based archaic introgression detection with machine learning. bioRixv: 2026.05.31.729079.
-- Huang X, Kruisz P, Kuhlwilm M. 2022. sstar: A Python package for detecting archaic introgression from population genetic data with *S*\*. *Molecular Biology Evolution* **39**: msac212.
+- Koça A, Stöckl A, Chen S, Kuhlwilm M, Huang X. 2026. sstar2: A Python package for *S*\*-based archaic introgression detection with machine learning. bioRxiv: 2026.05.31.729079.
+- Huang X, Kruisz P, Kuhlwilm M. 2022. sstar: A Python package for detecting archaic introgression from population genetic data with *S*\*. *Molecular Biology and Evolution* **39**: msac212.
 - Vernot B, et al. 2016. Excavating Neandertal and Denisovan DNA from the genomes of Melanesian individuals. *Science* **352**: 235–239.
 - Vernot B, Akey JM. 2014. Resurrecting surviving Neandertal lineages from modern human genomes. *Science* **343**: 1017–1021.
 - Plagnol V, Wall JD. 2006. Possible ancestral structure in human populations. *PLoS Genetics*. **2**: e105.
