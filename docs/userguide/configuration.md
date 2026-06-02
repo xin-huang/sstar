@@ -45,7 +45,7 @@ In the `simulation` section:
 
 | Parameter | Description |
 |---|---|
-| `nrep` | Number of simulation replicates. |
+| `nrep` | Number of simulations run in each batch. Additional batches are simulated until at least `nfeature` genomic windows are obtained. |
 | `nref` | Number of reference individuals. |
 | `ntgt` | Number of target individuals. |
 | `ref_id` | Population label used for the reference population in the simulated data. |
@@ -55,7 +55,7 @@ In the `simulation` section:
 | `rec_rate` | Recombination rate used in simulation. |
 | `ploidy` | Ploidy of the simulated individuals. |
 | `is_phased` | Whether the simulated data are treated as phased. |
-| `nfeature` | Number of features generated for each simulated replicate. |
+| `nfeature` | Minimum number of genomic windows to generate for model training. |
 | `is_shuffled` | Whether the generated features are shuffled before model training. |
 | `nprocess` | Number of processes used for simulation. |
 | `seed` | Random seed for reproducibility. |
@@ -64,7 +64,7 @@ In the `preprocessing` section:
 
 | Parameter | Description |
 |---|---|
-| `vcf_file` | Path to the input VCF file. |
+| `vcf_file` | Path to the input VCF file for inference. |
 | `chr_name` | Chromosome name to analyze. |
 | `ref_ind_file` | Path to the file listing reference individuals. |
 | `tgt_ind_file` | Path to the file listing target individuals. |
