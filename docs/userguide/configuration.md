@@ -1,6 +1,6 @@
 # Configuration
 
-For the `train` and `infer` commands, `sstar2` requires a [YAML](https://en.wikipedia.org/wiki/YAML) configuration file specifying parameters for simulation, preprocessing, and the machine learning model ([GradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html)). An example configuration file can be found [here](https://github.com/xin-huang/sstar/blob/docs/examples/data/sstar2.config.template.yaml) and is shown below:
+For the `train` and `infer` commands, `sstar2` requires a [YAML](https://en.wikipedia.org/wiki/YAML) configuration file specifying parameters for simulation, preprocessing, and the machine learning model ([GradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html)). An example configuration file can be found [here](https://github.com/xin-huang/sstar/blob/docs/examples/data/sstar2.config.yaml) and is shown below:
 
 ```
 simulation:
@@ -79,9 +79,9 @@ In the `model` section, parameters under `params` are passed to `GradientBoostin
 | Parameter | Description |
 |---|---|
 | `loss` | Loss function used by the gradient boosting model. Must be set to `quantile`. |
-| `alpha` | Quantile level used |
+| `alpha` | Quantile level used. |
 | `n_estimators` | Number of boosting stages. |
 | `max_depth` | Maximum depth of each regression tree. |
 | `random_state` | Random seed used by the model. |
 
-For other available model parameters, see the official scikit-learn documentation for [GradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html).
+For other available model parameters, please see the official `scikit-learn` documentation for [GradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html).
