@@ -78,10 +78,10 @@ In the `model` section, parameters under `params` are passed to `GradientBoostin
 
 | Parameter | Description |
 |---|---|
-| `loss` | Loss function used by the gradient boosting model. |
-| `alpha` | Quantile level used when `loss` is set to `quantile`. |
+| `loss` | Loss function used by the gradient boosting model. Must be set to `quantile`. |
+| `alpha` | Quantile level used |
 | `n_estimators` | Number of boosting stages. |
 | `max_depth` | Maximum depth of each regression tree. |
 | `random_state` | Random seed used by the model. |
 
-File paths can be given as relative paths from the working directory or as absolute paths.
+For other available model parameters, see the official scikit-learn documentation for [GradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html).
