@@ -73,6 +73,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#train" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -367,6 +372,26 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    train
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -384,6 +409,36 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -470,6 +525,27 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -486,9 +562,47 @@
 
 
 
-  <h1>train</h1>
+<h1 id="train">train</h1>
+<div class="codehilite"><pre><span></span><code>sstar2 train --demes examples/data/BonoboGhost_4K19_wo_introgression.yaml \
+             --config examples/data/sstar2.config.yaml \
+             --output test.model.onnx
+</code></pre></div>
 
-
+<h3 id="settings">Settings</h3>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--demes</code></td>
+<td>Path to the demes file.</td>
+</tr>
+<tr>
+<td><code>--config</code></td>
+<td>Path to the config file.</td>
+</tr>
+<tr>
+<td><code>--output</code></td>
+<td>Path to the output file.</td>
+</tr>
+<tr>
+<td><code>--match-bonus</code></td>
+<td>Bonus for matching genotypes between two variants. Default: <code>5000</code>.</td>
+</tr>
+<tr>
+<td><code>--max-mismatch</code></td>
+<td>Maximum genotype distance allowed before a pair is discarded. Default: <code>5</code>.</td>
+</tr>
+<tr>
+<td><code>--mismatch-penalty</code></td>
+<td>Penalty for mismatching genotypes between two variants. Default: <code>-10000</code>.</td>
+</tr>
+</tbody>
+</table>
 
 
 

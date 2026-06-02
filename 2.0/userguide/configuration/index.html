@@ -496,7 +496,7 @@
 
 
 <h1 id="configuration">Configuration</h1>
-<p>For the <code>train</code> and <code>infer</code> commands, <code>sstar2</code> requires a <a href="https://en.wikipedia.org/wiki/YAML">YAML</a> configuration file specifying parameters for simulation, preprocessing, and the machine learning model (<a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html">GradientBoostingRegressor</a>). An example configuration file can be found <a href="https://github.com/xin-huang/sstar/blob/docs/examples/data/sstar2.config.template.yaml">here</a> and is shown below:</p>
+<p>For the <code>train</code> and <code>infer</code> commands, <code>sstar2</code> requires a <a href="https://en.wikipedia.org/wiki/YAML">YAML</a> configuration file specifying parameters for simulation, preprocessing, and the machine learning model (<a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html">GradientBoostingRegressor</a>). An example configuration file can be found <a href="https://github.com/xin-huang/sstar/blob/docs/examples/data/sstar2.config.yaml">here</a> and is shown below:</p>
 <div class="codehilite"><pre><span></span><code>simulation:
   nrep: 100
   nref: 10
@@ -663,7 +663,7 @@ model:
 </tr>
 <tr>
 <td><code>alpha</code></td>
-<td>Quantile level used</td>
+<td>Quantile level used.</td>
 </tr>
 <tr>
 <td><code>n_estimators</code></td>
@@ -679,7 +679,7 @@ model:
 </tr>
 </tbody>
 </table>
-<p>For other available model parameters, see the official scikit-learn documentation for <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html">GradientBoostingRegressor</a>.</p>
+<p>For other available model parameters, please see the official <code>scikit-learn</code> documentation for <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html">GradientBoostingRegressor</a>.</p>
 
 
 

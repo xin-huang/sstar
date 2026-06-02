@@ -73,6 +73,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#infer" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -395,6 +400,26 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    infer
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -412,6 +437,36 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -470,6 +525,27 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -486,9 +562,57 @@
 
 
 
-  <h1>infer</h1>
+<h1 id="infer">infer</h1>
+<div class="codehilite"><pre><span></span><code>sstar2 infer --model examples/data/trained.model.onnx \
+             --config examples/data/sstar2.config.yaml \
+             --feat-file test.score.tsv \
+             --pred-file test.pred.tsv \
+             --tract-file test.inferred.tracts.bed
+</code></pre></div>
 
-
+<h3 id="settings">Settings</h3>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--model</code></td>
+<td>Path to the model file.</td>
+</tr>
+<tr>
+<td><code>--config</code></td>
+<td>Path to the config file.</td>
+</tr>
+<tr>
+<td><code>--feat-file</code></td>
+<td>Path to the feature TSV file.</td>
+</tr>
+<tr>
+<td><code>--pred-file</code></td>
+<td>Path to the prediction TSV file.</td>
+</tr>
+<tr>
+<td><code>--tract-file</code></td>
+<td>Path to the output BED file.</td>
+</tr>
+<tr>
+<td><code>--match-bonus</code></td>
+<td>Bonus for matching genotypes between two variants. Default: <code>5000</code>.</td>
+</tr>
+<tr>
+<td><code>--max-mismatch</code></td>
+<td>Maximum genotype distance allowed before a pair is discarded. Default: <code>5</code>.</td>
+</tr>
+<tr>
+<td><code>--mismatch-penalty</code></td>
+<td>Penalty for mismatching genotypes between two variants. Default: <code>-10000</code>.</td>
+</tr>
+</tbody>
+</table>
 
 
 
