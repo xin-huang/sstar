@@ -1,7 +1,11 @@
 # infer
 
 ```
-sstar2 infer --model examples/data/trained.model.onnx --config examples/data/sstar2.config.yaml --feat-file test.score.tsv --pred-file test.pred.tsv --tract-file test.inferred.tracts.bed
+sstar2 infer --model examples/data/trained.model.onnx \
+             --config examples/data/sstar2.config.yaml \
+             --feat-file test.score.tsv \
+             --pred-file test.pred.tsv \
+             --tract-file test.inferred.tracts.bed
 ```
 
 ### Settings
