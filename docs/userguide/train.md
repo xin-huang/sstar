@@ -2,7 +2,9 @@
 
 
 ```
-sstar2 train --demes examples/data/BonoboGhost_4K19_wo_introgression.yaml --config examples/data/sstar2.config.yaml --output test.model.onnx
+sstar2 train --demes examples/data/BonoboGhost_4K19_wo_introgression.yaml \
+             --config examples/data/sstar2.config.yaml \
+             --output test.model.onnx
 ```
 
 ### Settings
