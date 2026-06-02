@@ -77,7 +77,10 @@ def add_train_parser(subparsers: argparse.ArgumentParser) -> None:
         help="Path to the output file.",
     )
     parser.add_argument(
-        "--match-bonus", type=positive_int, default=5000, help="Bonus for matching genotypes between two variants. Default: %(default)s."
+        "--match-bonus",
+        type=positive_int,
+        default=5000,
+        help="Bonus for matching genotypes between two variants. Default: %(default)s.",
     )
     parser.add_argument(
         "--max-mismatch",
