@@ -66,7 +66,7 @@ def test_calc_match_pct():
     )
     assert calc_match_pct([0, -1], [0, 2], P=2) == 1.0
     assert calc_match_pct([-1], [-1], P=2) == "NA"
-
+    assert calc_match_pct([], [], P=2) == "NA"
 
 def test_dosage_for_positions():
     gt = allel.GenotypeArray(
