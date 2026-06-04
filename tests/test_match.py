@@ -394,3 +394,12 @@ def test_match_parser_accepts_required_args(tmp_path):
     assert args.ploidy == 2
     assert hasattr(args, "runner")
     assert callable(args.runner)
+
+
+def test_match_parser_rejects_missing_required_args():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="subparsers")
+    add_match_parser(subparsers)
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["match"])    
