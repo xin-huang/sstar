@@ -17,12 +17,13 @@
 #
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
+import argparse
+
 import allel
 import numpy as np
 import pandas as pd
 import pytest
 
-from sstar.__main__ import _sstar_cli_parser
 from sstar.match import (
     _base_sample_name,
     _dosage_for_positions,
@@ -31,6 +32,7 @@ from sstar.match import (
     match,
     run_match,
 )
+from sstar.parsers.matchparser import add_match_parser
 
 
 def _write_match_input_files(tmp_path, tract_text):
@@ -89,6 +91,28 @@ def test_dosage_for_positions():
     np.testing.assert_array_equal(dosage, np.array([2.0, 0.0, -1.0, -1.0, 1.0]))
 
 
+def test_dosage_for_positions_extracts_target_haplotype():
+    gt = allel.GenotypeArray(
+        np.array(
+            [
+                [[0, 1]],
+                [[1, 0]],
+                [[-1, -1]],
+            ]
+        )
+    )
+    pos = np.array([100, 200, 300])
+
+    np.testing.assert_array_equal(
+        _dosage_for_positions(gt, pos, 0, [100, 200, 300], hap_index=0, P=2),
+        np.array([0.0, 2.0, -1.0]),
+    )
+    np.testing.assert_array_equal(
+        _dosage_for_positions(gt, pos, 0, [100, 200, 300], hap_index=1, P=2),
+        np.array([2.0, 0.0, -1.0]),
+    )
+
+
 def test_match():
     tgt_gt = allel.GenotypeArray(
         np.array(
@@ -115,12 +139,61 @@ def test_match():
     )
 
 
+def test_match_uses_target_haplotype():
+    tgt_gt = allel.GenotypeArray(
+        np.array(
+            [
+                [[0, 1]],
+                [[1, 0]],
+            ]
+        )
+    )
+    src_gt = allel.GenotypeArray(
+        np.array(
+            [
+                [[0, 0]],
+                [[1, 1]],
+            ]
+        )
+    )
+    pos = np.array([100, 200])
+
+    assert (
+        match(
+            tgt_gt,
+            pos,
+            0,
+            src_gt,
+            pos,
+            0,
+            [100, 200],
+            P=2,
+            tgt_hap_index=0,
+        )
+        == 1.0
+    )
+    assert (
+        match(
+            tgt_gt,
+            pos,
+            0,
+            src_gt,
+            pos,
+            0,
+            [100, 200],
+            P=2,
+            tgt_hap_index=1,
+        )
+        == 0.0
+    )
+
+
 def test_base_sample_name_maps_phased_labels():
     samples = ["ind1", "ind2"]
 
-    assert _base_sample_name("ind1", samples) == "ind1"
-    assert _base_sample_name("ind1_1", samples) == "ind1"
-    assert _base_sample_name("ind1_2", samples) == "ind1"
+    assert _base_sample_name("ind1", samples) == ("ind1", None)
+    assert _base_sample_name("ind1_1", samples) == ("ind1", 0)
+    assert _base_sample_name("ind1_2", samples) == ("ind1", 1)
 
     with pytest.raises(ValueError):
         _base_sample_name("missing_1", samples)
@@ -163,8 +236,66 @@ def test_run_match(tmp_path):
     assert df["sample"].tolist() == ["ind1_1", "ind1_1"]
 
     rates = dict(zip(df["src_sample"], df["match_rate"]))
+    assert rates["src1"] == pytest.approx(0.5)
+    assert rates["src2"] == pytest.approx(0.25)
+
+
+def test_run_match_unphased_sample(tmp_path):
+    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = _write_match_input_files(
+        tmp_path, "21\t0\t250\tind1\n"
+    )
+
+    run_match(
+        vcf_file=str(vcf_file),
+        tgt_ind_file=str(tgt_ind_file),
+        src_ind_file=str(src_ind_file),
+        tract_file=str(tract_file),
+        output_file=str(output_file),
+        ploidy=2,
+    )
+
+    df = pd.read_csv(output_file, sep="\t")
+    assert df.columns.tolist() == [
+        "chrom",
+        "start",
+        "end",
+        "sample",
+        "match_rate",
+        "src_sample",
+    ]
+    assert df["sample"].tolist() == ["ind1", "ind1"]
+
+    rates = dict(zip(df["src_sample"], df["match_rate"]))
     assert rates["src1"] == pytest.approx(0.75)
     assert rates["src2"] == pytest.approx(0.5)
+
+
+def test_run_match_preserves_both_haplotype_labels(tmp_path):
+    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = _write_match_input_files(
+        tmp_path,
+        "21\t0\t250\tind1_1\n"
+        "21\t0\t250\tind1_2\n",
+    )
+
+    run_match(
+        vcf_file=str(vcf_file),
+        tgt_ind_file=str(tgt_ind_file),
+        src_ind_file=str(src_ind_file),
+        tract_file=str(tract_file),
+        output_file=str(output_file),
+        ploidy=2,
+    )
+
+    df = pd.read_csv(output_file, sep="\t")
+    assert set(df["sample"]) == {"ind1_1", "ind1_2"}
+
+    src1_rates = {
+        row["sample"]: row["match_rate"]
+        for _, row in df[df["src_sample"] == "src1"].iterrows()
+    }
+    assert src1_rates["ind1_1"] == pytest.approx(0.5)
+    assert src1_rates["ind1_2"] == pytest.approx(1.0)
+    assert src1_rates["ind1_1"] != src1_rates["ind1_2"]
 
 
 def test_run_match_ignores_extra_tract_columns(tmp_path):
@@ -193,11 +324,51 @@ def test_run_match_ignores_extra_tract_columns(tmp_path):
     assert df["sample"].tolist() == ["ind1_1", "ind1_1"]
 
 
+def test_run_match_rejects_malformed_tract_file(tmp_path):
+    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = _write_match_input_files(
+        tmp_path, "21\t0\t250\n"
+    )
+
+    with pytest.raises(
+        ValueError, match="tract file must contain at least four columns"
+    ):
+        run_match(
+            vcf_file=str(vcf_file),
+            tgt_ind_file=str(tgt_ind_file),
+            src_ind_file=str(src_ind_file),
+            tract_file=str(tract_file),
+            output_file=str(output_file),
+            ploidy=2,
+        )
+
+
+def test_run_match_writes_na_when_no_overlapping_positions(tmp_path):
+    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = _write_match_input_files(
+        tmp_path, "21\t400\t500\tind1_1\n"
+    )
+
+    run_match(
+        vcf_file=str(vcf_file),
+        tgt_ind_file=str(tgt_ind_file),
+        src_ind_file=str(src_ind_file),
+        tract_file=str(tract_file),
+        output_file=str(output_file),
+        ploidy=2,
+    )
+
+    df = pd.read_csv(output_file, sep="\t", keep_default_na=False)
+    assert df["sample"].tolist() == ["ind1_1", "ind1_1"]
+    assert df["src_sample"].tolist() == ["src1", "src2"]
+    assert df["match_rate"].tolist() == ["NA", "NA"]
+
+
 def test_match_parser_accepts_required_args(tmp_path):
     vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = _write_match_input_files(
         tmp_path, "21\t0\t250\tind1_1\n"
     )
-    parser = _sstar_cli_parser()
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="subparsers")
+    add_match_parser(subparsers)
 
     args = parser.parse_args(
         [
@@ -221,3 +392,5 @@ def test_match_parser_accepts_required_args(tmp_path):
     assert args.tract_file == str(tract_file)
     assert args.output == str(output_file)
     assert args.ploidy == 2
+    assert hasattr(args, "runner")
+    assert callable(args.runner)
