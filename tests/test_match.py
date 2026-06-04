@@ -32,7 +32,7 @@ from sstar.match import (
     match,
     run_match,
 )
-from sstar.parsers.matchparser import add_match_parser
+from sstar.parsers.match_parser import add_match_parser
 
 
 def _write_match_input_files(tmp_path, tract_text):
