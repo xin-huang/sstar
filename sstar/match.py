@@ -18,7 +18,7 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 import os
-from typing import Union
+from typing import Optional, Union
 
 import allel
 import numpy as np
@@ -66,6 +66,8 @@ def _dosage_for_positions(
     pos: Union[list, np.ndarray],
     ind_index: int,
     positions: list,
+    hap_index: Optional[int] = None,
+    P: int = 2,
 ) -> np.ndarray:
     """
     Return ALT dosage for one individual at exact genomic positions.
@@ -83,6 +85,11 @@ def _dosage_for_positions(
         Index of the individual to extract.
     positions : list
         Genomic positions to query.
+    hap_index : int or None, optional
+        Haplotype index to extract for phased targets. When None, return
+        diploid ALT dosage using scikit-allel's to_n_alt().
+    P : int, optional
+        Ploidy multiplier for haploid allele extraction. Default: 2.
 
     Returns
     -------
@@ -107,11 +114,19 @@ def _dosage_for_positions(
 
     idx = np.asarray(idx, dtype=int)
     out_i = np.asarray(out_i, dtype=int)
-    sub = gt_arr[idx, ind_index : ind_index + 1, :]
-    g = allel.GenotypeArray(sub)
-    dos = g.to_n_alt().astype(float)
-    dos[g.is_missing()] = -1
-    out[out_i] = dos[:, 0]
+    if hap_index is None:
+        sub = gt_arr[idx, ind_index : ind_index + 1, :]
+        g = allel.GenotypeArray(sub)
+        dos = g.to_n_alt().astype(float)
+        dos[g.is_missing()] = -1
+        out[out_i] = dos[:, 0]
+        return out
+
+    alleles = gt_arr[idx, ind_index, hap_index].astype(float)
+    called = alleles >= 0
+    dos = np.full(len(idx), -1.0, dtype=float)
+    dos[called] = alleles[called] * P
+    out[out_i] = dos
 
     return out
 
@@ -125,26 +140,40 @@ def match(
     src_index: int,
     positions: list,
     P: int = 2,
+    tgt_hap_index: Optional[int] = None,
 ) -> Union[float, str]:
     """
     Calculate pairwise match rate between one target and one source individual.
     """
-    tgt_dos = _dosage_for_positions(tgt_gt, tgt_pos, tgt_index, positions)
-    src_dos = _dosage_for_positions(src_gt, src_pos, src_index, positions)
+    tgt_dos = _dosage_for_positions(
+        tgt_gt,
+        tgt_pos,
+        tgt_index,
+        positions,
+        hap_index=tgt_hap_index,
+        P=P,
+    )
+    src_dos = _dosage_for_positions(
+        src_gt,
+        src_pos,
+        src_index,
+        positions,
+        P=P,
+    )
 
     return calc_match_pct(tgt_dos, src_dos, P)
 
 
-def _base_sample_name(sample: str, samples: list[str]) -> str:
+def _base_sample_name(sample: str, samples: list[str]) -> tuple[str, Optional[int]]:
     """
-    Map phased tract labels back to target diploid sample names.
+    Resolve a target tract label to a base sample and optional haplotype index.
     """
     if sample in samples:
-        return sample
+        return sample, None
 
     base, sep, suffix = sample.rpartition("_")
-    if sep and suffix.isdigit() and base in samples:
-        return base
+    if sep and suffix in {"1", "2"} and base in samples:
+        return base, int(suffix) - 1
 
     raise ValueError(f"Target sample {sample} is not present in the target list.")
 
@@ -204,7 +233,7 @@ def run_match(
         start = int(tract["start"])
         end = int(tract["end"])
         tract_sample = str(tract["sample"])
-        base_sample = _base_sample_name(tract_sample, tgt_samples)
+        base_sample, tgt_hap_index = _base_sample_name(tract_sample, tgt_samples)
         tgt_index = tgt_samples.index(base_sample)
 
         tgt_chrom = _resolve_chrom(chrom, tgt_data)
@@ -214,6 +243,9 @@ def run_match(
         src_gt = src_data[src_chrom]["GT"]
         src_pos = np.asarray(src_data[src_chrom]["POS"])
 
+        # Tract coordinates are BED-style 0-based half-open [start, end),
+        # while VCF POS values are 1-based; therefore a VCF position belongs
+        # to the tract when start < POS <= end.
         tgt_region_pos = tgt_pos[(tgt_pos > start) & (tgt_pos <= end)]
         src_region_pos = src_pos[(src_pos > start) & (src_pos <= end)]
         positions = np.union1d(tgt_region_pos, src_region_pos).astype(int).tolist()
@@ -227,6 +259,7 @@ def run_match(
                 src_pos=src_pos,
                 src_index=src_index,
                 positions=positions,
+                tgt_hap_index=tgt_hap_index,
                 P=ploidy,
             )
             rows.append(
