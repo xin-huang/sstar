@@ -70,7 +70,7 @@ def train(
     data = os.path.join(output_dir, f"{output_prefix}.training.features.tsv")
 
     if not os.path.exists(data):
-        print("Training data is not found. Performing simulation ...")
+        print("No training data found. Performing simulation ...")
         simulate(
             demo_model_file=demes,
             output_dir=output_dir,
