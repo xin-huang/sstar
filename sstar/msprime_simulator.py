@@ -18,12 +18,14 @@
 #    https://www.gnu.org/licenses/gpl-3.0.en.html
 
 import os
+from typing import Any
 
 import demes
 import msprime
+import numpy as np
 
-from sstar.generators import WindowDataGenerator
 from sstar.feature_vector_preprocessor import FeatureVectorPreprocessor
+from sstar.utils import split_genome
 
 
 class MsprimeSimulator:
@@ -59,6 +61,7 @@ class MsprimeSimulator:
         match_bonus: int,
         max_mismatch: int,
         mismatch_penalty: int,
+        keep_sim_data: bool = False,
     ):
         """
         Initialize a new instance of MsprimeSimulator with specific parameters for msprime simulations.
@@ -89,6 +92,8 @@ class MsprimeSimulator:
             Directory where the output files will be stored.
         is_phased : bool
             Indicates whether the true tracts should be considered as unphased.
+        keep_sim_data : bool, optional
+            If True, writes tree sequence and seed files for each replicate.
         """
         self.demo_model_file = demo_model_file
         self.nref = nref
@@ -106,6 +111,7 @@ class MsprimeSimulator:
         self.match_bonus = match_bonus
         self.max_mismatch = max_mismatch
         self.mismatch_penalty = mismatch_penalty
+        self.keep_sim_data = keep_sim_data
 
     def run(self, rep: int = None, seed: int = None) -> list[dict[str, object]]:
         """
@@ -127,7 +133,7 @@ class MsprimeSimulator:
         Returns
         -------
         list[dict[str, object]]
-            A list of per-sample feature dictionaries generated from the simulated VCF.
+            A list of per-sample feature dictionaries generated from the simulated tree sequence.
         """
         output_dir = (
             self.output_dir if rep is None else os.path.join(self.output_dir, str(rep))
@@ -135,15 +141,6 @@ class MsprimeSimulator:
         output_prefix = (
             self.output_prefix if rep is None else f"{self.output_prefix}.{rep}"
         )
-
-        os.makedirs(output_dir, exist_ok=True)
-        ts_file = os.path.join(output_dir, f"{output_prefix}.ts")
-        vcf_file = os.path.join(output_dir, f"{output_prefix}.vcf")
-        ref_ind_file = os.path.join(output_dir, f"{output_prefix}.ref.ind.list")
-        tgt_ind_file = os.path.join(output_dir, f"{output_prefix}.tgt.ind.list")
-        seed_file = os.path.join(output_dir, f"{output_prefix}.seedmsprime")
-
-        self._create_ref_tgt_file(self.nref, self.ntgt, ref_ind_file, tgt_ind_file)
 
         demo_graph = demes.load(self.demo_model_file)
         demography = msprime.Demography.from_demes(demo_graph)
@@ -168,67 +165,113 @@ class MsprimeSimulator:
             model=msprime.BinaryMutationModel(),
         )
 
-        ts.dump(ts_file)
-        with open(vcf_file, "w") as o:
-            ts.write_vcf(o, allow_position_zero=True)
-        if seed is not None:
-            with open(seed_file, "w") as o:
-                o.write(f"{seed}\n")
+        if self.keep_sim_data:
+            os.makedirs(output_dir, exist_ok=True)
+            ts_file = os.path.join(output_dir, f"{output_prefix}.ts")
+            ts.dump(ts_file)
 
-        window_data_generator = WindowDataGenerator(
-            vcf_file=vcf_file,
-            ref_ind_file=ref_ind_file,
-            tgt_ind_file=tgt_ind_file,
-            chr_name="1",
-            win_len=self.seq_len,
-            win_step=self.seq_len,
-            ploidy=self.ploidy,
-            is_phased=self.is_phased,
-        )
+            if seed is not None:
+                seed_file = os.path.join(output_dir, f"{output_prefix}.seedmsprime")
+                with open(seed_file, "w") as o:
+                    o.write(f"{seed}\n")
 
+        ref_samples, tgt_samples = self._create_ref_tgt_samples()
         preprocessor = FeatureVectorPreprocessor(
-            ref_ind_file=ref_ind_file,
-            tgt_ind_file=tgt_ind_file,
+            ref_samples=ref_samples,
+            tgt_samples=tgt_samples,
             match_bonus=self.match_bonus,
             max_mismatch=self.max_mismatch,
             mismatch_penalty=self.mismatch_penalty,
         )
 
-        features = preprocessor.run(**list(window_data_generator.get())[0])
+        features = preprocessor.run(**self._build_feature_input_from_ts(ts))
 
         for item in features:
             item["Replicate"] = rep
 
         return features
 
-    def _create_ref_tgt_file(
-        self,
-        nref: int,
-        ntgt: int,
-        ref_ind_file: str,
-        tgt_ind_file: str,
-        identifier: str = "tsk_",
-    ) -> None:
-        """
-        Create files listing reference and target individual identifiers.
+    def _build_feature_input_from_ts(self, ts: Any) -> dict[str, object]:
+        """Build feature-vector input arrays directly from a tree sequence.
 
         Parameters
         ----------
-        nref : int
-            Number of reference individuals.
-        ntgt : int
-            Number of target individuals.
-        ref_ind_file : str
-            Path to the output file for reference individuals.
-        tgt_ind_file : str
-            Path to the output file for target individuals.
-        identifier : str, optional
-            Prefix for individual identifiers (default is "tsk_").
-        """
-        with open(ref_ind_file, "w") as f:
-            for i in range(nref):
-                f.write(identifier + str(i) + "\n")
+        ts : Any
+            Tree sequence returned by msprime after mutation simulation.
 
-        with open(tgt_ind_file, "w") as f:
-            for i in range(nref, nref + ntgt):
-                f.write(identifier + str(i) + "\n")
+        Returns
+        -------
+        dict[str, object]
+            Keyword arguments for :meth:`FeatureVectorPreprocessor.run`.
+        """
+        pos = np.array([int(site.position) for site in ts.sites()])
+        gts = ts.genotype_matrix()
+
+        nref_haplotypes = self.nref * self.ploidy
+        ref_hap_gts = gts[:, :nref_haplotypes]
+        tgt_hap_gts = gts[:, nref_haplotypes:]
+
+        ref_fixed_alt = np.sum(ref_hap_gts, axis=1) == ref_hap_gts.shape[1]
+        tgt_fixed_alt = np.sum(tgt_hap_gts, axis=1) == tgt_hap_gts.shape[1]
+        keep = np.logical_not(np.logical_and(ref_fixed_alt, tgt_fixed_alt))
+
+        pos = pos[keep]
+        ref_hap_gts = ref_hap_gts[keep]
+        tgt_hap_gts = tgt_hap_gts[keep]
+
+        windows = split_genome(
+            pos=pos,
+            chr_name="1",
+            polymorphism_size=self.seq_len,
+            step_size=self.seq_len,
+        )
+        chr_name, window_range = windows[0]
+        start, end = window_range
+
+        idx = (pos >= start) & (pos <= end)
+        pos = pos[idx]
+        ref_hap_gts = ref_hap_gts[idx]
+        tgt_hap_gts = tgt_hap_gts[idx]
+
+        if self.is_phased:
+            ref_gts = ref_hap_gts
+            tgt_gts = tgt_hap_gts
+        else:
+            ref_gts = ref_hap_gts.reshape((len(pos), self.nref, self.ploidy)).sum(
+                axis=2
+            )
+            tgt_gts = tgt_hap_gts.reshape((len(pos), self.ntgt, self.ploidy)).sum(
+                axis=2
+            )
+
+        return {
+            "chr_name": chr_name,
+            "start": start,
+            "end": end,
+            "ploidy": self.ploidy,
+            "is_phased": self.is_phased,
+            "ref_gts": ref_gts,
+            "tgt_gts": tgt_gts,
+            "pos": pos,
+        }
+
+    def _create_ref_tgt_samples(
+        self, identifier: str = "tsk_"
+    ) -> tuple[list[str], list[str]]:
+        """Create reference and target sample identifiers.
+
+        Parameters
+        ----------
+        identifier : str, optional
+            Prefix for individual identifiers (default is ``"tsk_"``).
+
+        Returns
+        -------
+        tuple[list[str], list[str]]
+            Reference and target sample identifiers.
+        """
+        ref_samples = [f"{identifier}{i}" for i in range(self.nref)]
+        tgt_samples = [
+            f"{identifier}{i}" for i in range(self.nref, self.nref + self.ntgt)
+        ]
+        return ref_samples, tgt_samples
