@@ -86,6 +86,7 @@ def _run_quantile(args: argparse.Namespace) -> None:
         is_phased=args.phased,
         keep_simulated_data=args.keep_simulated_data,
         quantile_step=args.quantile_step,
+        quantile_start=args.quantile_start,
     )
 
 
@@ -503,9 +504,16 @@ def _s_star_cli_parser() -> argparse.ArgumentParser:
         dest="quantile_step",
         default=0.005,
         help=(
-            "Step size between quantiles from 0.5 to less than 1. "
+            "Step size between quantiles from --quantile-start to less than 1. "
             "Default: %(default)s."
         ),
+    )
+    parser.add_argument(
+        "--quantile-start",
+        type=float,
+        dest="quantile_start",
+        default=0.5,
+        help="First quantile to calculate. Default: %(default)s.",
     )
     parser.add_argument(
         "--thread",

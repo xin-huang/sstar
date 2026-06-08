@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sstar"
-version = "1.2.0"
+version = "1.2.1"
 description = "A Python package for detecting archaic introgression from population genetic data with S*"
 readme = "README.md"
 requires-python = "==3.8.19"

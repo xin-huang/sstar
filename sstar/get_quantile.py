@@ -93,6 +93,7 @@ def get_quantile(
     quantile_step: float,
     is_phased: bool = False,
     keep_simulated_data: bool = False,
+    quantile_start: float = 0.5,
 ) -> None:
     """
     Calculate quantiles of expected S* scores from ms simulations.
@@ -132,13 +133,18 @@ def get_quantile(
     seeds : list or None
         Three random seed numbers used in ms simulation. If None, ms uses its default seeding behavior.
     quantile_step : float
-        Step size between quantiles from 0.5 to less than 1.
+        Step size between quantiles from `quantile_start` to less than 1.
     is_phased : bool, optional
         If True, run `sstar score` with `--phased`. Default: `False`.
     keep_simulated_data : bool, optional
         If True, keep intermediate simulation directories. Default: `False`.
+    quantile_start : float, optional
+        First quantile to calculate. Must be greater than or equal to 0 and
+        less than 1. Quantiles are computed as
+        `np.arange(quantile_start, 1, quantile_step)`. Default: 0.5.
     """
     _validate_quantile_step(quantile_step)
+    _validate_quantile_start(quantile_start)
     if seeds is not None:
         np.random.seed(np.sum(seeds))
     output_dir = os.path.abspath(output_dir)
@@ -161,11 +167,27 @@ def get_quantile(
         thread,
         seeds,
         quantile_step,
-        is_phased,
+        is_phased=is_phased,
+        quantile_start=quantile_start,
     )
     _summary(output_dir, rec_rate)
     if not keep_simulated_data:
         _cleanup_simulated_data(output_dir, simulated_snp_dirs)
+
+
+def _validate_quantile_start(quantile_start: float) -> None:
+    """
+    Validate the first quantile to calculate.
+
+    Parameters
+    ----------
+    quantile_start : float
+        First quantile to calculate.
+    """
+    if not np.isfinite(quantile_start) or quantile_start < 0 or quantile_start >= 1:
+        raise ValueError(
+            "quantile_start must be greater than or equal to 0 and less than 1"
+        )
 
 
 def _validate_quantile_step(quantile_step: float) -> None:
@@ -175,7 +197,7 @@ def _validate_quantile_step(quantile_step: float) -> None:
     Parameters
     ----------
     quantile_step : float
-        Step size between quantiles from 0.5 to less than 1.
+        Step size between quantiles.
     """
     if not np.isfinite(quantile_step) or quantile_step <= 0 or quantile_step >= 0.5:
         raise ValueError("quantile_step must be greater than 0 and less than 0.5")
@@ -261,6 +283,7 @@ def _run_ms_simulation(
     seeds: Optional[list],
     quantile_step: float,
     is_phased: bool = False,
+    quantile_start: float = 0.5,
 ) -> list:
     """
     Run ms simulations across the requested SNP-count range.
@@ -296,9 +319,11 @@ def _run_ms_simulation(
     seeds : list or None
         Three random seed numbers used in ms simulation. If None, ms uses its default seeding behavior.
     quantile_step : float
-        Step size between quantiles from 0.5 to less than 1.
+        Step size between quantiles from `quantile_start` to less than 1.
     is_phased : bool, optional
         If True, run `sstar score` with `--phased`. Default: `False`.
+    quantile_start : float, optional
+        First quantile to calculate. Default: 0.5.
 
     Returns
     -------
@@ -369,6 +394,7 @@ def _run_ms_simulation(
                 seeds,
                 quantile_step,
                 is_phased,
+                quantile_start,
             ),
         )
         for _ii in range(thread)
@@ -406,6 +432,7 @@ def _run_ms_simulation_worker(
     seeds: Optional[list],
     quantile_step: float,
     is_phased: bool = False,
+    quantile_start: float = 0.5,
 ) -> None:
     """
     Worker process for running ms simulations and score quantile calculation.
@@ -437,9 +464,11 @@ def _run_ms_simulation_worker(
     seeds : list or None
         Three random seed numbers used in ms simulation. If None, ms uses its default seeding behavior.
     quantile_step : float
-        Step size between quantiles from 0.5 to less than 1.
+        Step size between quantiles from `quantile_start` to less than 1.
     is_phased : bool, optional
         If True, run `sstar score` with `--phased`. Default: `False`.
+    quantile_start : float, optional
+        First quantile to calculate. Default: 0.5.
     """
     while True:
         snp_num = in_queue.get()
@@ -526,7 +555,13 @@ def _run_ms_simulation_worker(
 
         _safe_sstar_score(score_cmd)  # safe wrapper (no linter error)
 
-        _cal_quantile(output_score, output_quantile, snp_num, quantile_step)
+        _cal_quantile(
+            output_score,
+            output_quantile,
+            snp_num,
+            quantile_step,
+            quantile_start=quantile_start,
+        )
         out_queue.put("Finished")
 
 
@@ -591,7 +626,11 @@ def _ms2vcf(
 
 
 def _cal_quantile(
-    in_file: str, out_file: str, snp_num: int, quantile_step: float
+    in_file: str,
+    out_file: str,
+    snp_num: int,
+    quantile_step: float,
+    quantile_start: float = 0.5,
 ) -> None:
     """
     Calculate quantiles of expected S* for one simulated SNP count.
@@ -605,9 +644,12 @@ def _cal_quantile(
     snp_num : int
         SNP count used in the ms simulation.
     quantile_step : float
-        Step size between quantiles from 0.5 to less than 1.
+        Step size between quantiles from `quantile_start` to less than 1.
+    quantile_start : float, optional
+        First quantile to calculate. Default: 0.5.
     """
     _validate_quantile_step(quantile_step)
+    _validate_quantile_start(quantile_start)
     df = pd.read_csv(in_file, sep="\t")
     df["S*_score"] = pd.to_numeric(df["S*_score"], errors="coerce")
     df = df.dropna(subset=["S*_score"])
@@ -615,7 +657,7 @@ def _cal_quantile(
     if df.empty:
         raise RuntimeError(f"No valid S* scores found in {in_file}")
 
-    quantiles = np.arange(0.5, 1, quantile_step)
+    quantiles = np.arange(quantile_start, 1, quantile_step)
     mean_df = (
         df.groupby(["chrom", "start", "end"], as_index=False)["S*_score"]
         .mean()
