@@ -12,12 +12,17 @@ theme:
     accent: cyan
 plugins:
   - search
+  - mike:
+      alias_type: redirect
 markdown_extensions:
   - extra
   - tables
   - fenced_code
   - admonition
   - codehilite
+extra:
+  version:
+    provider: mike
 extra_javascript:
   - 'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML'
 nav:

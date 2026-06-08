@@ -134,6 +134,33 @@ def test_cal_quantile_basic(tmp_path):
     assert np.isclose(out["quantile"].max(), 0.995)
 
 
+def test_cal_quantile_custom_start(tmp_path):
+    in_file = tmp_path / "scores.txt"
+    out_file = tmp_path / "quantile.txt"
+
+    df = pd.DataFrame(
+        {
+            "chrom": ["1", "1", "1", "1"],
+            "start": [0, 0, 100, 100],
+            "end": [100, 100, 200, 200],
+            "S*_score": [1.0, 2.0, 3.0, 4.0],
+        }
+    )
+    df.to_csv(in_file, sep="\t", index=False)
+
+    _cal_quantile(
+        str(in_file),
+        str(out_file),
+        snp_num=42,
+        quantile_step=0.01,
+        quantile_start=0.8,
+    )
+    out = pd.read_csv(out_file, sep="\t")
+
+    assert np.isclose(out["quantile"].min(), 0.8)
+    assert np.isclose(out["quantile"].max(), 0.99)
+
+
 def test_cal_quantile_custom_step(tmp_path):
     in_file = tmp_path / "scores.txt"
     out_file = tmp_path / "quantile.txt"
@@ -156,6 +183,25 @@ def test_cal_quantile_custom_step(tmp_path):
 
 
 @pytest.mark.parametrize(
+    "quantile_start",
+    [-0.1, 1.0, float("inf"), float("nan")],
+)
+def test_cal_quantile_rejects_invalid_start(tmp_path, quantile_start):
+    in_file = tmp_path / "scores.txt"
+    out_file = tmp_path / "quantile.txt"
+    in_file.write_text("chrom\tstart\tend\tS*_score\n1\t0\t1\t1.0\n")
+
+    with pytest.raises(ValueError):
+        _cal_quantile(
+            str(in_file),
+            str(out_file),
+            snp_num=42,
+            quantile_step=0.005,
+            quantile_start=quantile_start,
+        )
+
+
+@pytest.mark.parametrize(
     "quantile_step",
     [0, -0.1, 0.5, 1.0, float("inf"), float("nan")],
 )
@@ -165,7 +211,9 @@ def test_cal_quantile_rejects_invalid_step(tmp_path, quantile_step):
     in_file.write_text("chrom\tstart\tend\tS*_score\n1\t0\t1\t1.0\n")
 
     with pytest.raises(ValueError):
-        _cal_quantile(str(in_file), str(out_file), snp_num=42, quantile_step=quantile_step)
+        _cal_quantile(
+            str(in_file), str(out_file), snp_num=42, quantile_step=quantile_step
+        )
 
 
 def test_summary_aggregates_quantiles(tmp_path):

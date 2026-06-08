@@ -48,7 +48,7 @@ And it should return some paths similar to
 
 Users can also use [Apptainer](https://apptainer.org/) to pull a container image that includes `sstar` and `ms`:
 
-    apptainer pull sstar.sif oras://ghcr.io/xin-huang/sstar:1.2.0
+    apptainer pull sstar.sif oras://ghcr.io/xin-huang/sstar:1.2.1
 
 Then run `sstar` with:
 

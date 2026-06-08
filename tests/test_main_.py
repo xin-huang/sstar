@@ -99,6 +99,51 @@ def test_quantile_subcommand_calls_runner():
         args = mock_run.call_args[0][0]
         assert args.keep_simulated_data is False
         assert args.quantile_step == 0.005
+        assert args.quantile_start == 0.5
+
+
+def test_quantile_subcommand_quantile_start():
+    with patch("sstar.__main__._run_quantile") as mock_run:
+        main(
+            [
+                "quantile",
+                "--model",
+                "model.yaml",
+                "--ms-dir",
+                "/tmp/ms",
+                "--N0",
+                "10000",
+                "--nsamp",
+                "20",
+                "--nreps",
+                "10",
+                "--ref-pop",
+                "Western",
+                "--ref-size",
+                "10",
+                "--tgt-pop",
+                "Bonobo",
+                "--tgt-size",
+                "10",
+                "--mut-rate",
+                "1e-8",
+                "--rec-rate",
+                "1e-8",
+                "--seq-len",
+                "100000",
+                "--snp-num-range",
+                "50",
+                "200",
+                "10",
+                "--output-dir",
+                "quant_out",
+                "--quantile-start",
+                "0.8",
+            ]
+        )
+        mock_run.assert_called_once()
+        args = mock_run.call_args[0][0]
+        assert args.quantile_start == 0.8
 
 
 def test_quantile_subcommand_quantile_step():

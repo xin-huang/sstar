@@ -61,7 +61,8 @@ The meaning of each column:
 | `--seq-len` | Length of the simulated sequence. |
 | `--snp-num-range` | Minimum SNP count, maximum SNP count, and step size used for `ms` simulations. |
 | `--output-dir` | Path to the output directory. |
-| `--quantile-step` | Step size between quantiles from 0.5 to less than 1. Default: `0.005`. |
+| `--quantile-step` | Step size between quantiles from `--quantile-start` to less than 1. Default: `0.005`. |
+| `--quantile-start` | First quantile to calculate. Default: `0.5`. |
 | `--thread` | Number of threads for multiprocessing. Default: `1`. |
 | `--keep-simulated-data` | Keep intermediate simulation directories instead of deleting them after summarizing results. |
 | `--phased` | Run `sstar score` on phased haplotypes during simulation scoring. |
