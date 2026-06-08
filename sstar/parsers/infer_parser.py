@@ -83,18 +83,21 @@ def add_infer_parser(subparsers: argparse.ArgumentParser) -> None:
         "--tract-file", required=True, help="Path to the output BED file."
     )
     parser.add_argument(
-        "--match-bonus", type=positive_int, default=5000, help="S* match bonus."
+        "--match-bonus",
+        type=positive_int,
+        default=5000,
+        help="Bonus for matching genotypes between two variants. Default: %(default)s.",
     )
     parser.add_argument(
         "--max-mismatch",
         type=non_negative_int,
         default=5,
-        help="S* maximum mismatches.",
+        help="Maximum genotype distance allowed before a pair is discarded. Default: %(default)s.",
     )
     parser.add_argument(
         "--mismatch-penalty",
         type=non_positive_int,
         default=-10000,
-        help="S* mismatch penalty.",
+        help="Penalty for mismatching genotypes between two variants. Default: %(default)s.",
     )
     parser.set_defaults(runner=_run_infer)

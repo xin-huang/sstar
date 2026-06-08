@@ -1,22 +1,20 @@
 # Overview
 
-`sstar` assumes individuals are diploid and variants are bi-allelic in the combined reference and target populations used for scoring. Source populations are used for downstream annotation and match-rate calculation, and should not determine which variants are retained for S* scoring. Please check the data carefully before using `sstar`.
+`sstar2` assumes biallelic genotype data with derived alleles coded as `1` and supports both phased and unphased data.
 
-There are five subcommands in `sstar`:
+There are three subcommands in `sstar2`:
 
-- `score`
-- `quantile`
-- `threshold`
-- `matchrate`
-- `tract`
+- `train`
+- `infer`
+- `match`
 
 To display help information for each subcommand, users can use:
 
-	sstar subcommand -h
+	sstar2 subcommand -h
 
 For example:
 
-	sstar score -h
+	sstar2 train -h
 
 **Note:** In this manual, we define the population without introgressed fragments as the **reference population**, the population receiving introgressed fragments as the **target population**, and the population donating introgressed fragments as the **source population**.
 
