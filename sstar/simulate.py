@@ -135,6 +135,7 @@ def simulate(
         match_bonus=match_bonus,
         max_mismatch=max_mismatch,
         mismatch_penalty=mismatch_penalty,
+        keep_sim_data=keep_sim_data,
     )
 
     total_features = []

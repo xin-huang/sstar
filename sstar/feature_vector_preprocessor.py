@@ -20,7 +20,6 @@
 import numpy as np
 from typing import Any
 from sstar.sstar import Sstar
-from sstar.utils import parse_ind_file
 
 
 class FeatureVectorPreprocessor:
@@ -34,8 +33,8 @@ class FeatureVectorPreprocessor:
 
     def __init__(
         self,
-        ref_ind_file: str,
-        tgt_ind_file: str,
+        ref_samples: list[str],
+        tgt_samples: list[str],
         match_bonus: int,
         max_mismatch: int,
         mismatch_penalty: int,
@@ -43,12 +42,12 @@ class FeatureVectorPreprocessor:
         """
         Initializes a new instance of FeatureVectorsPreprocessor with specific parameters.
 
-        Parameters:
-        -----------
-        ref_ind_file : str
-            Path to the file listing reference individual identifiers.
-        tgt_ind_file : str
-            Path to the file listing target individual identifiers.
+        Parameters
+        ----------
+        ref_samples : list[str]
+            Reference individual identifiers.
+        tgt_samples : list[str]
+            Target individual identifiers.
         match_bonus : int
             S* match bonus.
         max_mismatch : int
@@ -56,11 +55,14 @@ class FeatureVectorPreprocessor:
         mismatch_penalty : int
             S* mismatch penalty.
         """
+        if len(ref_samples) == 0:
+            raise ValueError("No reference sample is provided.")
+        if len(tgt_samples) == 0:
+            raise ValueError("No target sample is provided.")
+
         self.match_bonus = match_bonus
         self.max_mismatch = max_mismatch
         self.mismatch_penalty = mismatch_penalty
-        ref_samples = parse_ind_file(ref_ind_file)
-        tgt_samples = parse_ind_file(tgt_ind_file)
         self.samples = {
             "ref": ref_samples,
             "tgt": tgt_samples,
