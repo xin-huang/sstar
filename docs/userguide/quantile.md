@@ -4,7 +4,7 @@
 
 ### Input
 
-Users need to install the `ms` program from [Hudson Lab](https://home.uchicago.edu/~rhudson1/source/mksamples.html) and provide a demographic model (e.g., [BonoboGhost_4K19_no_introgression.yaml](https://github.com/xin-huang/sstar/blob/main/examples/models/BonoboGhost_4K19_no_introgression.yaml)) in [Demes](https://popsim-consortium.github.io/demes-spec-docs/main/introduction.html) YAML format. The reference sample size should match the number of chromosomes in the real data to be analyzed, whereas the target sample size should be `2`, because `sstar` predicts introgressed fragments for each target sample separately. Then users can use the following command:
+Users need to install the `ms` program from [Hudson Lab](https://home.uchicago.edu/~rhudson1/source/mksamples.html) and provide a demographic model (e.g., [BonoboGhost_4K19_no_introgression.yaml](https://github.com/xin-huang/sstar/blob/v1/examples/models/BonoboGhost_4K19_no_introgression.yaml)) in [Demes](https://popsim-consortium.github.io/demes-spec-docs/main/introduction.html) YAML format. The reference sample size should match the number of chromosomes in the real data to be analyzed, whereas the target sample size should be `2`, because `sstar` predicts introgressed fragments for each target sample separately. Then users can use the following command:
 
 	sstar quantile --model examples/models/BonoboGhost_4K19_no_introgression.yaml \
                    --ms-dir ext/msdir/ \
@@ -23,7 +23,7 @@ Users need to install the `ms` program from [Hudson Lab](https://home.uchicago.e
                    --thread 2 \
                    --seeds 1 2 3
 
-The expected result above can be found in [test.quantile.exp.summary](https://github.com/xin-huang/sstar/blob/main/tests/results/test.quantile.exp.summary).
+The expected result above can be found in [test.quantile.exp.summary](https://github.com/xin-huang/sstar/blob/v1/tests/results/test.quantile.exp.summary).
 
 If users run `sstar` from [the Apptainer image](https://github.com/xin-huang/sstar/pkgs/container/sstar), `ms` is available at `/opt/ms`.
 

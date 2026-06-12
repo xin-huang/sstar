@@ -2,9 +2,9 @@
 
 ### Input
 
-To determine the significance of S\* scores, users should use data from simulations (e.g., [gravel_asn_scale_60k.simulated.data](https://raw.githubusercontent.com/xin-huang/sstar/main/examples/data/simulated_data/gravel_asn_scale_60k.simulated.data)) for building a generalized additive model to predict the expected S\* score under a demographic model without introgression. This file can be created with the [quantile command](https://xin-huang.github.io/sstar/userguide/quantile/).
+To determine the significance of S\* scores, users should use data from simulations (e.g., [gravel_asn_scale_60k.simulated.data](https://raw.githubusercontent.com/xin-huang/sstar/v1/examples/data/simulated_data/gravel_asn_scale_60k.simulated.data)) for building a generalized additive model to predict the expected S\* score under a demographic model without introgression. This file can be created with the [quantile command](https://xin-huang.github.io/sstar/userguide/quantile/).
 
-Users also need to provide the file containing S\* scores estimated from real data (e.g., [test.score.unphased.exp.results.tsv](https://github.com/xin-huang/sstar/blob/main/tests/results/test.score.unphased.exp.results.tsv)). Users can use a BED-like file (e.g., [hum.windows.50k.10k.recomb.map](https://raw.githubusercontent.com/xin-huang/sstar/main/examples/data/real_data/hum.windows.50k.10k.recomb.map)) to specify local recombination rates across the genome. If a window is not found in the recombination map but is present in the output file from `sstar score`, this window will be ignored when calculating significant thresholds.
+Users also need to provide the file containing S\* scores estimated from real data (e.g., [test.score.unphased.exp.results.tsv](https://github.com/xin-huang/sstar/blob/v1/tests/results/test.score.unphased.exp.results.tsv)). Users can use a BED-like file (e.g., [hum.windows.50k.10k.recomb.map](https://raw.githubusercontent.com/xin-huang/sstar/v1/examples/data/real_data/hum.windows.50k.10k.recomb.map)) to specify local recombination rates across the genome. If a window is not found in the recombination map but is present in the output file from `sstar score`, this window will be ignored when calculating significant thresholds.
 
 Users can estimate significant S\* score thresholds at quantile 0.99 with the following command:
 
@@ -14,7 +14,7 @@ Users can estimate significant S\* score thresholds at quantile 0.99 with the fo
                     --quantile 0.99 \
                     --output test.threshold.results.tsv
 
-The expected result above can be found in [test.threshold.exp.results.tsv](https://github.com/xin-huang/sstar/blob/main/tests/results/test.threshold.exp.results.tsv).
+The expected result above can be found in [test.threshold.exp.results.tsv](https://github.com/xin-huang/sstar/blob/v1/tests/results/test.threshold.exp.results.tsv).
 
 ### Output
 

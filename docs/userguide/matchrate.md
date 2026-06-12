@@ -2,7 +2,7 @@
 
 ### Input
 
-To calculate source match rates, users should provide a VCF file containing **phased** genotypes from the reference, target, and source populations (e.g. [test.match.rate.data.vcf](https://github.com/xin-huang/sstar/blob/main/tests/data/test.match.rate.data.vcf)). Users also need to provide three files containing names of individuals from the reference, target and source populations (e.g. [ref.ind.list](https://github.com/xin-huang/sstar/blob/main/examples/data/ind_list/ref.ind.list), [tgt.ind.list](https://github.com/xin-huang/sstar/blob/main/examples/data/ind_list/tgt.ind.list) and [nean.ind.list](https://github.com/xin-huang/sstar/blob/main/examples/data/ind_list/nean.ind.list)) for analysis. The file (e.g. [test.match.rate.score.exp.results.tsv](https://github.com/xin-huang/sstar/blob/main/tests/results/test.match.rate.score.exp.results.tsv)) containing S* scores from `sstar score` is also required.
+To calculate source match rates, users should provide a VCF file containing **phased** genotypes from the reference, target, and source populations (e.g. [test.match.rate.data.vcf](https://github.com/xin-huang/sstar/blob/v1/tests/data/test.match.rate.data.vcf)). Users also need to provide three files containing names of individuals from the reference, target and source populations (e.g. [ref.ind.list](https://github.com/xin-huang/sstar/blob/v1/examples/data/ind_list/ref.ind.list), [tgt.ind.list](https://github.com/xin-huang/sstar/blob/v1/examples/data/ind_list/tgt.ind.list) and [nean.ind.list](https://github.com/xin-huang/sstar/blob/v1/examples/data/ind_list/nean.ind.list)) for analysis. The file (e.g. [test.match.rate.score.exp.results.tsv](https://github.com/xin-huang/sstar/blob/v1/tests/results/test.match.rate.score.exp.results.tsv)) containing S* scores from `sstar score` is also required.
 
 Users can calculate source match rates with the following command:
 
@@ -13,7 +13,7 @@ Users can calculate source match rates with the following command:
                     --score tests/results/test.match.rate.score.exp.results.tsv \
                     --output test.match.rate.results.tsv
 
-The expected result above can be found in [test.match.rate.score.exp.results.tsv](https://github.com/xin-huang/sstar/blob/main/tests/results/test.match.rate.score.exp.results.tsv).
+The expected result above can be found in [test.match.rate.score.exp.results.tsv](https://github.com/xin-huang/sstar/blob/v1/tests/results/test.match.rate.score.exp.results.tsv).
 
 ### Output
 
