@@ -2,7 +2,7 @@
 
 ### Input
 
-To obtain candidate introgressed fragments from `sstar`, users should provide the output (e.g. [test.tract.threshold.tsv](https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.threshold.tsv)) from `sstar threshold`. If no source genome is available, users can use the following command:
+To obtain candidate introgressed fragments from `sstar`, users should provide the output (e.g. [test.tract.threshold.tsv](https://github.com/xin-huang/sstar/blob/v1/tests/data/test.tract.threshold.tsv)) from `sstar threshold`. If no source genome is available, users can use the following command:
 
 	sstar tract --threshold tests/data/test.tract.threshold.tsv --output-prefix test
 
@@ -12,7 +12,7 @@ If one source genome is available, users can calculate source match rates and ou
 	            --output-prefix test \
 				--match-rate tests/data/test.tract.src1.match.rate.tsv
 
-If source genomes from two different source populations are available, users can provide the output (e.g. [test.tract.src1.match.rate.tsv](https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.src1.match.rate.tsv) and [test.tract.src2.match.rate.tsv](https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.src2.match.rate.tsv)) from `sstar matchrate`, and use the following command:
+If source genomes from two different source populations are available, users can provide the output (e.g. [test.tract.src1.match.rate.tsv](https://github.com/xin-huang/sstar/blob/v1/tests/data/test.tract.src1.match.rate.tsv) and [test.tract.src2.match.rate.tsv](https://github.com/xin-huang/sstar/blob/v1/tests/data/test.tract.src2.match.rate.tsv)) from `sstar matchrate`, and use the following command:
 
 	sstar tract --threshold tests/data/test.tract.threshold.tsv \
 	            --output-prefix test \

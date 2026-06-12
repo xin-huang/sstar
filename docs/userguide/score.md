@@ -2,7 +2,7 @@
 
 ### Input
 
-To calculate S* scores, users should provide a VCF file containing genotypes from the reference and target populations (e.g. [test.score.data.vcf](https://github.com/xin-huang/sstar/blob/main/tests/data/test.score.data.vcf)). The genotypes in the VCF file should be segregating in the combined reference and target populations used for scoring, and should not contain non-variable sites across these individuals. If additional individuals are included in the VCF file, such as potential source individuals used in later analyses, sites that are variable only in those additional individuals should not be included. Users also need to provide two files containing names of individuals from the reference and target populations (e.g. [test.ref.ind.list](https://github.com/xin-huang/sstar/blob/main/tests/data/test.ref.ind.list) and [test.tgt.ind.list](https://github.com/xin-huang/sstar/blob/main/tests/data/test.tgt.ind.list)) for analysis.
+To calculate S* scores, users should provide a VCF file containing genotypes from the reference and target populations (e.g. [test.score.data.vcf](https://github.com/xin-huang/sstar/blob/v1/tests/data/test.score.data.vcf)). The genotypes in the VCF file should be segregating in the combined reference and target populations used for scoring, and should not contain non-variable sites across these individuals. If additional individuals are included in the VCF file, such as potential source individuals used in later analyses, sites that are variable only in those additional individuals should not be included. Users also need to provide two files containing names of individuals from the reference and target populations (e.g. [test.ref.ind.list](https://github.com/xin-huang/sstar/blob/v1/tests/data/test.ref.ind.list) and [test.tgt.ind.list](https://github.com/xin-huang/sstar/blob/v1/tests/data/test.tgt.ind.list)) for analysis.
 
 Users can calculate S* scores for unphased data with the following command:
 
@@ -11,7 +11,7 @@ Users can calculate S* scores for unphased data with the following command:
                 --tgt tests/data/test.tgt.ind.list \
                 --output test.score.unphased.results.tsv
 
-The expected result above can be found in [test.score.unphased.exp.results.tsv](https://github.com/xin-huang/sstar/blob/main/tests/results/test.score.unphased.exp.results.tsv).
+The expected result above can be found in [test.score.unphased.exp.results.tsv](https://github.com/xin-huang/sstar/blob/v1/tests/results/test.score.unphased.exp.results.tsv).
 
 To calculate S* scores for phased data, add the --phased argument to the command:
 
@@ -21,7 +21,7 @@ To calculate S* scores for phased data, add the --phased argument to the command
                 --output test.score.phased.results.tsv \
                 --phased
 
-The expected result can be found in [test.score.phased.exp.results.tsv](https://github.com/xin-huang/sstar/blob/main/tests/results/test.score.phased.exp.results.tsv).
+The expected result can be found in [test.score.phased.exp.results.tsv](https://github.com/xin-huang/sstar/blob/v1/tests/results/test.score.phased.exp.results.tsv).
 
 ### Output
 
@@ -59,4 +59,4 @@ The meaning of each column:
 | `--thread` | Number of CPUs used for multiprocessing. Default: `1`. |
 | `--phased` | Calculate scores on phased haplotypes instead of genotype dosages. |
 
-By default, `sstar` assumes the reference allele is the ancestral allele and the alternative allele is the derived allele. Users can use the argument `--anc-allele` with a BED format file (e.g. [test.anc.allele.bed](https://github.com/xin-huang/sstar/blob/main/tests/data/test.anc.allele.bed)) to define the ancestral allele for each variant. If `--anc-allele` is used, variants without ancestral allele information will be removed.
+By default, `sstar` assumes the reference allele is the ancestral allele and the alternative allele is the derived allele. Users can use the argument `--anc-allele` with a BED format file (e.g. [test.anc.allele.bed](https://github.com/xin-huang/sstar/blob/v1/tests/data/test.anc.allele.bed)) to define the ancestral allele for each variant. If `--anc-allele` is used, variants without ancestral allele information will be removed.

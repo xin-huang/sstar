@@ -30,7 +30,7 @@ Then users can install `sstar` with `pip`.
 
 	pip install sstar
 
-Users can also use [mamba](https://github.com/mamba-org/mamba) to create a virtual environment and install `sstar` with this [build-env.yaml](https://github.com/xin-huang/sstar/blob/main/build-env.yaml).
+Users can also use [mamba](https://github.com/mamba-org/mamba) to create a virtual environment and install `sstar` with this [build-env.yaml](https://github.com/xin-huang/sstar/blob/v1/build-env.yaml).
 
 	mamba env create -f build-env.yaml
 	conda activate sstar
