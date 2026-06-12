@@ -637,7 +637,7 @@
 <h1 id="calculate-quantiles-of-expected-s">Calculate quantiles of expected S*</h1>
 <p><code>sstar</code> provides a <code>quantile</code> subcommand to estimate quantiles of expected S* scores from simulated data <strong>without</strong> introgression.</p>
 <h3 id="input">Input</h3>
-<p>Users need to install the <code>ms</code> program from <a href="https://home.uchicago.edu/~rhudson1/source/mksamples.html">Hudson Lab</a> and provide a demographic model (e.g., <a href="https://github.com/xin-huang/sstar/blob/main/examples/models/BonoboGhost_4K19_no_introgression.yaml">BonoboGhost_4K19_no_introgression.yaml</a>) in <a href="https://popsim-consortium.github.io/demes-spec-docs/main/introduction.html">Demes</a> YAML format. The reference sample size should match the number of chromosomes in the real data to be analyzed, whereas the target sample size should be <code>2</code>, because <code>sstar</code> predicts introgressed fragments for each target sample separately. Then users can use the following command:</p>
+<p>Users need to install the <code>ms</code> program from <a href="https://home.uchicago.edu/~rhudson1/source/mksamples.html">Hudson Lab</a> and provide a demographic model (e.g., <a href="https://github.com/xin-huang/sstar/blob/v1/examples/models/BonoboGhost_4K19_no_introgression.yaml">BonoboGhost_4K19_no_introgression.yaml</a>) in <a href="https://popsim-consortium.github.io/demes-spec-docs/main/introduction.html">Demes</a> YAML format. The reference sample size should match the number of chromosomes in the real data to be analyzed, whereas the target sample size should be <code>2</code>, because <code>sstar</code> predicts introgressed fragments for each target sample separately. Then users can use the following command:</p>
 <div class="codehilite"><pre><span></span><code>sstar quantile --model examples/models/BonoboGhost_4K19_no_introgression.yaml \
                --ms-dir ext/msdir/ \
                --N0 1000 \
@@ -656,7 +656,7 @@
                --seeds 1 2 3
 </code></pre></div>
 
-<p>The expected result above can be found in <a href="https://github.com/xin-huang/sstar/blob/main/tests/results/test.quantile.exp.summary">test.quantile.exp.summary</a>.</p>
+<p>The expected result above can be found in <a href="https://github.com/xin-huang/sstar/blob/v1/tests/results/test.quantile.exp.summary">test.quantile.exp.summary</a>.</p>
 <p>If users run <code>sstar</code> from <a href="https://github.com/xin-huang/sstar/pkgs/container/sstar">the Apptainer image</a>, <code>ms</code> is available at <code>/opt/ms</code>.</p>
 <h3 id="output">Output</h3>
 <p>An example of the output is below:</p>

@@ -636,8 +636,8 @@
 
 <h1 id="calculate-significant-s-score-thresholds">Calculate significant S* score thresholds</h1>
 <h3 id="input">Input</h3>
-<p>To determine the significance of S* scores, users should use data from simulations (e.g., <a href="https://raw.githubusercontent.com/xin-huang/sstar/main/examples/data/simulated_data/gravel_asn_scale_60k.simulated.data">gravel_asn_scale_60k.simulated.data</a>) for building a generalized additive model to predict the expected S* score under a demographic model without introgression. This file can be created with the <a href="https://xin-huang.github.io/sstar/userguide/quantile/">quantile command</a>.</p>
-<p>Users also need to provide the file containing S* scores estimated from real data (e.g., <a href="https://github.com/xin-huang/sstar/blob/main/tests/results/test.score.unphased.exp.results.tsv">test.score.unphased.exp.results.tsv</a>). Users can use a BED-like file (e.g., <a href="https://raw.githubusercontent.com/xin-huang/sstar/main/examples/data/real_data/hum.windows.50k.10k.recomb.map">hum.windows.50k.10k.recomb.map</a>) to specify local recombination rates across the genome. If a window is not found in the recombination map but is present in the output file from <code>sstar score</code>, this window will be ignored when calculating significant thresholds.</p>
+<p>To determine the significance of S* scores, users should use data from simulations (e.g., <a href="https://raw.githubusercontent.com/xin-huang/sstar/v1/examples/data/simulated_data/gravel_asn_scale_60k.simulated.data">gravel_asn_scale_60k.simulated.data</a>) for building a generalized additive model to predict the expected S* score under a demographic model without introgression. This file can be created with the <a href="https://xin-huang.github.io/sstar/userguide/quantile/">quantile command</a>.</p>
+<p>Users also need to provide the file containing S* scores estimated from real data (e.g., <a href="https://github.com/xin-huang/sstar/blob/v1/tests/results/test.score.unphased.exp.results.tsv">test.score.unphased.exp.results.tsv</a>). Users can use a BED-like file (e.g., <a href="https://raw.githubusercontent.com/xin-huang/sstar/v1/examples/data/real_data/hum.windows.50k.10k.recomb.map">hum.windows.50k.10k.recomb.map</a>) to specify local recombination rates across the genome. If a window is not found in the recombination map but is present in the output file from <code>sstar score</code>, this window will be ignored when calculating significant thresholds.</p>
 <p>Users can estimate significant S* score thresholds at quantile 0.99 with the following command:</p>
 <div class="codehilite"><pre><span></span><code>sstar threshold --score tests/results/test.score.unphased.exp.results.tsv \
                 --sim-data examples/data/simulated_data/gravel_asn_scale_60k.simulated.data \
@@ -646,7 +646,7 @@
                 --output test.threshold.results.tsv
 </code></pre></div>
 
-<p>The expected result above can be found in <a href="https://github.com/xin-huang/sstar/blob/main/tests/results/test.threshold.exp.results.tsv">test.threshold.exp.results.tsv</a>.</p>
+<p>The expected result above can be found in <a href="https://github.com/xin-huang/sstar/blob/v1/tests/results/test.threshold.exp.results.tsv">test.threshold.exp.results.tsv</a>.</p>
 <h3 id="output">Output</h3>
 <p>An example of the output is below:</p>
 <table>

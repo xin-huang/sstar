@@ -636,7 +636,7 @@
 
 <h1 id="calculate-source-match-rates">Calculate source match rates</h1>
 <h3 id="input">Input</h3>
-<p>To calculate source match rates, users should provide a VCF file containing <strong>phased</strong> genotypes from the reference, target, and source populations (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.match.rate.data.vcf">test.match.rate.data.vcf</a>). Users also need to provide three files containing names of individuals from the reference, target and source populations (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/examples/data/ind_list/ref.ind.list">ref.ind.list</a>, <a href="https://github.com/xin-huang/sstar/blob/main/examples/data/ind_list/tgt.ind.list">tgt.ind.list</a> and <a href="https://github.com/xin-huang/sstar/blob/main/examples/data/ind_list/nean.ind.list">nean.ind.list</a>) for analysis. The file (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/results/test.match.rate.score.exp.results.tsv">test.match.rate.score.exp.results.tsv</a>) containing S* scores from <code>sstar score</code> is also required.</p>
+<p>To calculate source match rates, users should provide a VCF file containing <strong>phased</strong> genotypes from the reference, target, and source populations (e.g. <a href="https://github.com/xin-huang/sstar/blob/v1/tests/data/test.match.rate.data.vcf">test.match.rate.data.vcf</a>). Users also need to provide three files containing names of individuals from the reference, target and source populations (e.g. <a href="https://github.com/xin-huang/sstar/blob/v1/examples/data/ind_list/ref.ind.list">ref.ind.list</a>, <a href="https://github.com/xin-huang/sstar/blob/v1/examples/data/ind_list/tgt.ind.list">tgt.ind.list</a> and <a href="https://github.com/xin-huang/sstar/blob/v1/examples/data/ind_list/nean.ind.list">nean.ind.list</a>) for analysis. The file (e.g. <a href="https://github.com/xin-huang/sstar/blob/v1/tests/results/test.match.rate.score.exp.results.tsv">test.match.rate.score.exp.results.tsv</a>) containing S* scores from <code>sstar score</code> is also required.</p>
 <p>Users can calculate source match rates with the following command:</p>
 <div class="codehilite"><pre><span></span><code>sstar matchrate --vcf tests/data/test.match.rate.data.vcf \
                 --ref examples/data/ind_list/ref.ind.list \
@@ -646,7 +646,7 @@
                 --output test.match.rate.results.tsv
 </code></pre></div>
 
-<p>The expected result above can be found in <a href="https://github.com/xin-huang/sstar/blob/main/tests/results/test.match.rate.score.exp.results.tsv">test.match.rate.score.exp.results.tsv</a>.</p>
+<p>The expected result above can be found in <a href="https://github.com/xin-huang/sstar/blob/v1/tests/results/test.match.rate.score.exp.results.tsv">test.match.rate.score.exp.results.tsv</a>.</p>
 <h3 id="output">Output</h3>
 <p>An example of the output is below:</p>
 <table>

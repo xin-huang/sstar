@@ -636,7 +636,7 @@
 
 <h1 id="calculate-s-scores">Calculate S* scores</h1>
 <h3 id="input">Input</h3>
-<p>To calculate S* scores, users should provide a VCF file containing genotypes from the reference and target populations (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.score.data.vcf">test.score.data.vcf</a>). The genotypes in the VCF file should be segregating in the combined reference and target populations used for scoring, and should not contain non-variable sites across these individuals. If additional individuals are included in the VCF file, such as potential source individuals used in later analyses, sites that are variable only in those additional individuals should not be included. Users also need to provide two files containing names of individuals from the reference and target populations (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.ref.ind.list">test.ref.ind.list</a> and <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.tgt.ind.list">test.tgt.ind.list</a>) for analysis.</p>
+<p>To calculate S* scores, users should provide a VCF file containing genotypes from the reference and target populations (e.g. <a href="https://github.com/xin-huang/sstar/blob/v1/tests/data/test.score.data.vcf">test.score.data.vcf</a>). The genotypes in the VCF file should be segregating in the combined reference and target populations used for scoring, and should not contain non-variable sites across these individuals. If additional individuals are included in the VCF file, such as potential source individuals used in later analyses, sites that are variable only in those additional individuals should not be included. Users also need to provide two files containing names of individuals from the reference and target populations (e.g. <a href="https://github.com/xin-huang/sstar/blob/v1/tests/data/test.ref.ind.list">test.ref.ind.list</a> and <a href="https://github.com/xin-huang/sstar/blob/v1/tests/data/test.tgt.ind.list">test.tgt.ind.list</a>) for analysis.</p>
 <p>Users can calculate S* scores for unphased data with the following command:</p>
 <div class="codehilite"><pre><span></span><code>sstar score --vcf tests/data/test.score.data.vcf \
             --ref tests/data/test.ref.ind.list \
@@ -644,7 +644,7 @@
             --output test.score.unphased.results.tsv
 </code></pre></div>
 
-<p>The expected result above can be found in <a href="https://github.com/xin-huang/sstar/blob/main/tests/results/test.score.unphased.exp.results.tsv">test.score.unphased.exp.results.tsv</a>.</p>
+<p>The expected result above can be found in <a href="https://github.com/xin-huang/sstar/blob/v1/tests/results/test.score.unphased.exp.results.tsv">test.score.unphased.exp.results.tsv</a>.</p>
 <p>To calculate S* scores for phased data, add the --phased argument to the command:</p>
 <div class="codehilite"><pre><span></span><code>sstar score --vcf tests/data/test.score.data.vcf \
             --ref tests/data/test.ref.ind.list \
@@ -653,7 +653,7 @@
             --phased
 </code></pre></div>
 
-<p>The expected result can be found in <a href="https://github.com/xin-huang/sstar/blob/main/tests/results/test.score.phased.exp.results.tsv">test.score.phased.exp.results.tsv</a>.</p>
+<p>The expected result can be found in <a href="https://github.com/xin-huang/sstar/blob/v1/tests/results/test.score.phased.exp.results.tsv">test.score.phased.exp.results.tsv</a>.</p>
 <h3 id="output">Output</h3>
 <p>An example of the output is below:</p>
 <table>
@@ -752,7 +752,7 @@
 </tr>
 </tbody>
 </table>
-<p>By default, <code>sstar</code> assumes the reference allele is the ancestral allele and the alternative allele is the derived allele. Users can use the argument <code>--anc-allele</code> with a BED format file (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.anc.allele.bed">test.anc.allele.bed</a>) to define the ancestral allele for each variant. If <code>--anc-allele</code> is used, variants without ancestral allele information will be removed.</p>
+<p>By default, <code>sstar</code> assumes the reference allele is the ancestral allele and the alternative allele is the derived allele. Users can use the argument <code>--anc-allele</code> with a BED format file (e.g. <a href="https://github.com/xin-huang/sstar/blob/v1/tests/data/test.anc.allele.bed">test.anc.allele.bed</a>) to define the ancestral allele for each variant. If <code>--anc-allele</code> is used, variants without ancestral allele information will be removed.</p>
 
 
 

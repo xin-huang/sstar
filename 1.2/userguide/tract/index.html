@@ -634,7 +634,7 @@
 
 <h1 id="get-candidate-introgressed-fragments">Get candidate introgressed fragments</h1>
 <h3 id="input">Input</h3>
-<p>To obtain candidate introgressed fragments from <code>sstar</code>, users should provide the output (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.threshold.tsv">test.tract.threshold.tsv</a>) from <code>sstar threshold</code>. If no source genome is available, users can use the following command:</p>
+<p>To obtain candidate introgressed fragments from <code>sstar</code>, users should provide the output (e.g. <a href="https://github.com/xin-huang/sstar/blob/v1/tests/data/test.tract.threshold.tsv">test.tract.threshold.tsv</a>) from <code>sstar threshold</code>. If no source genome is available, users can use the following command:</p>
 <div class="codehilite"><pre><span></span><code>sstar tract --threshold tests/data/test.tract.threshold.tsv --output-prefix test
 </code></pre></div>
 
@@ -644,7 +644,7 @@
             --match-rate tests/data/test.tract.src1.match.rate.tsv
 </code></pre></div>
 
-<p>If source genomes from two different source populations are available, users can provide the output (e.g. <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.src1.match.rate.tsv">test.tract.src1.match.rate.tsv</a> and <a href="https://github.com/xin-huang/sstar/blob/main/tests/data/test.tract.src2.match.rate.tsv">test.tract.src2.match.rate.tsv</a>) from <code>sstar matchrate</code>, and use the following command:</p>
+<p>If source genomes from two different source populations are available, users can provide the output (e.g. <a href="https://github.com/xin-huang/sstar/blob/v1/tests/data/test.tract.src1.match.rate.tsv">test.tract.src1.match.rate.tsv</a> and <a href="https://github.com/xin-huang/sstar/blob/v1/tests/data/test.tract.src2.match.rate.tsv">test.tract.src2.match.rate.tsv</a>) from <code>sstar matchrate</code>, and use the following command:</p>
 <div class="codehilite"><pre><span></span><code>sstar tract --threshold tests/data/test.tract.threshold.tsv \
             --output-prefix test \
             --match-rate tests/data/test.tract.src1.match.rate.tsv tests/data/test.tract.src2.match.rate.tsv
