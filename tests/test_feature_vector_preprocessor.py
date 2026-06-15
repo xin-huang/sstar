@@ -22,16 +22,10 @@ import numpy as np
 from sstar.feature_vector_preprocessor import FeatureVectorPreprocessor
 
 
-def test_run_calls_sstar_compute_and_formats_output(tmp_path, monkeypatch):
-    ref_ind = tmp_path / "ref.ind"
-    tgt_ind = tmp_path / "tgt.ind"
-
-    ref_ind.write_text("ref1\n")
-    tgt_ind.write_text("tgt1\n")
-
+def test_run_calls_sstar_compute_and_formats_output(monkeypatch):
     preprocessor = FeatureVectorPreprocessor(
-        ref_ind_file=str(ref_ind),
-        tgt_ind_file=str(tgt_ind),
+        ref_samples=["ref1"],
+        tgt_samples=["tgt1"],
         match_bonus=123,
         max_mismatch=4,
         mismatch_penalty=-7,
