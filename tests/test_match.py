@@ -58,15 +58,16 @@ def _write_match_input_files(tmp_path, tract_text):
 
 
 def test_calc_match_pct():
-    assert calc_match_pct([0, 1, 2], [0, 1, 2], P=2) == 1.0
-    assert calc_match_pct([0], [1], P=2) == 0.5
-    assert calc_match_pct([0], [2], P=2) == 0.0
-    assert calc_match_pct([0, 1, 2], [0, 2, 2], P=2) == pytest.approx(
+    assert calc_match_pct([0, 1, 2], [0, 1, 2], denominator=3, P=2) == 1.0
+    assert calc_match_pct([0], [1], denominator=1, P=2) == 0.5
+    assert calc_match_pct([0], [2], denominator=1, P=2) == 0.0
+    assert calc_match_pct([0, 1, 2], [0, 2, 2], denominator=3, P=2) == pytest.approx(
         (1.0 + 0.5 + 1.0) / 3
     )
-    assert calc_match_pct([0, -1], [0, 2], P=2) == 1.0
-    assert calc_match_pct([-1], [-1], P=2) == "NA"
-    assert calc_match_pct([], [], P=2) == "NA"
+    assert calc_match_pct([0, -1], [0, 2], denominator=2, P=2) == 0.5
+    assert calc_match_pct([-1], [-1], denominator=1, P=2) == 0.0
+    assert calc_match_pct([], [], denominator=0, P=2) == "NA"
+
 
 def test_dosage_for_positions():
     gt = allel.GenotypeArray(
@@ -134,9 +135,9 @@ def test_match():
     )
     pos = np.array([100, 200, 300])
 
-    assert match(tgt_gt, pos, 0, src_gt, pos, 0, [100, 200, 300], P=2) == pytest.approx(
-        (1.0 + 0.5 + 1.0) / 3
-    )
+    assert match(
+        tgt_gt, pos, 0, src_gt, pos, 0, [100, 200, 300], denominator=3, P=2
+    ) == pytest.approx((1.0 + 0.5 + 1.0) / 3)
 
 
 def test_match_uses_target_haplotype():
@@ -167,6 +168,7 @@ def test_match_uses_target_haplotype():
             pos,
             0,
             [100, 200],
+            denominator=2,
             P=2,
             tgt_hap_index=0,
         )
@@ -181,6 +183,7 @@ def test_match_uses_target_haplotype():
             pos,
             0,
             [100, 200],
+            denominator=2,
             P=2,
             tgt_hap_index=1,
         )
@@ -211,8 +214,8 @@ def test_resolve_chrom_handles_chr_prefix():
 
 
 def test_run_match(tmp_path):
-    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = _write_match_input_files(
-        tmp_path, "21\t0\t250\tind1_1\n"
+    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = (
+        _write_match_input_files(tmp_path, "21\t0\t250\tind1_1\n")
     )
 
     run_match(
@@ -225,24 +228,14 @@ def test_run_match(tmp_path):
     )
 
     df = pd.read_csv(output_file, sep="\t")
-    assert df.columns.tolist() == [
-        "chrom",
-        "start",
-        "end",
-        "sample",
-        "match_rate",
-        "src_sample",
-    ]
-    assert df["sample"].tolist() == ["ind1_1", "ind1_1"]
-
-    rates = dict(zip(df["src_sample"], df["match_rate"]))
-    assert rates["src1"] == pytest.approx(0.5)
-    assert rates["src2"] == pytest.approx(0.25)
+    assert df.columns.tolist() == ["chrom", "start", "end", "sample", "match_rate"]
+    assert df["sample"].tolist() == ["ind1_1"]
+    assert df["match_rate"].tolist() == pytest.approx([0.375])
 
 
 def test_run_match_unphased_sample(tmp_path):
-    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = _write_match_input_files(
-        tmp_path, "21\t0\t250\tind1\n"
+    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = (
+        _write_match_input_files(tmp_path, "21\t0\t250\tind1\n")
     )
 
     run_match(
@@ -255,26 +248,17 @@ def test_run_match_unphased_sample(tmp_path):
     )
 
     df = pd.read_csv(output_file, sep="\t")
-    assert df.columns.tolist() == [
-        "chrom",
-        "start",
-        "end",
-        "sample",
-        "match_rate",
-        "src_sample",
-    ]
-    assert df["sample"].tolist() == ["ind1", "ind1"]
-
-    rates = dict(zip(df["src_sample"], df["match_rate"]))
-    assert rates["src1"] == pytest.approx(0.75)
-    assert rates["src2"] == pytest.approx(0.5)
+    assert df.columns.tolist() == ["chrom", "start", "end", "sample", "match_rate"]
+    assert df["sample"].tolist() == ["ind1"]
+    assert df["match_rate"].tolist() == pytest.approx([0.625])
 
 
 def test_run_match_preserves_both_haplotype_labels(tmp_path):
-    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = _write_match_input_files(
-        tmp_path,
-        "21\t0\t250\tind1_1\n"
-        "21\t0\t250\tind1_2\n",
+    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = (
+        _write_match_input_files(
+            tmp_path,
+            "21\t0\t250\tind1_1\n" "21\t0\t250\tind1_2\n",
+        )
     )
 
     run_match(
@@ -289,18 +273,15 @@ def test_run_match_preserves_both_haplotype_labels(tmp_path):
     df = pd.read_csv(output_file, sep="\t")
     assert set(df["sample"]) == {"ind1_1", "ind1_2"}
 
-    src1_rates = {
-        row["sample"]: row["match_rate"]
-        for _, row in df[df["src_sample"] == "src1"].iterrows()
-    }
-    assert src1_rates["ind1_1"] == pytest.approx(0.5)
-    assert src1_rates["ind1_2"] == pytest.approx(1.0)
-    assert src1_rates["ind1_1"] != src1_rates["ind1_2"]
+    rates = {row["sample"]: row["match_rate"] for _, row in df.iterrows()}
+    assert rates["ind1_1"] == pytest.approx(0.375)
+    assert rates["ind1_2"] == pytest.approx(0.625)
+    assert rates["ind1_1"] != rates["ind1_2"]
 
 
 def test_run_match_ignores_extra_tract_columns(tmp_path):
-    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = _write_match_input_files(
-        tmp_path, "21\t0\t250\tind1_1\textra_value\n"
+    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = (
+        _write_match_input_files(tmp_path, "21\t0\t250\tind1_1\textra_value\n")
     )
 
     run_match(
@@ -313,20 +294,13 @@ def test_run_match_ignores_extra_tract_columns(tmp_path):
     )
 
     df = pd.read_csv(output_file, sep="\t")
-    assert df.columns.tolist() == [
-        "chrom",
-        "start",
-        "end",
-        "sample",
-        "match_rate",
-        "src_sample",
-    ]
-    assert df["sample"].tolist() == ["ind1_1", "ind1_1"]
+    assert df.columns.tolist() == ["chrom", "start", "end", "sample", "match_rate"]
+    assert df["sample"].tolist() == ["ind1_1"]
 
 
 def test_run_match_rejects_malformed_tract_file(tmp_path):
-    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = _write_match_input_files(
-        tmp_path, "21\t0\t250\n"
+    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = (
+        _write_match_input_files(tmp_path, "21\t0\t250\n")
     )
 
     with pytest.raises(
@@ -343,8 +317,8 @@ def test_run_match_rejects_malformed_tract_file(tmp_path):
 
 
 def test_run_match_writes_na_when_no_overlapping_positions(tmp_path):
-    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = _write_match_input_files(
-        tmp_path, "21\t400\t500\tind1_1\n"
+    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = (
+        _write_match_input_files(tmp_path, "21\t400\t500\tind1_1\n")
     )
 
     run_match(
@@ -357,14 +331,13 @@ def test_run_match_writes_na_when_no_overlapping_positions(tmp_path):
     )
 
     df = pd.read_csv(output_file, sep="\t", keep_default_na=False)
-    assert df["sample"].tolist() == ["ind1_1", "ind1_1"]
-    assert df["src_sample"].tolist() == ["src1", "src2"]
-    assert df["match_rate"].tolist() == ["NA", "NA"]
+    assert df["sample"].tolist() == ["ind1_1"]
+    assert df["match_rate"].tolist() == ["NA"]
 
 
 def test_match_parser_accepts_required_args(tmp_path):
-    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = _write_match_input_files(
-        tmp_path, "21\t0\t250\tind1_1\n"
+    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = (
+        _write_match_input_files(tmp_path, "21\t0\t250\tind1_1\n")
     )
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="subparsers")
@@ -402,4 +375,4 @@ def test_match_parser_rejects_missing_required_args():
     add_match_parser(subparsers)
 
     with pytest.raises(SystemExit):
-        parser.parse_args(["match"])    
+        parser.parse_args(["match"])
