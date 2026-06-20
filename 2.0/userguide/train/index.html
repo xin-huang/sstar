@@ -475,6 +475,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#outputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -659,6 +670,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#outputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -698,18 +720,21 @@
 
 
 <h1 id="train">train</h1>
-<p>The <code>train</code> command trains an ONNX model for S*-based archaic introgression detection.</p>
-<p>It reads a DEMES demographic model and an <code>sstar2</code> configuration file. If the training feature table is not already present, <code>sstar2 train</code> first simulates training data and writes the feature table. It then trains a <code>GradientBoostingRegressor</code> model to predict <code>S*_score</code> from <code>Region_ind_SNP_number</code>.</p>
+<p>The <code>train</code> command trains an <a href="https://onnx.ai/">ONNX</a> model for <em>S</em>*-based archaic introgression detection.</p>
+<p>It reads a <a href="https://popsim-consortium.github.io/demes-spec-docs/main/introduction.html">DEMES</a> demographic model <strong>without introgression</strong> and an <code>sstar2</code> <a href="https://xin-huang.github.io/sstar/2.0/userguide/configuration/">configuration</a> file. If the training feature table is not already present, <code>sstar2 train</code> first simulates training data and writes the feature table. It then trains a <code>GradientBoostingRegressor</code> model to predict <code>S*_score</code> from <code>Region_ind_SNP_number</code>.</p>
 <p>The training feature table is derived from the model output path:</p>
 <div class="codehilite"><pre><span></span><code>&lt;output-prefix&gt;.training.features.tsv
 </code></pre></div>
 
 <p>If this file already exists, <code>sstar2 train</code> reuses it instead of running simulation again.</p>
-<div class="codehilite"><pre><span></span><code>sstar2 train --demes examples/data/BonoboGhost_4K19_wo_introgression.yaml \
-             --config examples/data/sstar2.config.yaml \
-             --output test.model.onnx
+<h3 id="example">Example</h3>
+<p>Using the example <a href="https://github.com/xin-huang/sstar/blob/main/examples/data/HumanNeanderthal_4G21_wo_introgression.yaml">demographic model</a> and example <a href="https://github.com/xin-huang/sstar/blob/main/examples/data/sstar2.example.config.yaml">configuration file</a>, users can train a quantile regression model with the following command:</p>
+<div class="codehilite"><pre><span></span><code>sstar2 train --demes examples/data/HumanNeanderthal_4G21_wo_introgression.yaml \
+             --config examples/data/sstar2.example.config.yaml \
+             --output examples/results/sstar2.example.trained.model.onnx
 </code></pre></div>
 
+<p>The trained model can be found <a href="https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.trained.model.onnx">here</a> and the features used to train it are available <a href="https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.trained.model.training.features.tsv">here</a>.</p>
 <h3 id="outputs">Outputs</h3>
 <ul>
 <li><code>--output</code>: trained ONNX model file.</li>
