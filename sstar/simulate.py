@@ -140,6 +140,7 @@ def simulate(
 
     total_features = []
     start_rep = 0
+    batch_num = 0
 
     is_stopped = False
 
@@ -169,9 +170,10 @@ def simulate(
         total_features.extend(features)
         is_stopped = len(total_features) >= nfeature
 
-        print(f"Number of obtained features: {len(total_features)}")
+        print(f"Number of obtained features: {len(total_features)} in batch {batch_num}")
 
         start_rep += nrep
+        batch_num += 1
 
     total_features = total_features[:nfeature]
 

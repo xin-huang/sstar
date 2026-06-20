@@ -53,6 +53,8 @@ def _read_match_rate_file(match_rate_file: str, source_name: str) -> pd.DataFram
     match_rates = pd.read_csv(
         match_rate_file,
         sep="\t",
+        header=None,
+        names=REQUIRED_COLUMNS,
         keep_default_na=False,
         dtype={"chrom": str, "sample": str},
     )

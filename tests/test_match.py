@@ -26,13 +26,20 @@ import pytest
 
 from sstar.match import (
     _base_sample_name,
+    _build_position_index,
+    _dosage_for_position_index,
     _dosage_for_positions,
+    _positions_in_bed_interval,
     _resolve_chrom,
+    _validate_disjoint_samples,
+    _validate_sorted_positions,
     calc_match_pct,
     match,
     run_match,
 )
 from sstar.parsers.match_parser import add_match_parser
+
+MATCH_COLUMNS = ["chrom", "start", "end", "sample", "match_rate"]
 
 
 def _write_match_input_files(tmp_path, tract_text):
@@ -92,6 +99,36 @@ def test_dosage_for_positions():
     np.testing.assert_array_equal(dosage, np.array([2.0, 0.0, -1.0, -1.0, 1.0]))
 
 
+def test_dosage_for_position_index_matches_dosage_for_positions():
+    gt = allel.GenotypeArray(
+        np.array(
+            [
+                [[0, 0]],
+                [[0, 1]],
+                [[1, 1]],
+                [[-1, -1]],
+            ]
+        )
+    )
+    pos = np.array([100, 200, 300, 400])
+    positions = [300, 100, 250, 400, 200]
+
+    expected = _dosage_for_positions(
+        gt=gt,
+        pos=pos,
+        ind_index=0,
+        positions=positions,
+    )
+    observed = _dosage_for_position_index(
+        gt=gt,
+        pos_to_i=_build_position_index(pos),
+        ind_index=0,
+        positions=positions,
+    )
+
+    np.testing.assert_array_equal(observed, expected)
+
+
 def test_dosage_for_positions_extracts_target_haplotype():
     gt = allel.GenotypeArray(
         np.array(
@@ -112,6 +149,39 @@ def test_dosage_for_positions_extracts_target_haplotype():
         _dosage_for_positions(gt, pos, 0, [100, 200, 300], hap_index=1, P=2),
         np.array([2.0, 0.0, -1.0]),
     )
+
+
+def test_dosage_for_position_index_extracts_target_haplotype():
+    gt = allel.GenotypeArray(
+        np.array(
+            [
+                [[0, 1]],
+                [[1, 0]],
+                [[-1, -1]],
+            ]
+        )
+    )
+    pos = np.array([100, 200, 300])
+    positions = [100, 200, 300]
+
+    expected = _dosage_for_positions(
+        gt,
+        pos,
+        0,
+        positions,
+        hap_index=1,
+        P=2,
+    )
+    observed = _dosage_for_position_index(
+        gt,
+        _build_position_index(pos),
+        0,
+        positions,
+        hap_index=1,
+        P=2,
+    )
+
+    np.testing.assert_array_equal(observed, expected)
 
 
 def test_match():
@@ -213,6 +283,35 @@ def test_resolve_chrom_handles_chr_prefix():
         _resolve_chrom("23", data)
 
 
+def test_validate_disjoint_samples():
+    _validate_disjoint_samples(["ind1", "ind2"], ["src1", "src2"])
+
+    with pytest.raises(
+        ValueError,
+        match="Target and source sample lists must not overlap",
+    ):
+        _validate_disjoint_samples(["ind1", "ind2"], ["src1", "ind1"])
+
+
+def test_validate_sorted_positions():
+    _validate_sorted_positions({"1": {"POS": np.array([100, 200, 300])}})
+
+    with pytest.raises(
+        ValueError,
+        match="VCF positions must be sorted within chromosome 1",
+    ):
+        _validate_sorted_positions({"1": {"POS": np.array([100, 300, 200])}})
+
+
+def test_positions_in_bed_interval_uses_start_exclusive_end_inclusive():
+    pos = np.array([100, 200, 300, 400])
+
+    np.testing.assert_array_equal(
+        _positions_in_bed_interval(pos, 100, 300),
+        np.array([200, 300]),
+    )
+
+
 def test_run_match(tmp_path):
     vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = (
         _write_match_input_files(tmp_path, "21\t0\t250\tind1_1\n")
@@ -227,8 +326,7 @@ def test_run_match(tmp_path):
         ploidy=2,
     )
 
-    df = pd.read_csv(output_file, sep="\t")
-    assert df.columns.tolist() == ["chrom", "start", "end", "sample", "match_rate"]
+    df = pd.read_csv(output_file, sep="\t", header=None, names=MATCH_COLUMNS)
     assert df["sample"].tolist() == ["ind1_1"]
     assert df["match_rate"].tolist() == pytest.approx([0.375])
 
@@ -247,8 +345,7 @@ def test_run_match_unphased_sample(tmp_path):
         ploidy=2,
     )
 
-    df = pd.read_csv(output_file, sep="\t")
-    assert df.columns.tolist() == ["chrom", "start", "end", "sample", "match_rate"]
+    df = pd.read_csv(output_file, sep="\t", header=None, names=MATCH_COLUMNS)
     assert df["sample"].tolist() == ["ind1"]
     assert df["match_rate"].tolist() == pytest.approx([0.625])
 
@@ -270,7 +367,7 @@ def test_run_match_preserves_both_haplotype_labels(tmp_path):
         ploidy=2,
     )
 
-    df = pd.read_csv(output_file, sep="\t")
+    df = pd.read_csv(output_file, sep="\t", header=None, names=MATCH_COLUMNS)
     assert set(df["sample"]) == {"ind1_1", "ind1_2"}
 
     rates = {row["sample"]: row["match_rate"] for _, row in df.iterrows()}
@@ -293,8 +390,7 @@ def test_run_match_ignores_extra_tract_columns(tmp_path):
         ploidy=2,
     )
 
-    df = pd.read_csv(output_file, sep="\t")
-    assert df.columns.tolist() == ["chrom", "start", "end", "sample", "match_rate"]
+    df = pd.read_csv(output_file, sep="\t", header=None, names=MATCH_COLUMNS)
     assert df["sample"].tolist() == ["ind1_1"]
 
 
@@ -330,9 +426,31 @@ def test_run_match_writes_na_when_no_overlapping_positions(tmp_path):
         ploidy=2,
     )
 
-    df = pd.read_csv(output_file, sep="\t", keep_default_na=False)
+    df = pd.read_csv(
+        output_file, sep="\t", header=None, names=MATCH_COLUMNS, keep_default_na=False
+    )
     assert df["sample"].tolist() == ["ind1_1"]
     assert df["match_rate"].tolist() == ["NA"]
+
+
+def test_run_match_rejects_overlapping_target_and_source_samples(tmp_path):
+    vcf_file, tgt_ind_file, src_ind_file, tract_file, output_file = (
+        _write_match_input_files(tmp_path, "21\t0\t250\tind1_1\n")
+    )
+    src_ind_file.write_text("ind1\nsrc1\n")
+
+    with pytest.raises(
+        ValueError,
+        match="Target and source sample lists must not overlap",
+    ):
+        run_match(
+            vcf_file=str(vcf_file),
+            tgt_ind_file=str(tgt_ind_file),
+            src_ind_file=str(src_ind_file),
+            tract_file=str(tract_file),
+            output_file=str(output_file),
+            ploidy=2,
+        )
 
 
 def test_match_parser_accepts_required_args(tmp_path):

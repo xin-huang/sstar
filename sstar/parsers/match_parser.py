@@ -82,7 +82,7 @@ def add_match_parser(subparsers: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--output",
         required=True,
-        help="Path to the output match-rate TSV file.",
+        help="Path to the output match-rate BED file.",
     )
     parser.add_argument(
         "--ploidy",

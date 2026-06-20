@@ -29,7 +29,7 @@ from sstar.parsers.assign_parser import add_assign_parser
 def _write_match_rate_file(path, rows):
     pd.DataFrame(
         rows, columns=["chrom", "start", "end", "sample", "match_rate"]
-    ).to_csv(path, sep="\t", index=False)
+    ).to_csv(path, sep="\t", index=False, header=False)
 
 
 def _read_bed(path):
