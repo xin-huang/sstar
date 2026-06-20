@@ -168,6 +168,6 @@ def assign_source_by_match_rate(
         os.makedirs(output_dir, exist_ok=True)
 
     for source_name in source_names:
-        output_file = f"{output_prefix}.{source_name}.inferred.tracts.bed"
+        output_file = f"{output_prefix}.{source_name}.bed"
         rows = merged.loc[assigned_sources == source_name, KEY_COLUMNS + [source_name]]
         rows.to_csv(output_file, sep="\t", header=False, index=False)

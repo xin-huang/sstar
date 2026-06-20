@@ -15,7 +15,7 @@ sstar2 assign --match-rate examples/sstar2.example.nean.match.rate.bed examples/
 One BED file is written for each source name:
 
 ```text
-<output-prefix>.<source-name>.inferred.tracts.bed
+<output-prefix>.<source-name>.bed
 ```
 
 Each output file is tab-separated and has no header:
