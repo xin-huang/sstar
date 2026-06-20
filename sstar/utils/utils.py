@@ -52,7 +52,7 @@ def read_geno_data(
     anc_allele_file: str,
     filter_missing: bool,
     chr_name: str = None,
-) -> dict:
+) -> tuple[dict, np.ndarray]:
     """
     Read genotype data from a VCF file.
 
@@ -73,6 +73,9 @@ def read_geno_data(
     -------
     dict
         Genotype data read from the VCF file.
+    numpy.ndarray
+        Sample names in the order returned by the VCF reader. This order
+        corresponds to the sample axis of each genotype array.
     """
     vcf = allel.read_vcf(str(vcf), alt_number=1, samples=ind, region=chr_name)
     if vcf is None:
@@ -105,7 +108,7 @@ def read_geno_data(
         if anc_allele_file is not None:
             data = check_anc_allele(data, anc_allele, c)
 
-    return data
+    return data, samples
 
 
 def filter_data(data: dict, c: str, index: np.ndarray) -> dict:
@@ -261,13 +264,13 @@ def read_data(
     ref_data = ref_samples = tgt_data = tgt_samples = None
     if ref_ind_file is not None:
         ref_samples = parse_ind_file(ref_ind_file)
-        ref_data = read_geno_data(
+        ref_data, _ = read_geno_data(
             vcf_file, ref_samples, anc_allele_file, True, chr_name=chr_name
         )
 
     if tgt_ind_file is not None:
         tgt_samples = parse_ind_file(tgt_ind_file)
-        tgt_data = read_geno_data(
+        tgt_data, _ = read_geno_data(
             vcf_file, tgt_samples, anc_allele_file, True, chr_name=chr_name
         )
 

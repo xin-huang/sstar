@@ -22,6 +22,7 @@ import pandas as pd
 from sstar.mp_manager import mp_manager
 from sstar.generators import WindowDataGenerator
 from sstar.feature_vector_preprocessor import FeatureVectorPreprocessor
+from sstar.utils import parse_ind_file
 
 
 def preprocess(
@@ -98,9 +99,12 @@ def preprocess(
         win_step=win_step,
     )
 
+    ref_samples = parse_ind_file(ref_ind_file)
+    tgt_samples = parse_ind_file(tgt_ind_file)
+
     preprocessor = FeatureVectorPreprocessor(
-        ref_ind_file=ref_ind_file,
-        tgt_ind_file=tgt_ind_file,
+        ref_samples=ref_samples,
+        tgt_samples=tgt_samples,
         match_bonus=match_bonus,
         max_mismatch=max_mismatch,
         mismatch_penalty=mismatch_penalty,

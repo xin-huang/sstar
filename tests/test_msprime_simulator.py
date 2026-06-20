@@ -41,9 +41,11 @@ def test_MsprimeSimulator(tmp_path):
         match_bonus=5000,
         max_mismatch=5,
         mismatch_penalty=-10000,
+        keep_sim_data=True,
     )
 
     res = simulator.run(rep=0, seed=1234)
+    assert (tmp_path / "0" / "check.0.ts").exists()
     pd.DataFrame(res).to_csv(output_file, sep="\t", index=False, na_rep="NA")
 
     df = pd.read_csv(output_file, sep="\t")
