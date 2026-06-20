@@ -8,8 +8,10 @@
       
       
       
-        <link rel="canonical" href="https://xin-huang.github.io/sstar/2.0/userguide/example/">
+        <link rel="canonical" href="https://xin-huang.github.io/sstar/2.0/userguide/examples/">
       
+      
+        <link rel="prev" href="../assign/">
       
       
       
@@ -21,7 +23,7 @@
     
     
       
-        <title>Example - sstar</title>
+        <title>Examples - sstar</title>
       
     
     
@@ -105,7 +107,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Example
+              Examples
             
           </span>
         </div>
@@ -249,18 +251,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -281,7 +285,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -519,10 +523,17 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../examples.md" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -538,6 +549,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -583,7 +595,7 @@
 
 
 
-  <h1>Example</h1>
+  <h1>Examples</h1>
 
 <div class="codehilite"><pre><span></span><code><span class="n">sstar2</span><span class="w"> </span><span class="n">train</span><span class="w"> </span><span class="o">--</span><span class="n">demes</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">HumanNeanderthal_4G21_wo_introgression</span><span class="p">.</span><span class="n">yaml</span><span class="w"> </span><span class="o">--</span><span class="n">config</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">yaml</span><span class="w"> </span><span class="o">--</span><span class="k">output</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">trained</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">onnx</span>
 <span class="n">sstar2</span><span class="w"> </span><span class="n">infer</span><span class="w"> </span><span class="o">--</span><span class="n">model</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">trained</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">onnx</span><span class="w"> </span><span class="o">--</span><span class="n">config</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">yaml</span><span class="w"> </span><span class="o">--</span><span class="n">feat</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">examples</span><span class="p">.</span><span class="n">inference</span><span class="p">.</span><span class="n">features</span><span class="p">.</span><span class="n">tsv</span><span class="w"> </span><span class="o">--</span><span class="n">pred</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">pred</span><span class="p">.</span><span class="n">tsv</span><span class="w"> </span><span class="o">--</span><span class="n">tract</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">inferred</span><span class="p">.</span><span class="n">tracts</span><span class="p">.</span><span class="n">bed</span>
