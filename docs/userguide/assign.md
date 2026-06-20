@@ -1,5 +1,31 @@
 # assign
 
+The `assign` command assigns inferred tracts to source populations using match-rate files.
+
+It compares the match rates for the same tract across two or more sources. A tract is assigned only when one source has the unique highest match rate. Tied tracts, tracts with no valid maximum, and tracts not shared by all input files are not assigned.
+
+```
+sstar2 assign --match-rate examples/sstar2.example.nean.match.rate.bed examples/sstar2.example.den.match.rate.bed \
+              --source-name nean den \
+              --output-prefix examples/sstar2.example
+```
+
+### Outputs
+
+One BED file is written for each source name:
+
+```text
+<output-prefix>.<source-name>.inferred.tracts.bed
+```
+
+Each output file is tab-separated and has no header:
+
+```text
+chrom  start  end  sample  match_rate
+```
+
+A source-specific output file is created even if no tracts are assigned to that source.
+
 ### Settings
 
 | Argument | Description |
