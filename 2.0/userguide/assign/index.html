@@ -25,7 +25,7 @@
     
     
       
-        <title>assign - sstar2</title>
+        <title>assign - sstar</title>
       
     
     
@@ -94,7 +94,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="sstar2" class="md-header__button md-logo" aria-label="sstar2" data-md-component="logo">
+    <a href="../.." title="sstar" class="md-header__button md-logo" aria-label="sstar" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -108,7 +108,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            sstar2
+            sstar
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -204,13 +204,13 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="sstar2" class="md-nav__button md-logo" aria-label="sstar2" data-md-component="logo">
+    <a href="../.." title="sstar" class="md-nav__button md-logo" aria-label="sstar" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    sstar2
+    sstar
   </label>
   
     <div class="md-nav__source">
@@ -559,6 +559,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#settings" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -648,6 +659,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#settings" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -676,6 +698,23 @@
 
 
 <h1 id="assign">assign</h1>
+<p>The <code>assign</code> command assigns inferred tracts to source populations using match-rate files.</p>
+<p>It compares the match rates for the same tract across two or more sources. A tract is assigned only when one source has the unique highest match rate. Tied tracts, tracts with no valid maximum, and tracts not shared by all input files are not assigned.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">sstar2</span><span class="w"> </span><span class="k">assign</span><span class="w"> </span><span class="o">--</span><span class="n">match</span><span class="o">-</span><span class="n">rate</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">nean</span><span class="p">.</span><span class="n">match</span><span class="p">.</span><span class="n">rate</span><span class="p">.</span><span class="n">bed</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">den</span><span class="p">.</span><span class="n">match</span><span class="p">.</span><span class="n">rate</span><span class="p">.</span><span class="n">bed</span><span class="w"> </span><span class="se">\</span>
+<span class="w">              </span><span class="o">--</span><span class="n">source</span><span class="o">-</span><span class="n">name</span><span class="w"> </span><span class="n">nean</span><span class="w"> </span><span class="n">den</span><span class="w"> </span><span class="se">\</span>
+<span class="w">              </span><span class="o">--</span><span class="k">output</span><span class="o">-</span><span class="n">prefix</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span>
+</code></pre></div>
+
+<h3 id="outputs">Outputs</h3>
+<p>One BED file is written for each source name:</p>
+<div class="codehilite"><pre><span></span><code>&lt;output-prefix&gt;.&lt;source-name&gt;.bed
+</code></pre></div>
+
+<p>Each output file is tab-separated and has no header:</p>
+<div class="codehilite"><pre><span></span><code>chrom  start  end  sample  match_rate
+</code></pre></div>
+
+<p>A source-specific output file is created even if no tracts are assigned to that source.</p>
 <h3 id="settings">Settings</h3>
 <table>
 <thead>

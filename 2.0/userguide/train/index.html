@@ -25,7 +25,7 @@
     
     
       
-        <title>train - sstar2</title>
+        <title>train - sstar</title>
       
     
     
@@ -94,7 +94,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="sstar2" class="md-header__button md-logo" aria-label="sstar2" data-md-component="logo">
+    <a href="../.." title="sstar" class="md-header__button md-logo" aria-label="sstar" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -108,7 +108,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            sstar2
+            sstar
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -204,13 +204,13 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="sstar2" class="md-nav__button md-logo" aria-label="sstar2" data-md-component="logo">
+    <a href="../.." title="sstar" class="md-nav__button md-logo" aria-label="sstar" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    sstar2
+    sstar
   </label>
   
     <div class="md-nav__source">
@@ -475,6 +475,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#settings" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -648,6 +659,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#settings" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -676,11 +698,23 @@
 
 
 <h1 id="train">train</h1>
+<p>The <code>train</code> command trains an ONNX model for S*-based archaic introgression detection.</p>
+<p>It reads a DEMES demographic model and an <code>sstar2</code> configuration file. If the training feature table is not already present, <code>sstar2 train</code> first simulates training data and writes the feature table. It then trains a <code>GradientBoostingRegressor</code> model to predict <code>S*_score</code> from <code>Region_ind_SNP_number</code>.</p>
+<p>The training feature table is derived from the model output path:</p>
+<div class="codehilite"><pre><span></span><code>&lt;output-prefix&gt;.training.features.tsv
+</code></pre></div>
+
+<p>If this file already exists, <code>sstar2 train</code> reuses it instead of running simulation again.</p>
 <div class="codehilite"><pre><span></span><code>sstar2 train --demes examples/data/BonoboGhost_4K19_wo_introgression.yaml \
              --config examples/data/sstar2.config.yaml \
              --output test.model.onnx
 </code></pre></div>
 
+<h3 id="outputs">Outputs</h3>
+<ul>
+<li><code>--output</code>: trained ONNX model file.</li>
+<li><code>&lt;output-prefix&gt;.training.features.tsv</code>: simulated training feature table.</li>
+</ul>
 <h3 id="settings">Settings</h3>
 <table>
 <thead>
