@@ -12,8 +12,8 @@ sstar2 infer --model examples/data/trained.model.onnx \
 
 | Argument | Description |
 | - | - |
-| `--model` | Path to the model file. |
-| `--config` | Path to the config file. |
+| `--model` | Path to the trained model file. |
+| `--config` | Path to the `sstar2` configuration YAML file. |
 | `--feat-file` | Path to the feature TSV file. |
 | `--pred-file` | Path to the prediction TSV file. |
 | `--tract-file` | Path to the output BED file. | 

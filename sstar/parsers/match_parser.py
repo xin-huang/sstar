@@ -77,7 +77,7 @@ def add_match_parser(subparsers: argparse.ArgumentParser) -> None:
         "--tract-file",
         type=existed_file,
         required=True,
-        help="Path to the inferred tract BED file from sstar2 infer.",
+        help="Path to the inferred tract BED file from `sstar2 infer`.",
     )
     parser.add_argument(
         "--output",
