@@ -63,18 +63,18 @@ def add_train_parser(subparsers: argparse.ArgumentParser) -> None:
         "--demes",
         type=existed_file,
         required=True,
-        help="Path to the demes file.",
+        help="Path to the DEMES demographic model file.",
     )
     parser.add_argument(
         "--config",
         type=existed_file,
         required=True,
-        help="Path to the config file.",
+        help="Path to the `sstar2` configuration YAML file.",
     )
     parser.add_argument(
         "--output",
         required=True,
-        help="Path to the output file.",
+        help="Path to the trained model output file.",
     )
     parser.add_argument(
         "--match-bonus",

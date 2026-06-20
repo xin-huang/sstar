@@ -88,6 +88,6 @@ def add_match_parser(subparsers: argparse.ArgumentParser) -> None:
         "--ploidy",
         type=positive_int,
         default=2,
-        help="Ploidy used to normalize dosage differences.",
+        help="Ploidy used to normalize dosage differences. Default: %(default)s.",
     )
     parser.set_defaults(runner=_run_match)

@@ -65,13 +65,13 @@ def add_infer_parser(subparsers: argparse.ArgumentParser) -> None:
         "--model",
         type=existed_file,
         required=True,
-        help="Path to the model file.",
+        help="Path to the trained model file.",
     )
     parser.add_argument(
         "--config",
         type=existed_file,
         required=True,
-        help="Path to the config file.",
+        help="Path to the `sstar2` configuration YAML file.",
     )
     parser.add_argument(
         "--feat-file", required=True, help="Path to the feature TSV file."
