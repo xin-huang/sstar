@@ -28,8 +28,11 @@ extra_javascript:
 nav:
 - Home: 'index.md'
 - User Guide: 
-    - Overview: 'userguide/overview.md'
-    - Configuration: 'userguide/configuration.md'
+  - Overview: 'userguide/overview.md'
+  - Configuration: 'userguide/configuration.md'
+  - Commands:
     - train: 'userguide/train.md'
     - infer: 'userguide/infer.md'
     - match: 'userguide/match.md'
+    - assign: 'userguide/assign.md'
+  - Examples: 'userguide/examples.md'

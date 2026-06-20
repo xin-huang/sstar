@@ -2,11 +2,12 @@
 
 `sstar2` assumes biallelic genotype data with derived alleles coded as `1` and supports both phased and unphased data.
 
-There are three subcommands in `sstar2`:
+There are four subcommands in `sstar2`:
 
 - `train`
 - `infer`
 - `match`
+- `assign`
 
 To display help information for each subcommand, users can use:
 
