@@ -8,13 +8,9 @@
       
       
       
-        <link rel="canonical" href="https://xin-huang.github.io/sstar/2.0/userguide/configuration/">
+        <link rel="canonical" href="https://xin-huang.github.io/sstar/2.0/userguide/example/">
       
       
-        <link rel="prev" href="../overview/">
-      
-      
-        <link rel="next" href="../train/">
       
       
         
@@ -25,7 +21,7 @@
     
     
       
-        <title>Configuration - sstar</title>
+        <title>Example - sstar</title>
       
     
     
@@ -73,11 +69,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#configuration" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -114,7 +105,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Configuration
+              Example
             
           </span>
         </div>
@@ -258,20 +249,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -292,7 +281,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -335,19 +324,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
         
   
   
@@ -363,7 +343,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -588,8 +567,6 @@
   
   
   
-    
-  
   
 </nav>
                   </div>
@@ -606,191 +583,14 @@
 
 
 
-<h1 id="configuration">Configuration</h1>
-<p>For the <code>train</code> and <code>infer</code> commands, <code>sstar2</code> requires a <a href="https://en.wikipedia.org/wiki/YAML">YAML</a> configuration file specifying parameters for simulation, preprocessing, and the machine learning model (<a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html">GradientBoostingRegressor</a>). An example configuration file can be found <a href="https://github.com/xin-huang/sstar/blob/docs/examples/data/sstar2.config.yaml">here</a> and is shown below:</p>
-<div class="codehilite"><pre><span></span><code>simulation:
-  nrep: 100
-  nref: 10
-  ntgt: 10
-  ref_id: &quot;Western&quot;
-  tgt_id: &quot;Bonobo&quot;
-  seq_len: 40000
-  mut_rate: 1.2e-8
-  rec_rate: 0.7e-8
-  ploidy: 2
-  is_phased: false
-  nfeature: 100
-  is_shuffled: false
-  nprocess: 2
-  seed: 4836
+  <h1>Example</h1>
 
-preprocessing:
-  vcf_file: &quot;examples/data/example.vcf&quot;
-  chr_name: &quot;1&quot;
-  ref_ind_file: &quot;examples/data/ref.ind.list&quot;
-  tgt_ind_file: &quot;examples/data/tgt.ind.list&quot;
-  win_len: 40000
-  win_step: 10000
-  is_phased: false
-  nprocess: 2
-  ploidy: 2
-
-model:
-  params:
-    loss: &quot;quantile&quot;
-    alpha: 0.999
-    n_estimators: 200
-    max_depth: 3
-    random_state: 4836
+<div class="codehilite"><pre><span></span><code><span class="n">sstar2</span><span class="w"> </span><span class="n">train</span><span class="w"> </span><span class="o">--</span><span class="n">demes</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">HumanNeanderthal_4G21_wo_introgression</span><span class="p">.</span><span class="n">yaml</span><span class="w"> </span><span class="o">--</span><span class="n">config</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">yaml</span><span class="w"> </span><span class="o">--</span><span class="k">output</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">trained</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">onnx</span>
+<span class="n">sstar2</span><span class="w"> </span><span class="n">infer</span><span class="w"> </span><span class="o">--</span><span class="n">model</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">trained</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">onnx</span><span class="w"> </span><span class="o">--</span><span class="n">config</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">yaml</span><span class="w"> </span><span class="o">--</span><span class="n">feat</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">examples</span><span class="p">.</span><span class="n">inference</span><span class="p">.</span><span class="n">features</span><span class="p">.</span><span class="n">tsv</span><span class="w"> </span><span class="o">--</span><span class="n">pred</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">pred</span><span class="p">.</span><span class="n">tsv</span><span class="w"> </span><span class="o">--</span><span class="n">tract</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">inferred</span><span class="p">.</span><span class="n">tracts</span><span class="p">.</span><span class="n">bed</span>
+<span class="n">sstar2</span><span class="w"> </span><span class="n">match</span><span class="w"> </span><span class="o">--</span><span class="n">vcf</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">biallelic</span><span class="p">.</span><span class="n">snps</span><span class="p">.</span><span class="n">vcf</span><span class="p">.</span><span class="n">gz</span><span class="w"> </span><span class="o">--</span><span class="n">tgt</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">tgt</span><span class="p">.</span><span class="n">samples</span><span class="p">.</span><span class="n">list</span><span class="w"> </span><span class="o">--</span><span class="n">src</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">nean</span><span class="p">.</span><span class="n">samples</span><span class="p">.</span><span class="n">list</span><span class="w"> </span><span class="o">--</span><span class="n">tract</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">inferred</span><span class="p">.</span><span class="n">tracts</span><span class="p">.</span><span class="n">bed</span><span class="w"> </span><span class="o">--</span><span class="k">output</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">nean</span><span class="p">.</span><span class="n">match</span><span class="p">.</span><span class="n">rate</span><span class="p">.</span><span class="n">bed</span>
+<span class="n">sstar2</span><span class="w"> </span><span class="n">match</span><span class="w"> </span><span class="o">--</span><span class="n">vcf</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">biallelic</span><span class="p">.</span><span class="n">snps</span><span class="p">.</span><span class="n">vcf</span><span class="p">.</span><span class="n">gz</span><span class="w"> </span><span class="o">--</span><span class="n">tgt</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">tgt</span><span class="p">.</span><span class="n">samples</span><span class="p">.</span><span class="n">list</span><span class="w"> </span><span class="o">--</span><span class="n">src</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">den</span><span class="p">.</span><span class="n">samples</span><span class="p">.</span><span class="n">list</span><span class="w"> </span><span class="o">--</span><span class="n">tract</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">inferred</span><span class="p">.</span><span class="n">tracts</span><span class="p">.</span><span class="n">bed</span><span class="w"> </span><span class="o">--</span><span class="k">output</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">den</span><span class="p">.</span><span class="n">match</span><span class="p">.</span><span class="n">rate</span><span class="p">.</span><span class="n">bed</span>
+<span class="n">sstar2</span><span class="w"> </span><span class="k">assign</span><span class="w"> </span><span class="o">--</span><span class="n">match</span><span class="o">-</span><span class="n">rate</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">nean</span><span class="p">.</span><span class="n">match</span><span class="p">.</span><span class="n">rate</span><span class="p">.</span><span class="n">bed</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">den</span><span class="p">.</span><span class="n">match</span><span class="p">.</span><span class="n">rate</span><span class="p">.</span><span class="n">bed</span><span class="w"> </span><span class="o">--</span><span class="n">source</span><span class="o">-</span><span class="n">name</span><span class="w"> </span><span class="n">nean</span><span class="w"> </span><span class="n">den</span><span class="w"> </span><span class="o">--</span><span class="k">output</span><span class="o">-</span><span class="n">prefix</span><span class="w"> </span><span class="n">examples</span><span class="o">/</span><span class="n">sstar2</span><span class="p">.</span><span class="n">example</span>
 </code></pre></div>
-
-<p>The configuration file has three top-level sections: <code>simulation</code>, <code>preprocessing</code>, and <code>model</code>.</p>
-<p>In the <code>simulation</code> section:</p>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>nrep</code></td>
-<td>Number of simulations run in each batch. Additional batches are simulated until at least <code>nfeature</code> genomic windows are obtained.</td>
-</tr>
-<tr>
-<td><code>nref</code></td>
-<td>Number of reference individuals.</td>
-</tr>
-<tr>
-<td><code>ntgt</code></td>
-<td>Number of target individuals.</td>
-</tr>
-<tr>
-<td><code>ref_id</code></td>
-<td>Population label used for the reference population in the simulated data.</td>
-</tr>
-<tr>
-<td><code>tgt_id</code></td>
-<td>Population label used for the target population in the simulated data.</td>
-</tr>
-<tr>
-<td><code>seq_len</code></td>
-<td>Length of the simulated sequence.</td>
-</tr>
-<tr>
-<td><code>mut_rate</code></td>
-<td>Mutation rate used in simulation.</td>
-</tr>
-<tr>
-<td><code>rec_rate</code></td>
-<td>Recombination rate used in simulation.</td>
-</tr>
-<tr>
-<td><code>ploidy</code></td>
-<td>Ploidy of the simulated individuals.</td>
-</tr>
-<tr>
-<td><code>is_phased</code></td>
-<td>Whether the simulated data are treated as phased.</td>
-</tr>
-<tr>
-<td><code>nfeature</code></td>
-<td>Minimum number of genomic windows to generate for model training.</td>
-</tr>
-<tr>
-<td><code>is_shuffled</code></td>
-<td>Whether the generated genomic windows are shuffled before model training.</td>
-</tr>
-<tr>
-<td><code>nprocess</code></td>
-<td>Number of processes used for simulation.</td>
-</tr>
-<tr>
-<td><code>seed</code></td>
-<td>Random seed for reproducibility.</td>
-</tr>
-</tbody>
-</table>
-<p>In the <code>preprocessing</code> section:</p>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>vcf_file</code></td>
-<td>Path to the input VCF file for inference.</td>
-</tr>
-<tr>
-<td><code>chr_name</code></td>
-<td>Chromosome name to analyze.</td>
-</tr>
-<tr>
-<td><code>ref_ind_file</code></td>
-<td>Path to the file listing reference individuals.</td>
-</tr>
-<tr>
-<td><code>tgt_ind_file</code></td>
-<td>Path to the file listing target individuals.</td>
-</tr>
-<tr>
-<td><code>win_len</code></td>
-<td>Window length used to divide the genome.</td>
-</tr>
-<tr>
-<td><code>win_step</code></td>
-<td>Step size between adjacent windows.</td>
-</tr>
-<tr>
-<td><code>is_phased</code></td>
-<td>Whether the input VCF is treated as phased.</td>
-</tr>
-<tr>
-<td><code>nprocess</code></td>
-<td>Number of processes used for preprocessing.</td>
-</tr>
-<tr>
-<td><code>ploidy</code></td>
-<td>Ploidy of the individuals in the input VCF.</td>
-</tr>
-</tbody>
-</table>
-<p>In the <code>model</code> section, parameters under <code>params</code> are passed to <code>GradientBoostingRegressor</code>:</p>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>loss</code></td>
-<td>Loss function used by the gradient boosting model. Must be set to <code>quantile</code>.</td>
-</tr>
-<tr>
-<td><code>alpha</code></td>
-<td>Quantile level used.</td>
-</tr>
-<tr>
-<td><code>n_estimators</code></td>
-<td>Number of boosting stages.</td>
-</tr>
-<tr>
-<td><code>max_depth</code></td>
-<td>Maximum depth of each regression tree.</td>
-</tr>
-<tr>
-<td><code>random_state</code></td>
-<td>Random seed used by the model.</td>
-</tr>
-</tbody>
-</table>
-<p>For other available model parameters, please see the official <code>scikit-learn</code> documentation for <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html">GradientBoostingRegressor</a>.</p>
 
 
 
