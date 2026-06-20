@@ -25,13 +25,15 @@ from sstar import __version__
 from sstar.parsers.train_parser import add_train_parser
 from sstar.parsers.infer_parser import add_infer_parser
 from sstar.parsers.match_parser import add_match_parser
+from sstar.parsers.assign_parser import add_assign_parser
 
 
 def _set_sigpipe_handler() -> None:
     """
     Sets the signal handler for SIGPIPE signals on POSIX systems.
     """
-    import os, signal
+    import os
+    import signal
 
     if os.name == "posix":
         # Set signal handler for SIGPIPE to quietly kill the program.
@@ -58,6 +60,7 @@ def _sstar_cli_parser() -> argparse.ArgumentParser:
     add_train_parser(subparsers)
     add_infer_parser(subparsers)
     add_match_parser(subparsers)
+    add_assign_parser(subparsers)
 
     return top_parser
 
