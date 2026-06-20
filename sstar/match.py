@@ -73,6 +73,94 @@ def calc_match_pct(
     return float(score_sum / denominator)
 
 
+def _build_position_index(pos: Union[list, np.ndarray]) -> dict[int, int]:
+    """
+    Build a genomic-position to array-index lookup.
+
+    Parameters
+    ----------
+    pos : list or numpy.ndarray
+        Variant positions.
+
+    Returns
+    -------
+    dict[int, int]
+        Mapping from genomic position to genotype-array row index.
+    """
+    return {int(p): i for i, p in enumerate(pos)}
+
+
+def _dosage_for_position_index(
+    gt: allel.GenotypeArray,
+    pos_to_i: dict[int, int],
+    ind_index: int,
+    positions: list,
+    hap_index: Optional[int] = None,
+    P: int = 2,
+) -> np.ndarray:
+    """
+    Return ALT dosage for one individual using a precomputed position index.
+
+    Missing genotypes and absent positions are encoded as -1. When extracting a
+    single haplotype, called alleles are multiplied by ``P`` so haplotype allele
+    states are represented on the same dosage scale used for diploid genotypes.
+
+    Parameters
+    ----------
+    gt : allel.GenotypeArray
+        Genotype array with variant, sample, and ploidy axes.
+    pos_to_i : dict[int, int]
+        Mapping from genomic position to genotype-array row index.
+    ind_index : int
+        Index of the individual to extract.
+    positions : list
+        Genomic positions to query.
+    hap_index : int or None, optional
+        Zero-based haplotype index to extract for phased targets. When None,
+        return diploid ALT dosage using scikit-allel's to_n_alt().
+    P : int, optional
+        Ploidy multiplier for haploid allele extraction. Default: 2, which
+        maps haplotype allele 0 to dosage 0 and haplotype allele 1 to dosage 2.
+
+    Returns
+    -------
+    numpy.ndarray
+        Dosage array aligned to positions. Missing genotypes and absent
+        positions are encoded as -1.
+    """
+    gt_arr = np.asarray(gt)
+    out = np.full(len(positions), -1.0, dtype=float)
+    idx = []
+    out_i = []
+
+    for j, p in enumerate(positions):
+        i = pos_to_i.get(int(p))
+        if i is not None:
+            idx.append(i)
+            out_i.append(j)
+
+    if not idx:
+        return out
+
+    idx = np.asarray(idx, dtype=int)
+    out_i = np.asarray(out_i, dtype=int)
+    if hap_index is None:
+        sub = gt_arr[idx, ind_index : ind_index + 1, :]
+        g = allel.GenotypeArray(sub)
+        dos = g.to_n_alt().astype(float)
+        dos[g.is_missing()] = -1
+        out[out_i] = dos[:, 0]
+        return out
+
+    alleles = gt_arr[idx, ind_index, hap_index].astype(float)
+    called = alleles >= 0
+    dos = np.full(len(idx), -1.0, dtype=float)
+    dos[called] = alleles[called] * P
+    out[out_i] = dos
+
+    return out
+
+
 def _dosage_for_positions(
     gt: allel.GenotypeArray,
     pos: Union[list, np.ndarray],
@@ -112,39 +200,15 @@ def _dosage_for_positions(
         Dosage array aligned to positions. Missing genotypes and absent
         positions are encoded as -1.
     """
-    pos = np.asarray(pos)
-    gt_arr = np.asarray(gt)
-    pos_to_i = {int(p): i for i, p in enumerate(pos)}
-    out = np.full(len(positions), -1.0, dtype=float)
-    idx = []
-    out_i = []
-
-    for j, p in enumerate(positions):
-        i = pos_to_i.get(int(p))
-        if i is not None:
-            idx.append(i)
-            out_i.append(j)
-
-    if not idx:
-        return out
-
-    idx = np.asarray(idx, dtype=int)
-    out_i = np.asarray(out_i, dtype=int)
-    if hap_index is None:
-        sub = gt_arr[idx, ind_index : ind_index + 1, :]
-        g = allel.GenotypeArray(sub)
-        dos = g.to_n_alt().astype(float)
-        dos[g.is_missing()] = -1
-        out[out_i] = dos[:, 0]
-        return out
-
-    alleles = gt_arr[idx, ind_index, hap_index].astype(float)
-    called = alleles >= 0
-    dos = np.full(len(idx), -1.0, dtype=float)
-    dos[called] = alleles[called] * P
-    out[out_i] = dos
-
-    return out
+    pos_to_i = _build_position_index(pos)
+    return _dosage_for_position_index(
+        gt=gt,
+        pos_to_i=pos_to_i,
+        ind_index=ind_index,
+        positions=positions,
+        hap_index=hap_index,
+        P=P,
+    )
 
 
 def match(
@@ -296,6 +360,73 @@ def _resolve_chrom(chrom: object, data: dict) -> str:
     )
 
 
+def _validate_disjoint_samples(tgt_samples: list[str], src_samples: list[str]) -> None:
+    """
+    Raise an error if target and source sample lists overlap.
+
+    Parameters
+    ----------
+    tgt_samples : list of str
+        Target sample names.
+    src_samples : list of str
+        Source sample names.
+
+    Raises
+    ------
+    ValueError
+        If any sample appears in both target and source sample lists.
+    """
+    overlap = set(tgt_samples) & set(src_samples)
+    if overlap:
+        overlap_text = ", ".join(sorted(overlap))
+        raise ValueError(
+            f"Target and source sample lists must not overlap: {overlap_text}"
+        )
+
+
+def _validate_sorted_positions(data: dict) -> None:
+    """
+    Raise an error if positions are not sorted within any chromosome.
+
+    Parameters
+    ----------
+    data : dict
+        Genotype data keyed by chromosome.
+
+    Raises
+    ------
+    ValueError
+        If variant positions decrease within a chromosome.
+    """
+    for chrom, chrom_data in data.items():
+        pos = np.asarray(chrom_data["POS"])
+        if np.any(pos[:-1] > pos[1:]):
+            raise ValueError(f"VCF positions must be sorted within chromosome {chrom}.")
+
+
+def _positions_in_bed_interval(pos: np.ndarray, start: int, end: int) -> np.ndarray:
+    """
+    Return VCF positions satisfying ``start < POS <= end``.
+
+    Parameters
+    ----------
+    pos : numpy.ndarray
+        Sorted VCF positions for one chromosome.
+    start : int
+        BED-style tract start.
+    end : int
+        BED-style tract end.
+
+    Returns
+    -------
+    numpy.ndarray
+        Positions inside the interval.
+    """
+    left = np.searchsorted(pos, start, side="right")
+    right = np.searchsorted(pos, end, side="right")
+    return pos[left:right]
+
+
 def run_match(
     vcf_file: str,
     tgt_ind_file: str,
@@ -310,10 +441,11 @@ def run_match(
     The tract file must contain at least four columns: chromosome, start, end,
     and target sample label. Tract coordinates are interpreted as BED-style
     0-based half-open intervals, so a 1-based VCF position belongs to a tract
-    when ``start < POS <= end``. Window variants are the union of target and
-    source VCF positions in the tract. For each source individual, the pairwise
-    score is normalized by this window-level variant count, and the final
-    tract score is the mean across all source individuals.
+    when ``start < POS <= end``. Target and source samples are loaded from the
+    same VCF, so window variants are the VCF positions in the tract. For each
+    source individual, the pairwise score is normalized by this window-level
+    variant count, and the final tract score is the mean across all source
+    individuals.
 
     Parameters
     ----------
@@ -335,9 +467,23 @@ def run_match(
     """
     tgt_samples = parse_ind_file(tgt_ind_file)
     src_samples = parse_ind_file(src_ind_file)
+    _validate_disjoint_samples(tgt_samples, src_samples)
 
-    tgt_data = read_geno_data(vcf_file, tgt_samples, None, filter_missing=False)
-    src_data = read_geno_data(vcf_file, src_samples, None, filter_missing=False)
+    analysis_samples = tgt_samples + src_samples
+    data, returned_samples = read_geno_data(
+        vcf_file, analysis_samples, None, filter_missing=False
+    )
+    sample_to_index = {str(sample): i for i, sample in enumerate(returned_samples)}
+    src_indices = [sample_to_index[sample] for sample in src_samples]
+
+    _validate_sorted_positions(data)
+
+    pos_by_chrom = {
+        chrom: np.asarray(chrom_data["POS"]) for chrom, chrom_data in data.items()
+    }
+    position_index_by_chrom = {
+        chrom: _build_position_index(pos) for chrom, pos in pos_by_chrom.items()
+    }
 
     tracts = pd.read_csv(tract_file, sep="\t", header=None)
     if tracts.shape[1] < 4:
@@ -355,42 +501,48 @@ def run_match(
         end = int(tract["end"])
         tract_sample = str(tract["sample"])
         base_sample, tgt_hap_index = _base_sample_name(tract_sample, tgt_samples)
-        tgt_index = tgt_samples.index(base_sample)
+        tgt_index = sample_to_index[base_sample]
 
-        tgt_chrom = _resolve_chrom(chrom, tgt_data)
-        src_chrom = _resolve_chrom(chrom, src_data)
-        tgt_gt = tgt_data[tgt_chrom]["GT"]
-        tgt_pos = np.asarray(tgt_data[tgt_chrom]["POS"])
-        src_gt = src_data[src_chrom]["GT"]
-        src_pos = np.asarray(src_data[src_chrom]["POS"])
+        resolved_chrom = _resolve_chrom(chrom, data)
+        gt = data[resolved_chrom]["GT"]
+        pos = pos_by_chrom[resolved_chrom]
+        pos_to_i = position_index_by_chrom[resolved_chrom]
 
         # Tract coordinates are BED-style 0-based half-open [start, end),
         # while VCF POS values are 1-based; therefore a VCF position belongs
         # to the tract when start < POS <= end.
-        tgt_region_pos = tgt_pos[(tgt_pos > start) & (tgt_pos <= end)]
-        src_region_pos = src_pos[(src_pos > start) & (src_pos <= end)]
-        positions = np.union1d(tgt_region_pos, src_region_pos).astype(int).tolist()
+        region_pos = _positions_in_bed_interval(pos, start, end)
+        positions = region_pos.astype(int).tolist()
         window_variant_count = len(positions)
-
-        source_rates = []
-        for src_index, _src_sample in enumerate(src_samples):
-            rate = match(
-                tgt_gt=tgt_gt,
-                tgt_pos=tgt_pos,
-                tgt_index=tgt_index,
-                src_gt=src_gt,
-                src_pos=src_pos,
-                src_index=src_index,
-                positions=positions,
-                denominator=window_variant_count,
-                tgt_hap_index=tgt_hap_index,
-                P=ploidy,
-            )
-            source_rates.append(rate)
 
         if window_variant_count == 0:
             rate = "NA"
         else:
+            tgt_dos = _dosage_for_position_index(
+                gt=gt,
+                pos_to_i=pos_to_i,
+                ind_index=tgt_index,
+                positions=positions,
+                hap_index=tgt_hap_index,
+                P=ploidy,
+            )
+            source_rates = []
+            for src_index in src_indices:
+                src_dos = _dosage_for_position_index(
+                    gt=gt,
+                    pos_to_i=pos_to_i,
+                    ind_index=src_index,
+                    positions=positions,
+                    P=ploidy,
+                )
+                source_rates.append(
+                    calc_match_pct(
+                        tgt_dos,
+                        src_dos,
+                        denominator=window_variant_count,
+                        P=ploidy,
+                    )
+                )
             rate = float(np.mean(source_rates))
 
         rows.append(
@@ -408,4 +560,6 @@ def run_match(
         os.makedirs(output_dir, exist_ok=True)
 
     columns = ["chrom", "start", "end", "sample", "match_rate"]
-    pd.DataFrame(rows, columns=columns).to_csv(output_file, sep="\t", index=False)
+    pd.DataFrame(rows, columns=columns).to_csv(
+        output_file, sep="\t", index=False, header=False
+    )
