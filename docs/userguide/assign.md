@@ -22,7 +22,7 @@ This generates two BED files: [one](https://github.com/xin-huang/sstar/blob/main
 One BED file is written for each source name:
 
 ```text
-<output-prefix>.<source-name>.bed
+<output-prefix>.<source-name>.inferred.tracts.bed
 ```
 
 Each output file is tab-separated and has no header:
