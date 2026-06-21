@@ -579,29 +579,29 @@
 
 
 <h1 id="configuration">Configuration</h1>
-<p>For the <code>train</code> and <code>infer</code> commands, <code>sstar2</code> requires a <a href="https://en.wikipedia.org/wiki/YAML">YAML</a> configuration file specifying parameters for simulation, preprocessing, and the machine learning model (<a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html">GradientBoostingRegressor</a>). An example configuration file can be found <a href="https://github.com/xin-huang/sstar/blob/docs/examples/data/sstar2.config.yaml">here</a> and is shown below:</p>
+<p>For the <code>train</code> and <code>infer</code> commands, <code>sstar2</code> requires a <a href="https://en.wikipedia.org/wiki/YAML">YAML</a> configuration file specifying parameters for simulation, preprocessing, and the machine learning model (<a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html">GradientBoostingRegressor</a>). An example configuration file can be found <a href="https://github.com/xin-huang/sstar/blob/docs/examples/data/sstar2.example.config.yaml">here</a> and is shown below:</p>
 <div class="codehilite"><pre><span></span><code>simulation:
-  nrep: 100
-  nref: 10
+  nrep: 10000
+  nref: 5
   ntgt: 10
-  ref_id: &quot;Western&quot;
-  tgt_id: &quot;Bonobo&quot;
-  seq_len: 40000
-  mut_rate: 1.2e-8
-  rec_rate: 0.7e-8
+  ref_id: YRI
+  tgt_id: CEU
+  seq_len: 50_000
+  mut_rate: 1.29e-8
+  rec_rate: 1e-8
   ploidy: 2
   is_phased: false
-  nfeature: 100
+  nfeature: 100_000
   is_shuffled: false
   nprocess: 2
-  seed: 4836
+  seed: 12345
 
 preprocessing:
-  vcf_file: &quot;examples/data/example.vcf&quot;
-  chr_name: &quot;1&quot;
-  ref_ind_file: &quot;examples/data/ref.ind.list&quot;
-  tgt_ind_file: &quot;examples/data/tgt.ind.list&quot;
-  win_len: 40000
+  vcf_file: examples/data/sstar2.example.biallelic.snps.vcf.gz
+  chr_name: &quot;21&quot;
+  ref_ind_file: examples/data/ref.samples.list
+  tgt_ind_file: examples/data/tgt.samples.list
+  win_len: 50_000
   win_step: 10000
   is_phased: false
   nprocess: 2
@@ -610,10 +610,10 @@ preprocessing:
 model:
   params:
     loss: &quot;quantile&quot;
-    alpha: 0.999
+    alpha: 0.99
     n_estimators: 200
     max_depth: 3
-    random_state: 4836
+    random_state: 12345 
 </code></pre></div>
 
 <p>The configuration file has three top-level sections: <code>simulation</code>, <code>preprocessing</code>, and <code>model</code>.</p>
