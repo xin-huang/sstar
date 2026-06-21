@@ -503,6 +503,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#outputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -659,6 +670,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#outputs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -699,22 +721,25 @@
 
 <h1 id="infer">infer</h1>
 <p>The <code>infer</code> command identifies candidate introgressed tracts from genotype data.</p>
-<p>It reads preprocessing settings from the <code>sstar2</code> configuration file, computes S* features for genomic windows, applies a trained ONNX model, and writes windows whose observed <code>S*_score</code> is greater than the predicted score to a BED file.</p>
-<div class="codehilite"><pre><span></span><code>sstar2 infer --model examples/data/trained.model.onnx \
-             --config examples/data/sstar2.config.yaml \
-             --feat-file test.score.tsv \
-             --pred-file test.pred.tsv \
-             --tract-file test.inferred.tracts.bed
+<p>It reads preprocessing settings from the <code>sstar2</code> <a href="https://xin-huang.github.io/sstar/latest/userguide/configuration/">configuration file</a>, computes features for genomic windows, applies a trained ONNX model, and writes windows whose observed <code>S*_score</code> is greater than the predicted score to a BED file.</p>
+<h3 id="example">Example</h3>
+<p>Using the <a href="https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.trained.model.onnx">trained model</a> from the <a href="https://xin-huang.github.io/sstar/latest/userguide/train/">train</a> command and the <a href="https://github.com/xin-huang/sstar/blob/main/examples/data/sstar2.example.config.yaml">configuration file</a>, users can infer the introgressed fragments with the following command:</p>
+<div class="codehilite"><pre><span></span><code>sstar2 infer --model examples/results/sstar2.example.trained.model.onnx \
+             --config examples/data/sstar2.example.config.yaml \
+             --feat-file examples/results/sstar2.example.inference.features.tsv \
+             --pred-file examples/results/sstar2.example.pred.tsv \
+             --tract-file examples/results/sstar2.example.inferred.tracts.bed
 </code></pre></div>
 
+<p>The inferred tracts can be found <a href="https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.inferred.tracts.bed">here</a>. Two files are also generated: <a href="https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.inference.features.tsv">one</a> records the features for prediction, and <a href="https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.pred.tsv">the other</a> contains the observed and predicted <em>S</em>* scores.</p>
 <h3 id="outputs">Outputs</h3>
 <ul>
-<li><code>--feat-file</code>: feature TSV generated from the input genotype data.</li>
-<li><code>--pred-file</code>: prediction TSV containing the observed and predicted S* scores.</li>
+<li><code>--feat-file</code>: feature TSV generated from the input genotype data specified in the configuration file.</li>
+<li><code>--pred-file</code>: prediction TSV containing the observed and predicted <em>S</em>* scores.</li>
 <li><code>--tract-file</code>: BED file of inferred tracts.</li>
 </ul>
 <p>The BED file is tab-separated and has no header:</p>
-<div class="codehilite"><pre><span></span><code>chrom  start  end  sample
+<div class="codehilite"><pre><span></span><code><span class="nv">chrom</span><span class="w">  </span><span class="nv">start</span><span class="w">  </span><span class="k">end</span><span class="w">  </span><span class="nv">sample</span>
 </code></pre></div>
 
 <p>The start coordinate is written in BED-style 0-based format.</p>

@@ -721,7 +721,7 @@
 
 <h1 id="train">train</h1>
 <p>The <code>train</code> command trains a <strong>quantile regression</strong> model for <em>S</em>*-based archaic introgression detection.</p>
-<p>It reads a <a href="https://popsim-consortium.github.io/demes-spec-docs/main/introduction.html">Demes</a> demographic model <strong>without introgression</strong> and an <code>sstar2</code> <a href="https://xin-huang.github.io/sstar/2.0/userguide/configuration/">configuration</a> file. If the training feature table is not already present, <code>sstar2 train</code> first simulates training data and writes the feature table. It then trains a <code>GradientBoostingRegressor</code> model to predict <code>S*_score</code> from <code>Region_ind_SNP_number</code>.</p>
+<p>It reads a <a href="https://popsim-consortium.github.io/demes-spec-docs/main/introduction.html">Demes</a> demographic model <strong>without introgression</strong> and an <code>sstar2</code> <a href="https://xin-huang.github.io/sstar/latest/userguide/configuration/">configuration</a> file. If the training feature table is not already present, <code>sstar2 train</code> first simulates training data and writes the feature table. It then trains a <code>GradientBoostingRegressor</code> model to predict <code>S*_score</code> from <code>Region_ind_SNP_number</code>.</p>
 <p>The training feature table is derived from the model output path:</p>
 <div class="codehilite"><pre><span></span><code>&lt;output-prefix&gt;.training.features.tsv
 </code></pre></div>
@@ -737,7 +737,7 @@
 <p>The trained model can be found <a href="https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.trained.model.onnx">here</a> and the features used to train it are available <a href="https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.trained.model.training.features.tsv">here</a>.</p>
 <h3 id="outputs">Outputs</h3>
 <ul>
-<li><code>--output</code>: trained [ONNX]((https://onnx.ai/) model file.</li>
+<li><code>--output</code>: trained <a href="https://onnx.ai/">ONNX</a> model file.</li>
 <li><code>&lt;output-prefix&gt;.training.features.tsv</code>: simulated training feature table.</li>
 </ul>
 <h3 id="settings">Settings</h3>
