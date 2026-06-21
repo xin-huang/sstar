@@ -20,6 +20,7 @@
 
 import pandas as pd
 from sstar.infer import infer
+from sstar.quantile_regression import infer as qr_infer
 
 
 def test_infer(tmp_path):
@@ -57,3 +58,33 @@ def test_infer(tmp_path):
             rtol=1e-6,
             atol=1e-8,
         )
+
+
+def test_quantile_regression_infer_skips_missing_sstar_score(tmp_path):
+    features_file = tmp_path / "features.tsv"
+    pred_file = tmp_path / "pred.tsv"
+    tract_file = tmp_path / "tracts.bed"
+
+    features = pd.DataFrame(
+        {
+            "Chromosome": ["21", "21"],
+            "Start": [1, 50001],
+            "End": [50000, 100000],
+            "Sample": ["ind1_1", "ind1_1"],
+            "S*_score": [pd.NA, 67770.0],
+            "Region_ind_SNP_number": [10, 10],
+        }
+    )
+    features.to_csv(features_file, sep="\t", index=False, na_rep="NA")
+
+    qr_infer(
+        data=features_file,
+        model="tests/data/test.qr.model.onnx",
+        output=pred_file,
+        bed_file=tract_file,
+    )
+
+    predictions = pd.read_csv(pred_file, sep="\t")
+
+    assert pd.isna(predictions.loc[0, "Predicted_S*_score"])
+    assert pd.notna(predictions.loc[1, "Predicted_S*_score"])
