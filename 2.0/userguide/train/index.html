@@ -721,7 +721,7 @@
 
 <h1 id="train">train</h1>
 <p>The <code>train</code> command trains a <strong>quantile regression</strong> model for <em>S</em>*-based archaic introgression detection.</p>
-<p>It reads a <a href="https://popsim-consortium.github.io/demes-spec-docs/main/introduction.html">DEMES</a> demographic model <strong>without introgression</strong> and an <code>sstar2</code> <a href="https://xin-huang.github.io/sstar/2.0/userguide/configuration/">configuration</a> file. If the training feature table is not already present, <code>sstar2 train</code> first simulates training data and writes the feature table. It then trains a <code>GradientBoostingRegressor</code> model to predict <code>S*_score</code> from <code>Region_ind_SNP_number</code>.</p>
+<p>It reads a <a href="https://popsim-consortium.github.io/demes-spec-docs/main/introduction.html">Demes</a> demographic model <strong>without introgression</strong> and an <code>sstar2</code> <a href="https://xin-huang.github.io/sstar/2.0/userguide/configuration/">configuration</a> file. If the training feature table is not already present, <code>sstar2 train</code> first simulates training data and writes the feature table. It then trains a <code>GradientBoostingRegressor</code> model to predict <code>S*_score</code> from <code>Region_ind_SNP_number</code>.</p>
 <p>The training feature table is derived from the model output path:</p>
 <div class="codehilite"><pre><span></span><code>&lt;output-prefix&gt;.training.features.tsv
 </code></pre></div>
@@ -751,7 +751,7 @@
 <tbody>
 <tr>
 <td><code>--demes</code></td>
-<td>Path to the DEMES demographic model file.</td>
+<td>Path to the Demes demographic model file.</td>
 </tr>
 <tr>
 <td><code>--config</code></td>
