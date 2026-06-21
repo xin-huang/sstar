@@ -35,4 +35,3 @@ nav:
     - infer: 'userguide/infer.md'
     - match: 'userguide/match.md'
     - assign: 'userguide/assign.md'
-  - Examples: 'userguide/examples.md'
