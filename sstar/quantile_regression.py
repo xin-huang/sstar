@@ -77,9 +77,10 @@ def infer(
     """
     Predict `S*_score` and export regions exceeding the predicted score.
 
-    Predictions are generated for rows with non-missing
-    `Region_ind_SNP_number`. Rows with missing feature values keep
-    `Predicted_S*_score` as `NA`. The full table is written to `output`.
+    Predictions are generated for rows with non-missing `S*_score` and
+    `Region_ind_SNP_number`. Rows with missing observed scores or feature
+    values keep `Predicted_S*_score` as `NA`. The full table is written to
+    `output`.
     Regions where observed `S*_score` is greater than `Predicted_S*_score`
     are written to `bed_file` in BED format. The BED start coordinate is
     converted from 1-based to 0-based by subtracting 1.
@@ -97,7 +98,7 @@ def infer(
         `S*_score` greater than `Predicted_S*_score`.
     """
     df = pd.read_csv(data, sep="\t")
-    mask = df["Region_ind_SNP_number"].notna()
+    mask = df["S*_score"].notna() & df["Region_ind_SNP_number"].notna()
     df["Predicted_S*_score"] = np.nan
     session_options = ort.SessionOptions()
     session_options.intra_op_num_threads = 1
