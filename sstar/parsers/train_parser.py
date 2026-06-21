@@ -63,7 +63,7 @@ def add_train_parser(subparsers: argparse.ArgumentParser) -> None:
         "--demes",
         type=existed_file,
         required=True,
-        help="Path to the DEMES demographic model file.",
+        help="Path to the Demes demographic model file.",
     )
     parser.add_argument(
         "--config",

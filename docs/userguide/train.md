@@ -1,8 +1,8 @@
 # train
 
-The `train` command trains an [ONNX](https://onnx.ai/) model for *S*\*-based archaic introgression detection.
+The `train` command trains a **quantile regression** model for *S*\*-based archaic introgression detection.
 
-It reads a [DEMES](https://popsim-consortium.github.io/demes-spec-docs/main/introduction.html) demographic model **without introgression** and an `sstar2` [configuration](https://xin-huang.github.io/sstar/2.0/userguide/configuration/) file. If the training feature table is not already present, `sstar2 train` first simulates training data and writes the feature table. It then trains a `GradientBoostingRegressor` model to predict `S*_score` from `Region_ind_SNP_number`.
+It reads a [Demes](https://popsim-consortium.github.io/demes-spec-docs/main/introduction.html) demographic model **without introgression** and an `sstar2` [configuration](https://xin-huang.github.io/sstar/latest/userguide/configuration/) file. If the training feature table is not already present, `sstar2 train` first simulates training data and writes the feature table. It then trains a `GradientBoostingRegressor` model to predict `S*_score` from `Region_ind_SNP_number`.
 
 The training feature table is derived from the model output path:
 
@@ -26,14 +26,14 @@ The trained model can be found [here](https://github.com/xin-huang/sstar/blob/ma
 
 ### Outputs
 
-- `--output`: trained ONNX model file.
+- `--output`: trained [ONNX](https://onnx.ai/) model file.
 - `<output-prefix>.training.features.tsv`: simulated training feature table.
 
 ### Settings
 
 | Argument | Description |
 | - | - |
-| `--demes` | Path to the DEMES demographic model file. |
+| `--demes` | Path to the Demes demographic model file. |
 | `--config` | Path to the `sstar2` configuration YAML file. |
 | `--output` | Path to the trained model output file. |
 | `--match-bonus` | Bonus for matching genotypes between two variants. Default: `5000`. |

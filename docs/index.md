@@ -47,7 +47,7 @@ Then run `sstar2` with:
 
 ### Citations
 
-If you find `sstar2` is useful, please cite:
+If you find `sstar2` useful, please star the [GitHub repository](https://github.com/xin-huang/sstar) and cite:
 
 - Koça A, Stöckl A, Chen S, Kuhlwilm M, Huang X. 2026. sstar2: A Python package for *S*\*-based archaic introgression detection with machine learning. bioRxiv: 2026.05.31.729079.
 - Huang X, Kruisz P, Kuhlwilm M. 2022. sstar: A Python package for detecting archaic introgression from population genetic data with *S*\*. *Molecular Biology and Evolution* **39**: msac212.
