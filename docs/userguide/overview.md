@@ -12,7 +12,7 @@ There are four subcommands in `sstar2`:
 To display help information for each subcommand, users can use:
 
 ```
-sstar2 subcommand -h
+sstar2 <subcommand> -h
 ```
 
 For example:
@@ -21,7 +21,7 @@ For example:
 sstar2 train -h
 ```
 
-If you need further help, such as such as reporting a bug or suggesting a feature, please open an [issue](https://github.com/xin-huang/sstar/issues).
+If you need further help, such as reporting a bug or suggesting a feature, please open an [issue](https://github.com/xin-huang/sstar/issues).
 
 **Note:** In this manual, we define the population without introgressed fragments as the **reference population**, the population receiving introgressed fragments as the **target population**, and the population donating introgressed fragments as the **source population**.
 
