@@ -16,7 +16,7 @@ sstar2 infer --model examples/results/sstar2.example.trained.model.onnx \
              --tract-file examples/results/sstar2.example.inferred.tracts.bed
 ```
 
-The inferred tracts can be found [here](https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.inferred.tracts.bed). Two files are also generated: [one](https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.inference.features.tsv) records the features for prediction, and [the other](https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.pred.tsv) contains the observed and predicted *S*\* scores.
+The inferred tracts can be found [here](https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.inferred.tracts.bed). Two additional files are generated: [one](https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.inference.features.tsv) records the features for prediction, and [the other](https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.pred.tsv) contains the observed and predicted *S*\* scores.
 
 ### Outputs
 
