@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://xin-huang.github.io/sstar/userguide/overview/">
+        <link rel="canonical" href="https://xin-huang.github.io/sstar/userguide/infer/">
       
       
-        <link rel="prev" href="../..">
+        <link rel="prev" href="../train/">
       
       
-        <link rel="next" href="../configuration/">
+        <link rel="next" href="../match/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Overview - sstar</title>
+        <title>infer - sstar</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#overview" class="md-skip">
+        <a href="#infer" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Overview
+              infer
             
           </span>
         </div>
@@ -307,19 +307,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
         
   
   
@@ -335,7 +326,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -373,18 +363,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" checked>
         
           
           <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
@@ -405,7 +397,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -448,10 +440,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../infer/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    infer
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -467,6 +486,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -563,6 +635,47 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -578,29 +691,73 @@
 
 
 
-<h1 id="overview">Overview</h1>
-<p><code>sstar2</code> assumes biallelic genotype data with derived alleles coded as <code>1</code> and supports both phased and unphased data.</p>
-<p>There are four subcommands in <code>sstar2</code>:</p>
+<h1 id="infer">infer</h1>
+<p>The <code>infer</code> command identifies candidate introgressed tracts from genotype data.</p>
+<p>It reads preprocessing settings from the <code>sstar2</code> <a href="https://xin-huang.github.io/sstar/latest/userguide/configuration/">configuration file</a>, computes features for genomic windows, applies a trained ONNX model, and writes windows whose observed <code>S*_score</code> is greater than the predicted score to a BED file.</p>
+<h3 id="example">Example</h3>
+<p>Using the <a href="https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.trained.model.onnx">trained model</a> from the <a href="https://xin-huang.github.io/sstar/latest/userguide/train/">train</a> command and the <a href="https://github.com/xin-huang/sstar/blob/main/examples/data/sstar2.example.config.yaml">configuration file</a>, users can infer the introgressed fragments with the following command:</p>
+<div class="codehilite"><pre><span></span><code>sstar2 infer --model examples/results/sstar2.example.trained.model.onnx \
+             --config examples/data/sstar2.example.config.yaml \
+             --feat-file examples/results/sstar2.example.inference.features.tsv \
+             --pred-file examples/results/sstar2.example.pred.tsv \
+             --tract-file examples/results/sstar2.example.inferred.tracts.bed
+</code></pre></div>
+
+<p>The inferred tracts can be found <a href="https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.inferred.tracts.bed">here</a>. Two additional files are generated: <a href="https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.inference.features.tsv">one</a> records the features for prediction, and <a href="https://github.com/xin-huang/sstar/blob/main/examples/results/sstar2.example.pred.tsv">the other</a> contains the observed and predicted <em>S</em>* scores.</p>
+<h3 id="outputs">Outputs</h3>
 <ul>
-<li><code>train</code></li>
-<li><code>infer</code></li>
-<li><code>match</code></li>
-<li><code>assign</code></li>
+<li><code>--feat-file</code>: feature TSV generated from the input genotype data specified in the configuration file.</li>
+<li><code>--pred-file</code>: prediction TSV containing the observed and predicted <em>S</em>* scores.</li>
+<li><code>--tract-file</code>: BED file of inferred tracts.</li>
 </ul>
-<p>To display help information for each subcommand, users can use:</p>
-<div class="codehilite"><pre><span></span><code>sstar2 &lt;subcommand&gt; -h
+<p>The BED file is tab-separated and has no header:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">chrom</span><span class="w">  </span><span class="nv">start</span><span class="w">  </span><span class="k">end</span><span class="w">  </span><span class="nv">sample</span>
 </code></pre></div>
 
-<p>For example:</p>
-<div class="codehilite"><pre><span></span><code>sstar2 train -h
-</code></pre></div>
-
-<p>If you need further help, such as reporting a bug or suggesting a feature, please open an <a href="https://github.com/xin-huang/sstar/issues">issue</a>.</p>
-<p><strong>Note:</strong> In this manual, we define the population without introgressed fragments as the <strong>reference population</strong>, the population receiving introgressed fragments as the <strong>target population</strong>, and the population donating introgressed fragments as the <strong>source population</strong>.</p>
-<p>The example commands assume that users have cloned the <code>sstar</code> <a href="https://github.com/xin-huang/sstar">GitHub repository</a> and run the commands from the root directory of the repository:</p>
-<div class="codehilite"><pre><span></span><code>git clone https://github.com/xin-huang/sstar
-cd sstar
-</code></pre></div>
+<p>The start coordinate is written in BED-style 0-based format.</p>
+<h3 id="settings">Settings</h3>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--model</code></td>
+<td>Path to the trained model file.</td>
+</tr>
+<tr>
+<td><code>--config</code></td>
+<td>Path to the <code>sstar2</code> configuration YAML file.</td>
+</tr>
+<tr>
+<td><code>--feat-file</code></td>
+<td>Path to the feature TSV file.</td>
+</tr>
+<tr>
+<td><code>--pred-file</code></td>
+<td>Path to the prediction TSV file.</td>
+</tr>
+<tr>
+<td><code>--tract-file</code></td>
+<td>Path to the output BED file.</td>
+</tr>
+<tr>
+<td><code>--match-bonus</code></td>
+<td>Bonus for matching genotypes between two variants. Default: <code>5000</code>.</td>
+</tr>
+<tr>
+<td><code>--max-mismatch</code></td>
+<td>Maximum genotype distance allowed before a pair is discarded. Default: <code>5</code>.</td>
+</tr>
+<tr>
+<td><code>--mismatch-penalty</code></td>
+<td>Penalty for mismatching genotypes between two variants. Default: <code>-10000</code>.</td>
+</tr>
+</tbody>
+</table>
 
 
 
