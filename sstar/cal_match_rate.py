@@ -332,14 +332,14 @@ def _cal_tgt_match_pct_manager(
         for worker in workers:
             worker.start()
 
-        # Use timeout to avoid deadlock if worker crashes
+        # Allow long-running matchrate workers before treating missing output as a failure.
         for s in range(sample_size):
             try:
-                item = out_queue.get(timeout=60)
+                item = out_queue.get()
             except queue.Empty:
                 for worker in workers:
                     worker.terminate()
-                raise RuntimeError("Worker produced no output (likely crashed).")
+                raise RuntimeError("Worker produced no output.")
 
             if item != "":
                 res.append(item)
