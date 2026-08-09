@@ -325,8 +325,17 @@ def _cal_tgt_match_pct_manager(
     ]
 
     for t in samples:
-        index = tgt_samples.index(t)
-        in_queue.put((index, data[t]))
+        if phased:
+            sample_base, haplotype = t.rsplit("_", 1)
+            if haplotype not in {"1", "2"}:
+                raise ValueError(f"Invalid phased sample label: {t}")
+            haplotype_index = int(haplotype) - 1
+        else:
+            sample_base = t
+            haplotype_index = None
+
+        index = tgt_samples.index(sample_base)
+        in_queue.put((index, haplotype_index, data[t]))
 
     try:
         for worker in workers:
@@ -390,7 +399,7 @@ def _cal_tgt_match_pct_worker(
     """
 
     while True:
-        index, data = in_queue.get()
+        index, haplotype_index, data = in_queue.get()
         res = _cal_match_pct_ind(
             data,
             index,
@@ -399,7 +408,8 @@ def _cal_tgt_match_pct_worker(
             src_data,
             src_samples,
             sample_size,
-            phased,  # NEW
+            haplotype_index,
+            phased,
             score_col,
         )
         out_queue.put("\n".join(res))
@@ -414,7 +424,8 @@ def _cal_match_pct_ind(
     src_data: dict,
     src_samples: list,
     sample_size: int,
-    phased: bool,  # NEW
+    haplotype_index: Optional[int],
+    phased: bool,
     score_col: dict,
 ) -> list:
     """
@@ -462,45 +473,54 @@ def _cal_match_pct_ind(
         for src_ind_index in range(len(src_samples)):
             src_sample = src_samples[src_ind_index]
 
-            hap1_res = cal_matchpct(
-                chr_name,
-                mapped_intervals,
-                tgt_data,
-                src_data,
-                tgt_ind_index,
-                src_ind_index,
-                0,
-                int(win_start),
-                int(win_end),
-                sample_size,
-            )
-            hap2_res = cal_matchpct(
-                chr_name,
-                mapped_intervals,
-                tgt_data,
-                src_data,
-                tgt_ind_index,
-                src_ind_index,
-                1,
-                int(win_start),
-                int(win_end),
-                sample_size,
-            )
-
-            hap1_match_pct = hap1_res[-1]
-            hap2_match_pct = hap2_res[-1]
-            hap_match_pct = "NA"
-            if (hap1_match_pct != "NA") and (hap2_match_pct != "NA"):
-                hap_match_pct = (hap1_match_pct + hap2_match_pct) / 2
-
             if phased:
-                res.append(
-                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}_1\t{hap1_match_pct}\t{src_sample}"
+                hap_res = cal_matchpct(
+                    chr_name,
+                    mapped_intervals,
+                    tgt_data,
+                    src_data,
+                    tgt_ind_index,
+                    src_ind_index,
+                    haplotype_index,
+                    int(win_start),
+                    int(win_end),
+                    sample_size,
                 )
                 res.append(
-                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}_2\t{hap2_match_pct}\t{src_sample}"
+                    f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t{hap_res[-1]}\t{src_sample}"
                 )
             else:
+                hap1_res = cal_matchpct(
+                    chr_name,
+                    mapped_intervals,
+                    tgt_data,
+                    src_data,
+                    tgt_ind_index,
+                    src_ind_index,
+                    0,
+                    int(win_start),
+                    int(win_end),
+                    sample_size,
+                )
+                hap2_res = cal_matchpct(
+                    chr_name,
+                    mapped_intervals,
+                    tgt_data,
+                    src_data,
+                    tgt_ind_index,
+                    src_ind_index,
+                    1,
+                    int(win_start),
+                    int(win_end),
+                    sample_size,
+                )
+
+                hap1_match_pct = hap1_res[-1]
+                hap2_match_pct = hap2_res[-1]
+                hap_match_pct = "NA"
+                if (hap1_match_pct != "NA") and (hap2_match_pct != "NA"):
+                    hap_match_pct = (hap1_match_pct + hap2_match_pct) / 2
+
                 res.append(
                     f"{chr_name}\t{win_start}\t{win_end}\t{sample}\t{hap_match_pct}\t{src_sample}"
                 )

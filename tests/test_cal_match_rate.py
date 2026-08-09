@@ -96,9 +96,20 @@ def test_calc_match_pct_with_scikit_allel_genotypes():
 
 def test_cal_match_pct_phased_matches_golden(data, tmp_path):
     """
-    phased=True must match the existing golden file exactly.
+    phased=True must consume score rows whose sample labels already contain
+    haplotype suffixes such as sample_1 and sample_2.
     """
     out = tmp_path / "match_rate.phased.tsv"
+    phased_score_file = tmp_path / "score.phased.tsv"
+
+    score = pd.read_csv(data["score_file"], sep="\t", keep_default_na=False)
+    phased_score = score.loc[score.index.repeat(2)].reset_index(drop=True)
+    phased_score["sample"] = [
+        f"{sample}_{hap}"
+        for sample in score["sample"]
+        for hap in (1, 2)
+    ]
+    phased_score.to_csv(phased_score_file, sep="\t", index=False)
 
     cal_match_pct(
         data["vcf"],
@@ -108,13 +119,19 @@ def test_cal_match_pct_phased_matches_golden(data, tmp_path):
         None,
         str(out),
         1,
-        data["score_file"],
+        str(phased_score_file),
         None,
         phased=True,
     )
 
-    df = pd.read_csv(out, sep="\t")
-    df_expected = pd.read_csv(data["exp_output_phased"], sep="\t")
+    sort_cols = ["chrom", "start", "end", "sample", "src_sample"]
+
+    df = pd.read_csv(out, sep="\t").sort_values(sort_cols).reset_index(drop=True)
+    df_expected = (
+        pd.read_csv(data["exp_output_phased"], sep="\t")
+        .sort_values(sort_cols)
+        .reset_index(drop=True)
+    )
 
     pd.testing.assert_frame_equal(
         df,
